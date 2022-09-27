@@ -1,0 +1,25 @@
+---
+title: "ranas_explore"
+author: "Holden Jones"
+date: '2022-09-27'
+output: html_document
+---
+
+# Cacao ranas explore
+
+```{r}
+library(tidyverse)
+
+ranas <- read_csv("data/ranas.csv")
+```
+
+simple ind caught for each site - just look at number new ind caught
+```{r}
+ranas %>%
+  filter(Recap == "N") %>%
+  group_by(Sitio) %>%
+  summarize(count = n_distinct(Numero)) %>%
+  ggplot(aes(Sitio, count)) +
+  geom_col()
+```
+
