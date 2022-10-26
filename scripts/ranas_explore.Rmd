@@ -10,7 +10,7 @@ output: html_document
 ```{r}
 library(tidyverse)
 
-ranas <- read_csv("data/ranas.csv")
+ranas <- read_csv("data/ranas_data_10_26_22.csv")
 ```
 
 simple ind caught for each site - just look at number new ind caught
