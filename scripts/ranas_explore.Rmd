@@ -1,16 +1,10 @@
----
-title: "ranas_explore"
-author: "Holden Jones"
-date: '2022-09-27'
-output: html_document
----
 
 # Cacao ranas explore
 
 ```{r}
 library(tidyverse)
 
-ranas <- read_csv("data/ranas_data_10_26_22.csv")
+ranas <- read_csv("data/ranas_10_26_22.csv")
 ```
 
 simple ind caught for each site - just look at number new ind caught
