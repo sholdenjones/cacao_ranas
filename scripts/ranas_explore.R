@@ -40,12 +40,41 @@ new_test %>%
     '12/10/22')), 
     y = new_ind)) +
   geom_point() +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
+  theme(axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-  geom_smooth(method = "lm", se = FALSE)
+  labs(x = 'Sampling Nights', y = 'Cumulative Unique Individuals')
+
+### testing ###
 
 
 
+
+# how many species?
+new %>%
+  summarize(count = n_distinct(`FVE ID`))
+# 28
+
+# how many new species by each sampling effort?
+## I like this so far but it gives unique species per day, cumulative just adds
+new %>%
+  group_by(Fecha) %>%
+  summarize(count = n_distinct(`FVE ID`)) %>%
+  ungroup() %>%
+  mutate(cumulative_sum = cumsum(count))
+
+# this doesn't do it
+new_test2 <- new_test %>%
+  group_by(Fecha) %>%
+  mutate(species = n_distinct(`FVE ID`)) %>%
+ # ungroup() %>%
+  mutate(cumulative_species = cumsum(species))
+
+
+
+
+
+
+
+## think we need to lubridate first, get dates aligned! ##
 
 
