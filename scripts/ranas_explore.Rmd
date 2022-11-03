@@ -1,19 +1,197 @@
 
 # Cacao ranas explore
 
+load packages, data
 ```{r}
 library(tidyverse)
 
 ranas <- read_csv("data/ranas_10_26_22.csv")
 ```
 
-simple ind caught for each site - just look at number new ind caught
+
+--------------------------------------------------------------------------------
+# Individuals
+
+simple ind caught for each site
 ```{r}
-ranas %>%
-  filter(Recap == "N") %>%
+new <- ranas %>%
+  filter(Recap == "N")
+
+# simple ind caught for each site - just look at number new ind caught
+new %>%
   group_by(Sitio) %>%
   summarize(count = n_distinct(Numero)) %>%
   ggplot(aes(Sitio, count)) +
   geom_col()
 ```
+
+how has number of ind changed over time?
+## FIX
+*like this fig so far, but need to adjust axes, theme*
+```{r}
+new_test <- new %>%
+  group_by(Fecha) %>%
+  mutate(new_ind = as.numeric(max(Numero)))
+
+# this is close, need to adjust axis ticks
+new_test %>%
+  ggplot(aes(x = factor(Fecha, level = c(
+    '01/09/22', '02/09/22', '03/09/22', '05/09/22', '06/09/22',
+    '07/09/22', '08/09/22', '09/09/22', '10/09/22', '12/09/22',
+    '13/09/22', '14/09/22', '15/09/22', '17/09/22', '19/09/22',
+    '03/10/22', '05/10/22', '07/10/22', '08/10/22', '10/10/22', 
+    '12/10/22')), 
+    y = new_ind)) +
+  geom_point() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(x = 'Sampling Nights', y = 'Cumulative Unique Individuals')
+```
+
+
+--------------------------------------------------------------------------------
+# Species
+
+how many species have we found so far?
+*10/28/22 28 species so far*
+```{r}
+new %>%
+  summarize(count = n_distinct(`FVE ID`))
+```
+
+how many new species by each sampling effort?
+## FIX
+```{r}
+# I like this so far but it gives unique species per day, cumulative just adds
+new %>%
+  group_by(Fecha) %>%
+  summarize(count = n_distinct(`FVE ID`)) %>%
+  ungroup() %>%
+  mutate(cumulative_sum = cumsum(count))
+
+# this doesn't do it
+# new_test2 <- new_test %>%
+#   group_by(Fecha) %>%
+#   mutate(species = n_distinct(`FVE ID`)) %>%
+#  # ungroup() %>%
+#   mutate(cumulative_species = cumsum(species))
+```
+
+think we need to lubridate first, get dates aligned! ##
+
+dad's take:
+```{r}
+ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
+
+species_by_day <- ranas %>%
+  group_by(sample_date) %>%
+  summarize(species = list(sort(unique(`FVE ID`))),
+            no_species = n_distinct(`FVE ID`))
+ 
+species_by_day %>%
+  ggplot(aes(sample_date, no_species)) +
+  geom_col()
+
+# accumulates values in a str column and creates two new columns in dataframe
+# this assumes that dataframe is already sorted
+# might also assume that dataframe is the result of a group_by? (ie the values are contained in a list)
+# 1) cum_ + column_name - comma separated string of unique values
+# 2) no_cum_ + column_name
+accumulate_column <- function(df, column_name) {
+  cum_items = list()   # create empty list to hold results
+ 
+  # loop over each row in the dataframe
+  for(i in 1:nrow(df)) {
+    cum_items <- append(cum_items, df[i, column_name])     # add current row's items to results
+    cum_items <- purrr::flatten(cum_items)      # flatten items to maintain a single list (not a list of lists)
+    cum_items <- unique(unlist(cum_items))                 # keep results unique
+   
+    # add current accumulated results to row
+    df[i, paste("cum_", column_name, sep = "")] <- paste(sort(unlist(cum_items)), 
+                                                         collapse = ",")
+    df[i, paste("no_cum_", column_name, sep = "")] <- length(cum_items)
+  }
+ 
+  return(df)
+}
+
+cum_species_by_day <- accumulate_column(species_by_day, "species")
+
+cum_species_by_day %>%
+  ggplot(aes(sample_date, no_cum_species)) +
+  geom_point()
+
+cum_species_by_day %>%
+  count(`cum_species`)
+```
+
+
+--------------------------------------------------------------------------------
+# Survey
+
+read data
+```{r}
+survey <- read_csv("data/survey_data.csv")
+```
+
+hist of frogs, look at means of frog as well
+```{r}
+survey <- survey %>%
+  mutate(frogs = as.numeric(frogs),
+         species = as.numeric(species))
+
+survey_frogs <- survey %>%
+  filter(!is.na(frogs),
+         !frogs > 10000)
+
+## need to get mean too! ##
+mean(survey_frogs$frogs)
+median(survey_frogs$frogs)
+
+# make a histogram
+survey_frogs %>%
+  ggplot(aes(frogs)) +
+  geom_histogram(binwidth = 100)
+
+# geom_freqpoly, I like these better
+survey_frogs %>%
+  ggplot(aes(frogs)) +
+  geom_freqpoly()
+
+# another one for only less than 5000
+survey_frogs %>%
+  filter(!frogs > 5000) %>%
+  ggplot(aes(frogs)) +
+  geom_freqpoly()
+```
+
+hist of species
+```{r}
+survey_species <- survey %>%
+  filter(!is.na(species),
+    !species > 625)
+
+# mean and medians
+mean(survey_species$species)
+median(survey_species$species)
+
+# make a histogram
+survey_species %>%
+  ggplot(aes(species)) +
+  geom_histogram(bindwidth = 25)
+
+# geom_freqpoly, I like these better
+survey_species %>%
+  ggplot(aes(species)) +
+  geom_freqpoly()
+
+# another one for only less than 50 species
+survey_species %>%
+  filter(!species > 50) %>%
+  ggplot(aes(species)) +
+  geom_freqpoly()
+```
+
+
+
 
