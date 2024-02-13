@@ -1,197 +1,646 @@
+Use this markdown to go in depth in diversity analyses in cacao_ranas data
+- Simpson's - closer to 1 = higher diversity
+- Shannon-Weiner - typically from 1.5 - 3.4, higher = more diverse
+- Evenness
 
-# Cacao ranas explore
 
-load packages, data
-```{r}
-library(tidyverse)
-
-ranas <- read_csv("data/ranas_10_26_22.csv")
-```
-
+## NEED TO REVIEW WHOLE SCRIPT - with final data ##
 
 --------------------------------------------------------------------------------
-# Individuals
+# Load packages, data
 
-simple ind caught for each site
+use labdsv to get cacao data frame into community data matrix, as needed by
+vegan package
+
+load packages
 ```{r}
+library(labdsv)
+library(tidyverse)
+library(vegan)
+library(RColorBrewer)
+```
+
+load data, create new df
+```{r}
+# ranas data
+ranas <- read_csv("data/ranas_05_17_23.csv")
+ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
+
+## need to change VC-V to VC-N, turns out this site is not actually abandoned
+ranas <- ranas %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"),
+         year = substr(sample_date, 1, 4))
+ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
+
+# make new with only new ind
 new <- ranas %>%
   filter(Recap == "N")
 
-# simple ind caught for each site - just look at number new ind caught
-new %>%
+# environmental data - change VC-V to VC-N
+environmental <- read_csv("data/environment_04_08_23.csv")
+environmental$sample_date <- as.Date(environmental$Fecha, format = "%d/%m/%y")
+
+environmental <- environmental %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N")) 
+environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
+
+# site_data - change VC-V to VC-N
+site_data <- read_csv("data/site_data.csv")
+
+site_data <- site_data %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N")) 
+site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
+```
+
+
+--------------------------------------------------------------------------------
+# Simple richness by type
+
+richness by type - just number of species
+##NEED to control for sampling effort - ie divide by number of sites##
+```{r}
+richness_by_type <- ranas %>%
+  group_by(Tipo) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+richness_by_type %>%
+  ggplot(aes(Tipo, no_species)) +
+  geom_col()
+```
+
+--------------------------------------------------------------------------------
+# Aov for species richness by land type
+
+https://rpubs.com/an-bui/vegan-cheat-sheet
+
+There is no sig difference in sp richness b/ween landtypes
+```{r}
+sppr <- specnumber(new_mat)
+
+sppr_aov <- aov(sppr ~ Tipo, data = site_type)
+summary(sppr_aov)
+# p-value of 0.805! no sig difference in sp richness b/ween landtypes
+```
+
+## no sig difference in sp richness b/ween landtypes!
+
+Plot species richness b/ween landtypes
+```{r}
+sppr_df <- sppr %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+sppr_df$Tipo <- factor(sppr_df$Tipo,     # Reorder factor levels
+                         c("B", "V", "N", "C"))
+
+pal <- brewer.pal(4, "BrBG")
+
+plot_sppr <- ggplot(sppr_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Ecological landtype",
+       y = "Confirmed species per site",
+       title = "Species richness")
+plot_sppr
+```
+
+
+--------------------------------------------------------------------------------
+# 3 column format
+
+turn ranas into 3 column format - habitat, species, abundance for labdsv
+- use matrify!
+
+new_mat - three column format to use in labdsv package
+```{r}
+three_column <- new %>%
   group_by(Sitio) %>%
-  summarize(count = n_distinct(Numero)) %>%
-  ggplot(aes(Sitio, count)) +
-  geom_col()
-```
+  count(`Final_ID`)
 
-how has number of ind changed over time?
-## FIX
-*like this fig so far, but need to adjust axes, theme*
-```{r}
-new_test <- new %>%
-  group_by(Fecha) %>%
-  mutate(new_ind = as.numeric(max(Numero)))
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
 
-# this is close, need to adjust axis ticks
-new_test %>%
-  ggplot(aes(x = factor(Fecha, level = c(
-    '01/09/22', '02/09/22', '03/09/22', '05/09/22', '06/09/22',
-    '07/09/22', '08/09/22', '09/09/22', '10/09/22', '12/09/22',
-    '13/09/22', '14/09/22', '15/09/22', '17/09/22', '19/09/22',
-    '03/10/22', '05/10/22', '07/10/22', '08/10/22', '10/10/22', 
-    '12/10/22')), 
-    y = new_ind)) +
-  geom_point() +
-  theme(axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(x = 'Sampling Nights', y = 'Cumulative Unique Individuals')
+new_mat <- matrify(three_column)
 ```
 
 
 --------------------------------------------------------------------------------
-# Species
+# Diversity Indices
 
-how many species have we found so far?
-*10/28/22 28 species so far*
+Wonderful tutorials!
+https://peat-clark.github.io/BIO381/veganTutorial.html
+https://www.youtube.com/watch?v=wq1SXGQYgCs
+
+use 3 column format to get diversity indices for each site!
 ```{r}
-new %>%
-  summarize(count = n_distinct(`FVE ID`))
+print(shannon <- diversity(new_mat, index = "shannon"))
+print(simpson <- diversity(new_mat, index = "simpson"))
+print(inv_simpson <- diversity(new_mat, index = "invsimpson"))
 ```
 
-how many new species by each sampling effort?
-## FIX
+compare these indices with histograms
 ```{r}
-# I like this so far but it gives unique species per day, cumulative just adds
-new %>%
-  group_by(Fecha) %>%
-  summarize(count = n_distinct(`FVE ID`)) %>%
-  ungroup() %>%
-  mutate(cumulative_sum = cumsum(count))
-
-# this doesn't do it
-# new_test2 <- new_test %>%
-#   group_by(Fecha) %>%
-#   mutate(species = n_distinct(`FVE ID`)) %>%
-#  # ungroup() %>%
-#   mutate(cumulative_species = cumsum(species))
+par(mfrow = c(1, 2))  # use par to generate panels with 1 row of 2 graphs
+hist(simpson)
+hist(shannon)
 ```
 
-think we need to lubridate first, get dates aligned! ##
-
-dad's take:
+## no sig differences for diversity indices by land type
 ```{r}
-ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
+site_type <- site_data %>%
+  filter(Transecto == 1) %>% # so just one row per site
+  select(Sitio, Tipo)
 
-species_by_day <- ranas %>%
-  group_by(sample_date) %>%
-  summarize(species = list(sort(unique(`FVE ID`))),
-            no_species = n_distinct(`FVE ID`))
- 
-species_by_day %>%
-  ggplot(aes(sample_date, no_species)) +
-  geom_col()
+shannon_aov <- aov(shannon ~ Tipo, data = site_type)
+summary(shannon_aov)
+# not sig - p > 0.7!
 
-# accumulates values in a str column and creates two new columns in dataframe
-# this assumes that dataframe is already sorted
-# might also assume that dataframe is the result of a group_by? (ie the values are contained in a list)
-# 1) cum_ + column_name - comma separated string of unique values
-# 2) no_cum_ + column_name
-accumulate_column <- function(df, column_name) {
-  cum_items = list()   # create empty list to hold results
- 
-  # loop over each row in the dataframe
-  for(i in 1:nrow(df)) {
-    cum_items <- append(cum_items, df[i, column_name])     # add current row's items to results
-    cum_items <- purrr::flatten(cum_items)      # flatten items to maintain a single list (not a list of lists)
-    cum_items <- unique(unlist(cum_items))                 # keep results unique
-   
-    # add current accumulated results to row
-    df[i, paste("cum_", column_name, sep = "")] <- paste(sort(unlist(cum_items)), 
-                                                         collapse = ",")
-    df[i, paste("no_cum_", column_name, sep = "")] <- length(cum_items)
-  }
- 
-  return(df)
-}
+simpson_aov <- aov(simpson ~ Tipo, data = site_type)
+summary(simpson_aov)
+# not sig - p > 0.7!
 
-cum_species_by_day <- accumulate_column(species_by_day, "species")
+inv_simpson_aov <- aov(inv_simpson ~ Tipo, data = site_type)
+summary(inv_simpson_aov)
+# not sig - p > 0.7!
+```
 
-cum_species_by_day %>%
-  ggplot(aes(sample_date, no_cum_species)) +
-  geom_point()
+## plot how diversity indices vary across land types
+```{r shannon diversity plot}
+shannon_df <- shannon %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
 
-cum_species_by_day %>%
-  count(`cum_species`)
+shannon_df$Tipo <- factor(shannon_df$Tipo,     # Reorder factor levels
+                         c("N", "C", "V", "B"))
+
+pal <- brewer.pal(4, "BrBG")
+
+
+plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Shannon diversity",
+       title = "No significant difference in Shannon diversity across landtype 
+       (p 0.758)")
+plot_shannon
+```
+
+```{r simpson diversity plot}
+simpson_df <- simpson %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+simpson_df$Tipo <- factor(simpson_df$Tipo,     # Reorder factor levels
+                         c("N", "C", "V", "B"))
+
+plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Simpson diversity",
+       title = "There is no significant difference (p = 0.715) in Simpson diversity across landtypes")
+plot_simpson
+```
+
+```{r inv simpson diversity plot}
+inv_simpson_df <- inv_simpson %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+inv_simpson_df$Tipo <- factor(inv_simpson_df$Tipo,     # Reorder factor levels
+                         c("N", "C", "V", "B"))
+
+plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Ecological landtype",
+       y = "Inverse simpson diversity",
+       title = "There is no significant difference (p = 0.75) in Inverse Simpson diversity across landtypes")
+plot_inv_simpson
 ```
 
 
 --------------------------------------------------------------------------------
-# Survey
+# Pair-wise dissimilarity
 
-read data
+Calculate pair-wise dissimilarity (distance) using vegdist
+- gower and bray-curtis are good in detecting underlying ecological gradients
 ```{r}
-survey <- read_csv("data/survey_data.csv")
+par(mfrow = c(1, 2))
+bray <- vegdist(new_mat, "bray") 
+gower <- vegdist(new_mat, "gower")
+
+hist(bray, xlim = range(0.0,1.0))
+hist(gower, xlim = range(0.0,1.0))
 ```
 
-hist of frogs, look at means of frog as well
+dissimilarity analysis is good way to explore variability in community comp
+- next steps would be to do some sort of cluster analysis
+- see where community associations exist
+- but switching gears to look at rarefaction
+
+--------------------------------------------------------------------------------
+# Rarefaction
+
+technique to assess expected species richness
+- allows calculation of species richness for given number of samples based on
+  construction of rarefaction curves
+  
+issue is that the larger number of ind sampled, more species will be found
+- rarefaction curves created by randomly re-sampling pool of N samples multiple
+  times and then plotting average number of species found in each sample
+- rarefaction generates expected number of species in small collection of n ind
+  drawn from large pool of N samples
+- typically grow rapidly at first, then slowly as only rarest species remain to
+  be sampled
+
+use rarefy and rarecurve functions
 ```{r}
-survey <- survey %>%
-  mutate(frogs = as.numeric(frogs),
-         species = as.numeric(species))
+spAbund <- rowSums(new_mat)
+spAbund
 
-survey_frogs <- survey %>%
-  filter(!is.na(frogs),
-         !frogs > 10000)
-
-## need to get mean too! ##
-mean(survey_frogs$frogs)
-median(survey_frogs$frogs)
-
-# make a histogram
-survey_frogs %>%
-  ggplot(aes(frogs)) +
-  geom_histogram(binwidth = 100)
-
-# geom_freqpoly, I like these better
-survey_frogs %>%
-  ggplot(aes(frogs)) +
-  geom_freqpoly()
-
-# another one for only less than 5000
-survey_frogs %>%
-  filter(!frogs > 5000) %>%
-  ggplot(aes(frogs)) +
-  geom_freqpoly()
+test <- colSums(new_mat)
+test
 ```
 
-hist of species
+rarefaction uses smallest number of obs per sample to extrapolate expected
+number if all other samples only had that number of obs
+- VC-C only had 3!!! may want to proceed without this  in the future
+- GP-N also only 9, without these two the next lowest is 22
 ```{r}
-survey_species <- survey %>%
-  filter(!is.na(species),
-    !species > 625)
+# including VC-C raremin is 3
+raremin <- min(rowSums(new_mat))
+raremin
 
-# mean and medians
-mean(survey_species$species)
-median(survey_species$species)
+sRare <- rarefy(new_mat, raremin)
+sRare
 
-# make a histogram
-survey_species %>%
-  ggplot(aes(species)) +
-  geom_histogram(bindwidth = 25)
+# it won't allow us to override this to 22 (makes sense)
+# so will need to remove VC-C, GP-N from sites, via row position
+new_mat_abundant <- new_mat %>%
+  filter(!row_number() %in% c(19, 31))
 
-# geom_freqpoly, I like these better
-survey_species %>%
-  ggplot(aes(species)) +
-  geom_freqpoly()
+# let's see what happens with this as our raremin, and only using 30/32 sites
+raremin_abundant <- min(rowSums(new_mat_abundant))
+raremin_abundant
 
-# another one for only less than 50 species
-survey_species %>%
-  filter(!species > 50) %>%
-  ggplot(aes(species)) +
-  geom_freqpoly()
+# sRare gives expected 'rarefied' number of species (not obs) if only 22 collected
+sRare_abundant <- rarefy(new_mat_abundant, raremin_abundant)
+sRare_abundant
+
+shannon_aov <- aov(shannon ~ Tipo, data = site_type)
+summary(shannon_aov)
+```
+
+## no statistical difference in rarefied species richness across types
+*note that using rarefaction to remove effects of diff sample sizes is bad!*
+```{r}
+# join tipo data with sRare_abundant in a df
+sRare_abundant_df <- sRare_abundant %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+sRare_abundant_aov <- aov(value ~ Tipo, data = sRare_abundant_df)
+summary(sRare_abundant_aov)
+# p-value is 0.183 (04/9/23) - check back in when sequencing is done!
+```
+
+visualization using rarecurve, for ggplot?
+## make rarecurve for each type of site
+## stuck!
+```{r}
+# rarecurve for each site, would be nice to have for each type!
+rarecurve(new_mat_abundant, col = "blue", cex = 0.4)
+
+# TEST - try to make separate curve for each type
+# make dfs of equal length
+#site_type_abundant <- site_type %>%
+#                      filter(!Sitio == 'VC-C',
+#                             !Sitio == 'GP-N')
+
+
+# may need these as vector eventually?
+#test <- cbind(new_mat_abundant, site_type_abundant)
+
+#rarecurve_test <- rarecurve(test, step=1, label=TRUE, col = test$Tipo, 
+#                            xlab = "Number of individuals sampled", ylab = "Species richness")
+```
+
+boxplot of rarefied species richness
+```{r}
+# can compare rarefied species richness by type
+sRare_abundant_df$Tipo <- factor(sRare_abundant_df$Tipo,
+                         c("N", "C", "V", "B"))
+
+plot_sRare_abundant <- ggplot(sRare_abundant_df, aes(x = Tipo, y = value, 
+                                                     fill = Tipo)) +
+geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 11)", "Sun \n (n = 10)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+        # updated labels to reflect n = 10 for C and N sites
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Rarefied species richness per site",
+       title = "There is no significant difference (p = 0.183) in rarefied species richness across landtypes")
+plot_sRare_abundant
 ```
 
 
+--------------------------------------------------------------------------------
+# Non-Metric Multidimensional Scaling
+
+explore some ordination techniques
+- PCA
+- NMDS
+- Correspondence Analysis (CA)
+
+vegan is especially good at NMDS
+- goal of NMDS is to collapse info from multiple dimensions into just a few
+  so they can be visualized and interpreted.
+- NMDS does not produce statistical output - although we could do so
+
+*goal of NMDS is to represent position of communities in multidim space*
+*accurately as possible using less dims that can be easily visualized*
+
+NMDS does not use absolute abundances of sp in comm, but rather rank orders
+- thus is a felxible technique that accepts variety of data types
+- where non-metric comes from
+
+to run NMDS use function metaMDS
+```{r}
+new_big_NMDS <- metaMDS(new_mat_abundant, k = 2)
+```
+
+stress rule of thumb:
+- > 0.05 is excellent
+- > 0.1 is great
+- > 0.2 is good/okay
+- > 0.3 is poor
+
+now plot the NMDS
+```{r}
+plot(new_big_NMDS)
+
+# this shows us both communities (sites, open circles) and species(red crosses)
+
+# use ordiplot and orditorp to add text to plot instead of points
+ordiplot(new_big_NMDS,type="n")
+orditorp(new_big_NMDS,display="species",col="red",air=0.01) #The function adds text or points to ordination plots
+orditorp(new_big_NMDS,display="sites",cex=1.25,air=0.01)
+```
+
+## Stuck!
+*how to visualize groups / treatments in NMDS?*
+
+using ordihull can draw convex hulls connecting vertices of points from same / 
+  different groups
+*unsure how to assign each site into its proper treatment or group*
+
+
+--------------------------------------------------------------------------------
+# Abundance variation between site types
+
+plot abundance by type
+```{r plot abundance by type}
+new_count <- new %>%
+  group_by(Sitio) %>%
+  count() %>%
+  full_join(site_type, by = "Sitio")
+
+new_count$Tipo <- factor(new_count$Tipo, c("N", "C", "V", "B"))
+
+plot_new_count <- ggplot(new_count, aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Individuals per site",
+       title = "No significant difference (p = 0.715) in abundance across landtypes")
+plot_new_count
+```
+
+anova for abundance
+## abundance differences are not statistically significant
+```{r}
+abundance_aov <- aov(n ~ Tipo, data = new_count)
+summary(abundance_aov)
+```
+
+curious - what if we hadn't done mark recapture, what would abundance look like?
+*no difference - still don't see change in abundance*
+```{r}
+ranas_count <- ranas %>%
+  group_by(Sitio) %>%
+  count() %>%
+  full_join(site_type, by = "Sitio")
+
+ranas_count$Tipo <- factor(ranas_count$Tipo, c("N", "C", "V", "B"))
+
+# quick anova
+ranas_abundance_aov <- aov(n ~ Tipo, data = ranas_count)
+summary(ranas_abundance_aov)
+
+# and visualization
+plot_ranas_count <- ggplot(ranas_count, aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Ecological landtype",
+       y = "Observed individuals per site",
+       title = "Abundance w/out mark recapture")
+plot_ranas_count
+```
+
+
+--------------------------------------------------------------------------------
+# Which nested variables to retain?
+
+Talking with Miriam, one of the first things to do is figure out which variables
+I need to keep at a bloque, transect, and site level. Start at the smallest level
+- I recorded canopy coverage, veg coverage, leaf coverage at bloque level
+- Hora, temp, clima, humedad at transect level
+- Tipo, Bosque, Pesticidia, Dueno, Grupo, Location at site level
+
+Let's start by averaging all bloque-level variables to a transect level
+- start with those in environmental df - veg, hoja
+```{r make environmental_trans df}
+# in order to calculate mean need to remove same, replace with NAs
+# this is fine as all NAs here will mean that cover was same as previous
+environmental_trans <- environmental %>%
+  mutate(Hoja = na_if(Hoja, "same"),
+         Veg = na_if(Veg, "same")) %>%
+  mutate_at(c('Hoja', 'Veg', 'Humedad'), as.numeric) %>%
+  group_by(Sitio, Fecha, Transecto) %>%
+  mutate(transect_hoja = mean(Hoja),
+         transect_veg = mean(Veg))
+
+# then can clean up this df, remove unnecessary rows, columns
+environmental_trans <- environmental_trans %>%
+  filter(Bloque == 'A') %>%
+  select(-c('Bloque', 'Hoja', 'Veg'))
+
+# fill these NAs with previous values, use fill function
+environmental_trans <- environmental_trans %>% 
+  group_by(Sitio, Transecto) %>% 
+  fill(transect_hoja, transect_veg)
+```
+
+## Distribution of transect_hoja, veg
+then look at distribution of transect_hoja, transect_veg
+```{r}
+# this is interesting! see that viejo and bosque sites have higher hojarasca
+# viejo and bosque more consistent intermediate veg, c and n more variation!
+ggplot(environmental_trans, aes(transect_hoja, fill = Tipo)) +
+  geom_histogram()
+ggplot(environmental_trans, aes(transect_veg, fill = Tipo)) +
+  geom_histogram()
+```
+
+Look at distribution of other transect level variables
+```{r}
+ggplot(environmental_trans, aes(Hora, fill = Tipo)) +
+  geom_histogram()
+ggplot(environmental_trans, aes(Temperatura, fill = Tipo)) +
+  geom_histogram()
+ggplot(environmental_trans, aes(Humedad, fill = Tipo)) +
+  geom_histogram()
+```
+
+do same thing with transect level site_data
+- first will need to pivot_longer to put CCA, CCB, CCC, CCD columns into rows
+```{r}
+site_data <- site_data %>%
+  pivot_longer(
+    cols =starts_with("CC"),
+    names_to = "Bloque",
+    values_to = "Canopy_cover"
+  )
+
+# now have column with Bloque, can use this in same code above
+# doesn't matter that input is CC A, CC B etc b/c going to delete after :)
+site_trans <- site_data %>%
+  mutate_at(c('Transecto', 'Canopy_cover'), as.numeric) %>%
+  group_by(Sitio, Transecto) %>% # no Fecha b/c only measured once
+  mutate(transect_canopy = mean(Canopy_cover))
+
+site_trans <- site_trans %>%
+  filter(Bloque == 'CC A') %>%
+  select(-c('Bloque', 'Canopy_cover'))
+```
+
+## Distribution of canopy cover
+histogram looking at distribution of canopy cover across different types
+```{r}
+ggplot(site_trans, aes(transect_canopy, fill = Tipo)) +
+  geom_histogram()
+```
+
+------------------------------------------------------------------------------
+# Look at distribution of achatinus across active cacao sites
+- How many ind can we use from each N and C group for first round of pesticide
+- David's group will run 600 swabs for us this summer - how many from each site?
+- Power analysis elsewhere shows need 150 from each group to detect 60-40 
+  difference between plantation types - do we have enough for this?
+- Roughly 15 from each season for each of 20 cacao sites (10 nacional, 10 ccn)
+```{r}
+# make achatinus subset df here
+achatinus <- new %>%
+  filter(Final_ID == "priach")
+
+# group by each site - how many in each?
+achatinus %>%
+  filter(Tipo == "N"| # only planted cacao sites
+         Tipo == "C") %>%
+  group_by(Sitio) %>%
+  summarise(n = n()) %>%
+  filter(n > 10) # will need at least 20 so filter these
+
+# how about for each site in each year?
+achatinus %>%
+  filter(Tipo == "N"|
+         Tipo == "C") %>%
+  group_by(Sitio, year) %>%
+  summarise(n = n()) %>%
+  filter(n > 20)
+
+# all sites >= 15
+achatinus %>%
+  group_by(Sitio, year) %>%
+  summarise(n = n()) %>%
+  filter(n >= 15)
+```
 
 

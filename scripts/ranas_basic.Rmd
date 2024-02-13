@@ -1,0 +1,449 @@
+---
+title: "ranas_basic_old"
+author: "Holden Jones"
+date: '2023-02-02'
+output: html_document
+---
+
+Goal is to explore the ranas, individual data from my FCAT cacao project. The
+questions I'm most interested in looking at are: how do abundance and diversity
+vary across cacao types, in comparison to reference forest and abandoned 
+plantations. I'm also interested in seeing how different environmental variables
+either related to the sampling (weather, temp, humidity), or the habitat type 
+(leaf coverage, vegetation coverage, canopy closure, proximity to forest)
+influence both abundance and diversity. Use this script to explore the data,
+once I find avenues for future analyses, break those into separate scripts.
+
+# Cacao ranas explore
+
+load packages, data
+ranas - individual capture data
+environmental - sampling environmental data
+
+```{r load}
+library(labdsv)
+library(tidyverse)
+library(vegan)
+
+ranas <- read_csv("data/ranas_05_09_23.csv")
+enviromental <- read_csv("data/environment_04_08_23.csv")
+site_data <- read_csv("data/site_data.csv")
+
+new <- ranas %>%
+  filter(Recap == "N")
+```
+
+
+--------------------------------------------------------------------------------
+# How many individuals have we caught?
+
+simple ind caught for each site
+*12/07/22 1114 total ind*
+```{r ind_by_site}
+# simple ind caught for each site - just look at number new ind caught
+new %>%
+  group_by(Sitio) %>%
+  summarize(count = n_distinct(Numero)) %>%
+  ggplot(aes(Sitio, count)) +
+  geom_col()
+```
+
+how has number of ind changed over time?
+*like this fig so far, but need to adjust axes, theme*
+```{r ind_over_time}
+new_test <- new %>%
+  group_by(Fecha) %>%
+  mutate(new_ind = as.numeric(max(Numero)))
+
+# this is close, need to adjust axis ticks
+new_test %>%
+  ggplot(aes(x = factor(Fecha, level = c(
+    '01/09/22', '02/09/22', '03/09/22', '05/09/22', '06/09/22',
+    '07/09/22', '08/09/22', '09/09/22', '10/09/22', '12/09/22',
+    '13/09/22', '14/09/22', '15/09/22', '17/09/22', '19/09/22',
+    '03/10/22', '05/10/22', '07/10/22', '08/10/22', '10/10/22', 
+    '12/10/22')), 
+    y = new_ind)) +
+  geom_point() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(x = 'Sampling Nights', y = 'Cumulative Unique Individuals')
+```
+
+
+--------------------------------------------------------------------------------
+# How many species have we caught?
+
+how many species have we found so far?
+*12/07/22 30 species so far*
+*note using SHJ ID, ultimately use FVE ID, but need him to go through them*
+```{r}
+new %>%
+  summarize(count = n_distinct(`Final ID`)) ## WATCH OUT! 5/9/23
+## new update(?) means that can no longer put these dashes? now have to use
+## ` instead of ' or " WTF! that's crazy
+
+## this will work though
+new %>%
+  count(`Final ID`)
+```
+
+how many new species by each sampling effort?
+
+dad's take:
+```{r cum_species}
+ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
+
+species_by_day <- ranas %>%
+  group_by(sample_date) %>%
+  summarize(species = list(sort(unique(`SHJ ID`))),
+            no_species = n_distinct(`SHJ ID`))
+ 
+species_by_day %>%
+  ggplot(aes(sample_date, no_species)) +
+  geom_col()
+
+# accumulates values in a str column and creates two new columns in dataframe
+# this assumes that dataframe is already sorted
+# might also assume that dataframe is the result of a group_by? (ie the values are contained in a list)
+# 1) cum_ + column_name - comma separated string of unique values
+# 2) no_cum_ + column_name
+accumulate_column <- function(df, column_name) {
+  cum_items = list()   # create empty list to hold results
+ 
+  # loop over each row in the dataframe
+  for(i in 1:nrow(df)) {
+    cum_items <- append(cum_items, df[i, column_name])     # add current row's items to results
+    cum_items <- purrr::flatten(cum_items)      # flatten items to maintain a single list (not a list of lists)
+    cum_items <- unique(unlist(cum_items))                 # keep results unique
+   
+    # add current accumulated results to row
+    df[i, paste("cum_", column_name, sep = "")] <- paste(sort(unlist(cum_items)), 
+                                                         collapse = ",")
+    df[i, paste("no_cum_", column_name, sep = "")] <- length(cum_items)
+  }
+ 
+  return(df)
+}
+
+cum_species_by_day <- accumulate_column(species_by_day, "species")
+
+cum_species_by_day %>%
+  ggplot(aes(sample_date, no_cum_species)) +
+  geom_point()
+
+cum_species_by_day %>%
+  count(`cum_species`)
+```
+
+
+--------------------------------------------------------------------------------
+# How does abundance vary with habitat type?
+
+simplest would be to make boxplot for Type ~ Individuals
+here for C vs. N comparison
+```{r}
+# simple boxplot only for unique individuals
+new %>%
+  filter(Tipo == "N" | Tipo == "C") %>% # filtering just C, N b/c sampling effort
+  group_by(Tipo) %>%
+  summarize(count = n_distinct(Numero)) %>%
+  ggplot(aes(Tipo, count)) +
+  geom_col()
+# wow! this shows basically no difference in number of new ind. C vs N
+
+# what if we include recaptures? overall number of captures comparison
+ranas %>%
+  filter(Tipo == "N" | Tipo == "C") %>% # filtering just C, N b/c sampling effort
+  group_by(Tipo) %>%
+  summarize(count = n_distinct(Numero)) %>%
+  ggplot(aes(Tipo, count)) +
+  geom_col()
+# interesting, seems to be a difference here, more overall captures in C vs. N
+```
+
+here for B vs. V comparison
+```{r}
+# with equal sampling effort, seems to be more ind in viejo than bosque
+new %>%
+  filter(Tipo == "B" | Tipo == "V") %>% 
+  group_by(Tipo) %>%
+  summarize(count = n_distinct(Numero)) %>%
+  ggplot(aes(Tipo, count)) +
+  geom_col()
+
+# also overall more captures in viejo than bosque
+ranas %>%
+  filter(Tipo == "B" | Tipo == "V") %>%
+  group_by(Tipo) %>%
+  summarize(count = n_distinct(Numero)) %>%
+  ggplot(aes(Tipo, count)) +
+  geom_col()
+```
+
+## Thoughts - use mark recapture
+Eventually will want to use mark recapture data to create more accurate 
+abundance estimates. The issue is that we don't have individual marks, we have
+one generic mark for site. So instead of having captures for each individual
+over time, we will have a proportion of recaptured / total captures for each
+sampling effort, with the number of recaptures increasing over time.
+
+I think it will be helpful to work through the Scinax data with Miriam as a 
+simpler introduction to this issue. Ultimately expect to do the same for each
+species, perhaps only for most common - priach and maybe another few? Could just
+use minimum number for other less common species.
+
+
+--------------------------------------------------------------------------------
+# How does richness vary with habitat type?
+
+start with simple species richness, will be easiest thing to look at
+boxplot of species richness for each comparison (C/N, B/V)
+```{r}
+# shows slightly higher diversity in Nacional, but doesn't seem like much
+ranas %>%
+  filter(Tipo == "N" | Tipo == "C") %>%
+  group_by(Tipo) %>%
+  summarize(count = n_distinct(`SHJ ID`)) %>%
+  ggplot(aes(Tipo, count)) +
+  geom_col()
+
+# for b vs v comparison
+ranas %>%
+  filter(Tipo == "B" | Tipo == "V") %>%
+  group_by(Tipo) %>%
+  summarize(count = n_distinct(`SHJ ID`)) %>%
+  ggplot(aes(Tipo, count)) +
+  geom_col()
+# substantially more species richness in bosque compared to viejo!
+```
+
+## Thoughts - use better diversity index
+For exploratory analyses it's fine to start with species richness, but ultimately
+will want to use a better one. Need to review the different options for calculating
+species diversity.
+- simpson's - prob 2 ind are same species
+- shannon-weiner - certainty of identity of random ind
+- evenness - how similar in number are species?
+
+
+--------------------------------------------------------------------------------
+# Survey
+
+read data
+```{r}
+survey <- read_csv("data/survey_data.csv")
+```
+
+## Individuals
+
+hist of frogs, look at means of frog as well
+```{r}
+survey <- survey %>%
+  mutate(frogs = as.numeric(frogs),
+         species = as.numeric(species))
+
+# filter out crazy outliers
+survey_frogs <- survey %>%
+  filter(!is.na(frogs),
+         !frogs > 5000)
+
+# need to get mean and median too!
+mean(survey_frogs$frogs) # mean of nonoutliers is 1546
+median(survey_frogs$frogs) # median of nonoutliers is 1250
+
+# make a histogram
+survey_frogs %>%
+  ggplot(aes(frogs)) +
+  geom_histogram(binwidth = 100)
+
+# geom_freqpoly, I like these better
+survey_frogs %>%
+  ggplot(aes(frogs)) +
+  geom_freqpoly()
+```
+
+
+publishable histogram for ind w/ only entries less than 5000
+insert vertical line at mean or median of guesses
+insert vertical line at current progress
+*updated for final count - final!*
+```{r ind_survey_progress_final}
+survey_frogs  %>%
+  ggplot(aes(frogs)) +
+  geom_freqpoly(bins = 50) +
+  geom_vline(xintercept = median(survey_frogs$frogs), linetype="solid", 
+                color = "red", size=1) +
+  geom_vline(xintercept = length(new$Numero), linetype="solid", 
+                color = "blue", size=1) +
+  labs(x = 'Number of Frogs', y = 'Number of Guesses') +
+  annotate(geom="text", x = 3700, y = 14, 
+           label = "The median survey guess was 1,200 frogs.",
+              color = "red", size = 5) +
+  annotate(geom="text", x = 3700, y = 12, 
+           label = "We found 1,839!",
+              color = "blue", size = 5) +
+  theme_classic()
+```
+
+## Species
+
+hist of species, look at means and medians
+```{r}
+survey_species <- survey %>%
+  filter(!is.na(species),
+    !species > 625)
+
+# mean and medians
+mean(survey_species$species)
+median(survey_species$species)
+
+# make a histogram
+survey_species %>%
+  ggplot(aes(species)) +
+  geom_histogram(bindwidth = 25)
+
+# geom_freqpoly, I like these better
+survey_species %>%
+  ggplot(aes(species)) +
+  geom_freqpoly()
+```
+
+publishable histogram for sp w/ only entries less than 100
+insert vertical line at mean or median of guesses
+insert vertical line at current progress
+*updated for final count, not including genetic sequencing*
+```{r sp_survey_progress_final}
+survey_species  %>%
+  filter(!species > 200) %>%
+  ggplot(aes(species)) +
+  geom_freqpoly(bins = 50) +
+  geom_vline(xintercept = median(survey_species$species), linetype="solid", 
+                color = "red", size=1) +
+  geom_vline(xintercept = 31, linetype="solid", 
+                color = "blue", size=1) +
+  labs(x = 'Number of Species', y = 'Number of Guesses') +
+  annotate(geom="text", x = 150, y = 10, 
+           label = "The median survey guess was 40 species.",
+              color = "red", size = 5) +
+  annotate(geom="text", x = 150, y = 8.5, 
+           label = "Before genetic sequencing,",
+              color = "blue", size = 5) +
+  annotate(geom="text", x = 150, y = 7.5, 
+           label = "we've already found 31!",
+              color = "blue", size = 5) +
+  theme_classic()
+```
+
+
+--------------------------------------------------------------------------------
+# Filtering out list of swabs for David's group to process in January
+- 600 total, 300 each season, focus on Priach
+- could go for 10 from each of 32 sites, although doubt will have enough
+
+change Final ID to species - easier to work with
+```{r}
+new <- new %>%
+  rename(species = 'Final ID')
+
+# filter out everything not priach
+new_priach <- new %>%
+  filter(species == 'priach')
+
+# filter by year - start with 2022
+new_priach_2022 <- new_priach %>% 
+  filter(grepl('/22', Fecha))
+
+# 2023
+new_priach_2023 <- new_priach %>% 
+  filter(grepl('/23', Fecha))
+```
+
+barplot - look at number of priach per site per year
+```{r}
+# 2022
+ggplot(new_priach_2022, aes(Sitio)) +
+  geom_bar()
+
+#same thing for 2023:
+ggplot(new_priach_2023, aes(Sitio)) +
+  geom_bar()
+```
+
+Barplot interpretation
+2022
+- 5 sites don't have 10+ priach in 2022: DB-C, GP-N, JS-N, JZ-N, VC-C
+- so 27 sites total (32-5) x 10 = 270
+
+2023
+- 8 sites don't have 10+ priach in 2023: 
+    - AL-N, DB-C, FLL-B, JS-N, JZJ-C, VC-C, AZ-N, AZ-C
+- IMPORTANT - no permission for AZ-N, AZ-C in 2023, so had 0 in 2023
+- they got removed from new_priach_2023
+- so 24 sites total (32-6-2) x 10 = 240
+
+- 3 sites that don't have 10+ in both - no priach swabs: DB-C, JS-N, VC-C
+- 7 sites don't have 10+ in one season:
+  - GP-N, JZ-N, AL-N, FLL-B, JZJ-C, AZ-N, AZ-C
+
+- Means 22 sites will have 10 from each season, compare inter-season (440)
+- 7 sites from only one season, contribute to intra-season (70)
+- fun mix of other species will be second priority (90)
+
+## Pull samples for 1st tier
+```{r}
+# only sites w/ >9 samples in a season will be included
+tierone_2022 <- new_priach_2022 %>%
+  group_by(Sitio) %>%
+  filter(n() > 9) #%>% # to see how many ind are in 
+  #tally()
+
+# create tier one swab list by randomly sampling 10 from this tier one sites
+tierone_2022 <- tierone_2022 %>% 
+    group_by(Sitio) %>%
+    slice_sample(n = 10)
+# 270 in tier one from 2022
+
+# same for 2023
+tierone_2023 <- new_priach_2023 %>%
+  group_by(Sitio) %>%
+  filter(n() > 9) #%>%
+     #tally()
+
+tierone_2023 <- tierone_2023 %>% 
+    group_by(Sitio) %>%
+    slice_sample(n = 10)
+# 240 in tier one from 2023
+
+# join and then output write.csv these
+tierone <- bind_rows(tierone_2022, tierone_2023)
+# 510 in this 
+
+write_csv(tierone, "tierone.csv")
+## IMPORTANT - b/c of slice sample, exact #s will change - adding _final to official version
+```
+
+## Pull samples for 2nd tier
+- This will be a mix from 3 different species w/ at least 30 ind
+```{r}
+# these are all the species with > 30 swabs, regardless of year / site
+new_diverse_30 <- new %>%
+  filter(species != 'priach') %>%
+  group_by(species) %>%
+  filter(n() > 30)
+
+new_diverse_30 %>%
+  tally()
+
+# randomly sample 30 from these species : barpul, boapel, epibou
+tiertwo <- new_diverse_30 %>% 
+    group_by(species) %>%
+    slice_sample(n = 30)
+
+write_csv(tiertwo, "tiertwo.csv")
+## IMPORTANT - b/c of slice sample, exact #s will change - adding _final to official version
+```
+
+
+
+
