@@ -1,3 +1,79 @@
 
 # Processing raw data
 
+Use this script to perform small tasks on raw data to make it tidier, 
+easier to work with. Output is processed data to be used in analysis scripts.
+
+## next step is to add write_csv so its writing into processed_data folder
+
+
+--------------------------------------------------------------------------------
+load packages
+```{r}
+library(tidyverse)
+```
+
+define file path for processed outputs
+```{r}
+# this will be consistent for each output
+data_dir <- file.path(".", "data/processed_data")
+```
+
+
+--------------------------------------------------------------------------------
+ranas - individual occurrence data across all sites
+```{r}
+# read raw ranas data
+ranas <- read_csv("data/raw_data/ranas_05_17_23.csv")
+
+ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
+
+# need to change VC-V to VC-N, turns out this site was not actually abandoned!
+ranas <- ranas %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"),
+         year = substr(sample_date, 1, 4))
+
+ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
+
+# make new df with only new ind
+new <- ranas %>%
+  filter(Recap == "N")
+
+# use directory to make output processed csv
+filename <- "ranas_processed.csv"
+
+filepath <- file.path(data_dir, filename)
+
+# write df to csv
+write.csv(ranas, file = filepath)
+```
+
+--------------------------------------------------------------------------------
+environmental - environmental data for each sampling event
+```{r}
+# environmental data - change VC-V to VC-N
+environmental <- read_csv("data/raw_data/environment_04_08_23.csv")
+
+environmental$sample_date <- as.Date(environmental$Fecha, format = "%d/%m/%y")
+
+# update VC-N
+environmental <- environmental %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"))
+
+environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
+```
+
+--------------------------------------------------------------------------------
+site_data - location, canopy cover, and miscellaneous data for each site
+```{r}
+# site_data - change VC-V to VC-N
+site_data <- read_csv("data/raw_data/site_data.csv")
+
+# update VC-N
+site_data <- site_data %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"))
+
+site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
+```
+
+
