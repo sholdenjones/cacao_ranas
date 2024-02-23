@@ -4,7 +4,7 @@
 Use this script to perform small tasks on raw data to make it tidier, 
 easier to work with. Output is processed data to be used in analysis scripts.
 
-## next step is to add write_csv so its writing into processed_data folder
+## next step is to update sequencing data
 
 
 --------------------------------------------------------------------------------
@@ -15,7 +15,7 @@ library(tidyverse)
 
 define file path for processed outputs
 ```{r}
-# this will be consistent for each output
+# this will be consistent for each output in this script
 data_dir <- file.path(".", "data/processed_data")
 ```
 
@@ -26,6 +26,7 @@ ranas - individual occurrence data across all sites
 # read raw ranas data
 ranas <- read_csv("data/raw_data/ranas_05_17_23.csv")
 
+# format dates
 ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
 
 # need to change VC-V to VC-N, turns out this site was not actually abandoned!
@@ -35,18 +36,33 @@ ranas <- ranas %>%
 
 ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
 
-# make new df with only new ind
-new <- ranas %>%
-  filter(Recap == "N")
-
-# use directory to make output processed csv
+# make processed csv output
 filename <- "ranas_processed.csv"
-
 filepath <- file.path(data_dir, filename)
 
 # write df to csv
 write.csv(ranas, file = filepath)
 ```
+
+## add in identification data for sequenced individuals - perhaps do by hand?
+```{r}
+
+```
+
+
+--------------------------------------------------------------------------------
+new - only new individuals from ranas dataset
+```{r}
+# make new with only new ind
+new <- ranas %>%
+  filter(Recap == "N")
+
+# output
+filename <- "new_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(new, file = filepath)
+```
+
 
 --------------------------------------------------------------------------------
 environmental - environmental data for each sampling event
@@ -61,6 +77,11 @@ environmental <- environmental %>%
   mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"))
 
 environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
+
+# output
+filename <- "environmental_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(environmental, file = filepath)
 ```
 
 --------------------------------------------------------------------------------
@@ -74,6 +95,11 @@ site_data <- site_data %>%
   mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"))
 
 site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
+
+# output
+filename <- "site_data_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(site_data, file = filepath)
 ```
 
 
