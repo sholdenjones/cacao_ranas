@@ -24,7 +24,7 @@ data_dir <- file.path(".", "data/processed_data")
 ranas - individual occurrence data across all sites
 ```{r}
 # read raw ranas data
-ranas <- read_csv("data/raw_data/ranas_05_17_23.csv")
+ranas <- read_csv("data/raw_data/ranas_02_27_24.csv")
 
 # format dates
 ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
@@ -42,11 +42,6 @@ filepath <- file.path(data_dir, filename)
 
 # write df to csv
 write.csv(ranas, file = filepath)
-```
-
-## add in identification data for sequenced individuals - perhaps do by hand?
-```{r}
-
 ```
 
 
