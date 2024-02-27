@@ -54,7 +54,40 @@ ggplot(richness_by_site, aes(x = Tipo, y = no_species)) +
   ggtitle("Species Richness Across Land Use Types")
 ```
 
+run ANOVA on species richness across the 4 landuse types
+- p-value: 0.0524 - barely not significant! but sequencing results may push this
+```{r}
+aov_richness <- aov(no_species ~ Tipo, data = richness_by_site)
 
+summary(aov_richness)
+```
+
+
+--------------------------------------------------------------------------------
+# Harvested vs. non-harvested for abundance
+
+B+V have higher richness than N+C
+# significantly higher richness in B+V
+```{r}
+richness_by_site <- richness_by_site %>%
+  mutate(harvested = case_when(
+    Tipo == "N" ~ "Yes",
+    Tipo == "C" ~ "Yes",
+    Tipo == "B" ~ "No",
+    Tipo == "V" ~ "No")
+    )
+  
+# boxplot
+ggplot(richness_by_site, aes(x = harvested, y = no_species)) +
+  geom_boxplot() +
+  labs(x = "Active cacao plantation?", y = "Species richness") +
+  ggtitle("Species richness in harvested and non-harvested areas")  
+
+# then run aov here
+aov_richness_harvest <- aov(no_species ~ harvested, data = richness_by_site)
+
+summary(aov_richness_harvest)
+```
 
 
 
