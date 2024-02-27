@@ -1,0 +1,61 @@
+
+# Comparing diversity, abundance and composition across landuse types
+
+This script will take processed data as input, run statistic tests and produce
+figures comparing the dependent variables (diversity, abundance, composition) of
+each landuse type broadly. Other scripts will explore the variation in these
+response variables w/in specific landuse types.
+
+
+--------------------------------------------------------------------------------
+load packages
+```{r}
+library(labdsv)
+library(tidyverse)
+library(vegan)
+library(RColorBrewer)
+```
+
+load data
+## WHY IS 1st COLUMN SHOWING?
+```{r}
+ranas <- read_csv("data/processed_data/ranas_processed.csv")
+
+new <- read_csv("data/processed_data/new_processed.csv")
+```
+
+
+--------------------------------------------------------------------------------
+# Simple richness by type
+
+richness by type - just number of species
+
+## doesn't appear to be any significant differences across landuse types
+- although B, V are higher!
+```{r}
+# group by site and type to retain type for ggplot
+richness_by_site <- ranas %>%
+  group_by(Sitio, Tipo) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+# Group by land_use and calculate species richness
+richness_summary <- richness_by_site %>%
+  group_by(Tipo) %>%
+  summarize(mean_species_richness = mean(no_species),
+            median_species_richness = median(no_species),
+            min_species_richness = min(no_species),
+            max_species_richness = max(no_species))
+
+# Create a boxplot
+ggplot(richness_by_site, aes(x = Tipo, y = no_species)) +
+  geom_boxplot() +
+  labs(x = "Land Use Type", y = "Species Richness") +
+  ggtitle("Species Richness Across Land Use Types")
+```
+
+
+
+
+
+

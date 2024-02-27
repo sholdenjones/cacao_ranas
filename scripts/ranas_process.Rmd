@@ -4,8 +4,6 @@
 Use this script to perform small tasks on raw data to make it tidier, 
 easier to work with. Output is processed data to be used in analysis scripts.
 
-## next step is to update sequencing data
-
 
 --------------------------------------------------------------------------------
 load packages
