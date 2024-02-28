@@ -30,7 +30,21 @@ ranas <- ranas %>%
   select(-...1)
 
 new <- read_csv("data/processed_data/new_processed.csv")
+
+site_data <- read_csv("data/processed_data/site_data_processed.csv")
 ```
+
+define a consistent palet and labels to be used in multiple figures
+```{r}
+# palet, keep consistent across 
+pal <- brewer.pal(4, "BrBG")
+
+# site labels, use in several plots
+site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+```
+
+
 
 
 --------------------------------------------------------------------------------
@@ -64,16 +78,12 @@ richness_summary <- richness_by_site %>%
 richness_by_site$Tipo <- factor(richness_by_site$Tipo,
                          c("N", "C", "V", "B"))
 
-# palet
-pal <- brewer.pal(4, "BrBG")
-
 # plot species richness across landuse types using palet
 plot_richness_by_site <- ggplot(richness_by_site, aes(x = Tipo, y = no_species, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   # order needs to match factor levels above
-  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")) +
+  scale_x_discrete(labels = c(site_labels)) +
   theme(legend.position = "none",
         plot.background = element_rect("white"),
         panel.background = element_rect("white"),
@@ -146,8 +156,7 @@ abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
 plot_abundance_by_site <- ggplot(abundance_by_site, aes(x = Tipo, y = n, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
-  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")) +
+  scale_x_discrete(labels = c(site_labels)) +
   theme(legend.position = "none",
         plot.background = element_rect("white"),
         panel.background = element_rect("white"),
@@ -175,15 +184,12 @@ summary(aov_abundance)
 
 
 # DIVERSITY ACROSS LANDUSE TYPES
-
-
 ## COPIED FROM RANAS_EXPLORE _ REVIEW
 
+Look at how different diversity metrics compare across landuse types
 
-# 3 column format
-
-turn ranas into 3 column format - habitat, species, abundance for labdsv
-- use matrify!
+# First need to convert data into 3 column format
+habitat, species, abundance for labdsv - use matrify!
 
 new_mat - three column format to use in labdsv package
 ```{r}
@@ -201,7 +207,7 @@ new_mat <- matrify(three_column)
 --------------------------------------------------------------------------------
 # Diversity Indices
 
-Wonderful tutorials!
+# Wonderful tutorials!
 https://peat-clark.github.io/BIO381/veganTutorial.html
 https://www.youtube.com/watch?v=wq1SXGQYgCs
 
@@ -220,11 +226,7 @@ hist(shannon)
 ```
 
 
-
-
-
-
-
+--------------------------------------------------------------------------------
 ## no sig differences for diversity indices by land type
 ```{r}
 site_type <- site_data %>%
@@ -244,7 +246,12 @@ summary(inv_simpson_aov)
 # not sig - p > 0.7!
 ```
 
+
+--------------------------------------------------------------------------------
 ## plot how diversity indices vary across land types
+- these are pretty much identical regardless of index used
+
+shannon
 ```{r shannon diversity plot}
 shannon_df <- shannon %>% 
   enframe() %>% 
@@ -253,15 +260,10 @@ shannon_df <- shannon %>%
 shannon_df$Tipo <- factor(shannon_df$Tipo,     # Reorder factor levels
                          c("N", "C", "V", "B"))
 
-pal <- brewer.pal(4, "BrBG")
-
-
 plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = value, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
-  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
-    ) +
+  scale_x_discrete(labels = c(site_labels)) +
   theme(legend.position = "none",
         plot.background = element_rect("white"),
         panel.background = element_rect("white"),
@@ -277,10 +279,7 @@ plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = value, fill = Tipo)) +
 plot_shannon
 ```
 
-
-
-
-
+simpson
 ```{r simpson diversity plot}
 simpson_df <- simpson %>% 
   enframe() %>% 
@@ -309,8 +308,7 @@ plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
 plot_simpson
 ```
 
-
-
+inv simpson
 ```{r inv simpson diversity plot}
 inv_simpson_df <- inv_simpson %>% 
   enframe() %>% 
@@ -322,9 +320,7 @@ inv_simpson_df$Tipo <- factor(inv_simpson_df$Tipo,     # Reorder factor levels
 plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
-  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
-    ) +
+  scale_x_discrete(labels = c(site_labels)) +
   theme(legend.position = "none",
         plot.background = element_rect("white"),
         panel.background = element_rect("white"),
@@ -340,10 +336,9 @@ plot_inv_simpson
 ```
 
 
-
-
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+
 
 # COMPOSITION ACROSS LANDUSE TYPES....
 
