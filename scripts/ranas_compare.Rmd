@@ -1,5 +1,5 @@
 
-# Comparing diversity, abundance and composition across landuse types
+# COMPARE RICHNESS, ABUNDANCE, DIVERSITY, COMPOSITION ACROSS LANDUSE TYPES
 
 This script will take processed data as input, run statistic tests and produce
 figures comparing the dependent variables (diversity, abundance, composition) of
@@ -8,6 +8,9 @@ response variables w/in specific landuse types.
 
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
 load packages
 ```{r}
 library(labdsv)
@@ -17,24 +20,32 @@ library(RColorBrewer)
 ```
 
 load data
-## WHY IS 1st COLUMN SHOWING?
+## weird that dfs are of different lengths, wtf? why are columns getting added randomly?
+## also note that ranas is a tbl_df and new is spec_tbl_df despite being created from ranas
 ```{r}
 ranas <- read_csv("data/processed_data/ranas_processed.csv")
+
+# remove '...1' column - not sure why this is being added
+ranas <- ranas %>%
+  select(-...1)
 
 new <- read_csv("data/processed_data/new_processed.csv")
 ```
 
 
 --------------------------------------------------------------------------------
-# Simple richness by type
+--------------------------------------------------------------------------------
+
+
+# RICHNESS ACROSS LANDUSE TYPES
 
 richness by type - just number of species
 
-## doesn't appear to be any significant differences across landuse types
+## sig difference in species richness across landuse types
 - although B, V are higher!
 ```{r}
 # group by site and type to retain type for ggplot
-richness_by_site <- ranas %>%
+richness_by_site <- new %>%
   group_by(Sitio, Tipo) %>%
   summarize(species = list(sort(unique(`Final_ID`))),
             no_species = n_distinct(`Final_ID`))
@@ -48,26 +59,49 @@ richness_summary <- richness_by_site %>%
             max_species_richness = max(no_species))
 
 # Create a boxplot
-ggplot(richness_by_site, aes(x = Tipo, y = no_species)) +
+
+# reorder factor levels
+richness_by_site$Tipo <- factor(richness_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+# palet
+pal <- brewer.pal(4, "BrBG")
+
+# plot species richness across landuse types using palet
+plot_richness_by_site <- ggplot(richness_by_site, aes(x = Tipo, y = no_species, fill = Tipo)) +
   geom_boxplot() +
-  labs(x = "Land Use Type", y = "Species Richness") +
-  ggtitle("Species Richness Across Land Use Types")
+  scale_fill_manual(values = pal) +
+  # order needs to match factor levels above
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landuse types",
+       y = "Species richness",
+       title = "Species richness across landuse types")
+plot_richness_by_site
 ```
 
 run ANOVA on species richness across the 4 landuse types
-- p-value: 0.0524 - barely not significant! but sequencing results may push this
+- p-value: 0.0372
 ```{r}
 aov_richness <- aov(no_species ~ Tipo, data = richness_by_site)
 
 summary(aov_richness)
 ```
 
-
 --------------------------------------------------------------------------------
-# Harvested vs. non-harvested for abundance
+# Harvested vs. non-harvested for richness
 
 B+V have higher richness than N+C
-# significantly higher richness in B+V
+## significantly higher richness in B+V
+## aesthetically would want to mix colors from previous plot
 ```{r}
 richness_by_site <- richness_by_site %>%
   mutate(harvested = case_when(
@@ -78,15 +112,363 @@ richness_by_site <- richness_by_site %>%
     )
   
 # boxplot
-ggplot(richness_by_site, aes(x = harvested, y = no_species)) +
+plot_richness_by_harvest <- ggplot(richness_by_site, aes(x = harvested, y = no_species)) +
   geom_boxplot() +
   labs(x = "Active cacao plantation?", y = "Species richness") +
-  ggtitle("Species richness in harvested and non-harvested areas")  
+  ggtitle("Species richness in harvested and non-harvested areas")
+plot_richness_by_harvest
+```
 
+AOV sp. richness against harvested, non-harvested
+```{r}
 # then run aov here
 aov_richness_harvest <- aov(no_species ~ harvested, data = richness_by_site)
 
 summary(aov_richness_harvest)
+```
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+# ABUNDANCE ACROSS LANDUSE TYPES
+
+number of new individuals 
+## could eventually complicate this to look at pop size estimates?
+```{r}
+abundance_by_site <- new %>%
+  group_by(Sitio, Tipo) %>%
+  count()
+
+abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
+
+plot_abundance_by_site <- ggplot(abundance_by_site, aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landuse type",
+       y = "Individuals per site",
+       title = "Abundance across landuse types")
+plot_abundance_by_site
+```
+
+anova for abundance
+## abundance differences are not statistically significant
+```{r}
+aov_abundance <- aov(n ~ Tipo, data = abundance_by_site)
+summary(aov_abundance)
+```
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+# DIVERSITY ACROSS LANDUSE TYPES
+
+
+## COPIED FROM RANAS_EXPLORE _ REVIEW
+
+
+# 3 column format
+
+turn ranas into 3 column format - habitat, species, abundance for labdsv
+- use matrify!
+
+new_mat - three column format to use in labdsv package
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+```
+
+
+--------------------------------------------------------------------------------
+# Diversity Indices
+
+Wonderful tutorials!
+https://peat-clark.github.io/BIO381/veganTutorial.html
+https://www.youtube.com/watch?v=wq1SXGQYgCs
+
+use 3 column format to get diversity indices for each site!
+```{r}
+print(shannon <- diversity(new_mat, index = "shannon"))
+print(simpson <- diversity(new_mat, index = "simpson"))
+print(inv_simpson <- diversity(new_mat, index = "invsimpson"))
+```
+
+compare these indices with histograms
+```{r}
+par(mfrow = c(1, 2))  # use par to generate panels with 1 row of 2 graphs
+hist(simpson)
+hist(shannon)
+```
+
+
+
+
+
+
+
+## no sig differences for diversity indices by land type
+```{r}
+site_type <- site_data %>%
+  filter(Transecto == 1) %>% # so just one row per site
+  select(Sitio, Tipo)
+
+shannon_aov <- aov(shannon ~ Tipo, data = site_type)
+summary(shannon_aov)
+# not sig - p > 0.7!
+
+simpson_aov <- aov(simpson ~ Tipo, data = site_type)
+summary(simpson_aov)
+# not sig - p > 0.7!
+
+inv_simpson_aov <- aov(inv_simpson ~ Tipo, data = site_type)
+summary(inv_simpson_aov)
+# not sig - p > 0.7!
+```
+
+## plot how diversity indices vary across land types
+```{r shannon diversity plot}
+shannon_df <- shannon %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+shannon_df$Tipo <- factor(shannon_df$Tipo,     # Reorder factor levels
+                         c("N", "C", "V", "B"))
+
+pal <- brewer.pal(4, "BrBG")
+
+
+plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Shannon diversity",
+       title = "No significant difference in Shannon diversity across landtype 
+       (p 0.758)")
+plot_shannon
+```
+
+
+
+
+
+```{r simpson diversity plot}
+simpson_df <- simpson %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+simpson_df$Tipo <- factor(simpson_df$Tipo,     # Reorder factor levels
+                         c("N", "C", "V", "B"))
+
+plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Simpson diversity",
+       title = "There is no significant difference (p = 0.715) in Simpson diversity across landtypes")
+plot_simpson
+```
+
+
+
+```{r inv simpson diversity plot}
+inv_simpson_df <- inv_simpson %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+inv_simpson_df$Tipo <- factor(inv_simpson_df$Tipo,     # Reorder factor levels
+                         c("N", "C", "V", "B"))
+
+plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Ecological landtype",
+       y = "Inverse simpson diversity",
+       title = "There is no significant difference (p = 0.75) in Inverse Simpson diversity across landtypes")
+plot_inv_simpson
+```
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+# COMPOSITION ACROSS LANDUSE TYPES....
+
+
+## COPIED FROM RANAS_EXPLORE _ REVIEW
+
+
+
+--------------------------------------------------------------------------------
+# Pair-wise dissimilarity
+
+Calculate pair-wise dissimilarity (distance) using vegdist
+- gower and bray-curtis are good in detecting underlying ecological gradients
+```{r}
+par(mfrow = c(1, 2))
+bray <- vegdist(new_mat, "bray") 
+gower <- vegdist(new_mat, "gower")
+
+hist(bray, xlim = range(0.0,1.0))
+hist(gower, xlim = range(0.0,1.0))
+```
+
+
+dissimilarity analysis is good way to explore variability in community comp
+- next steps would be to do some sort of cluster analysis
+- see where community associations exist
+- but switching gears to look at rarefaction
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+# RAREFACTION....
+
+
+## COPIED FROM RANAS_EXPLORE _ REVIEW
+
+
+technique to assess expected species richness
+- allows calculation of species richness for given number of samples based on
+  construction of rarefaction curves
+  
+issue is that the larger number of ind sampled, more species will be found
+- rarefaction curves created by randomly re-sampling pool of N samples multiple
+  times and then plotting average number of species found in each sample
+- rarefaction generates expected number of species in small collection of n ind
+  drawn from large pool of N samples
+- typically grow rapidly at first, then slowly as only rarest species remain to
+  be sampled
+
+use rarefy and rarecurve functions
+```{r}
+spAbund <- rowSums(new_mat)
+spAbund
+
+test <- colSums(new_mat)
+test
+```
+
+
+
+rarefaction uses smallest number of obs per sample to extrapolate expected
+number if all other samples only had that number of obs
+- VC-C only had 3!!! may want to proceed without this  in the future
+- GP-N also only 9, without these two the next lowest is 22
+```{r}
+# including VC-C raremin is 3
+raremin <- min(rowSums(new_mat))
+raremin
+
+sRare <- rarefy(new_mat, raremin)
+sRare
+
+# it won't allow us to override this to 22 (makes sense)
+# so will need to remove VC-C, GP-N from sites, via row position
+new_mat_abundant <- new_mat %>%
+  filter(!row_number() %in% c(19, 31))
+
+# let's see what happens with this as our raremin, and only using 30/32 sites
+raremin_abundant <- min(rowSums(new_mat_abundant))
+raremin_abundant
+
+# sRare gives expected 'rarefied' number of species (not obs) if only 22 collected
+sRare_abundant <- rarefy(new_mat_abundant, raremin_abundant)
+sRare_abundant
+
+shannon_aov <- aov(shannon ~ Tipo, data = site_type)
+summary(shannon_aov)
+```
+
+## no statistical difference in rarefied species richness across types
+*note that using rarefaction to remove effects of diff sample sizes is bad!*
+```{r}
+# join tipo data with sRare_abundant in a df
+sRare_abundant_df <- sRare_abundant %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+sRare_abundant_aov <- aov(value ~ Tipo, data = sRare_abundant_df)
+summary(sRare_abundant_aov)
+# p-value is 0.183 (04/9/23) - check back in when sequencing is done!
+```
+
+visualization using rarecurve, for ggplot?
+## make rarecurve for each type of site
+## stuck!
+```{r}
+# rarecurve for each site, would be nice to have for each type!
+rarecurve(new_mat_abundant, col = "blue", cex = 0.4)
+
+# TEST - try to make separate curve for each type
+# make dfs of equal length
+#site_type_abundant <- site_type %>%
+#                      filter(!Sitio == 'VC-C',
+#                             !Sitio == 'GP-N')
+
+
+# may need these as vector eventually?
+#test <- cbind(new_mat_abundant, site_type_abundant)
+
+#rarecurve_test <- rarecurve(test, step=1, label=TRUE, col = test$Tipo, 
+#                            xlab = "Number of individuals sampled", ylab = "Species richness")
 ```
 
 

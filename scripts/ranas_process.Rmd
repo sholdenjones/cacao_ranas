@@ -32,6 +32,10 @@ ranas <- ranas %>%
   mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"),
          year = substr(sample_date, 1, 4))
 
+# remove '..20' column - not sure why these are being added
+ranas <- ranas %>%
+  select(-...20)
+
 ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
 
 # make processed csv output
