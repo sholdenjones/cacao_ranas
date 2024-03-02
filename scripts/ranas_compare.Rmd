@@ -12,7 +12,7 @@ response variables w/in specific landuse types.
 
 
 load packages
-```{r}
+```{r, results='hide'}
 library(labdsv)
 library(tidyverse)
 library(vegan)
@@ -43,8 +43,6 @@ pal <- brewer.pal(4, "BrBG")
 site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)", 
                               "Abandoned \n (n = 4)", "Forest \n (n = 5)")
 ```
-
-
 
 
 --------------------------------------------------------------------------------
@@ -184,7 +182,6 @@ summary(aov_abundance)
 
 
 # DIVERSITY ACROSS LANDUSE TYPES
-## COPIED FROM RANAS_EXPLORE _ REVIEW
 
 Look at how different diversity metrics compare across landuse types
 
@@ -227,23 +224,62 @@ hist(shannon)
 
 
 --------------------------------------------------------------------------------
-## no sig differences for diversity indices by land type
+## do a bit of dataframe creation here to run statistical tests
+
+create site_type df and join to enframed shannon_df
 ```{r}
+# create site_type df, just name of site and the type
 site_type <- site_data %>%
   filter(Transecto == 1) %>% # so just one row per site
   select(Sitio, Tipo)
 
-shannon_aov <- aov(shannon ~ Tipo, data = site_type)
+# enframe shannon which is currently a vector
+shannon_df <- enframe(shannon)
+
+# need to change name to Sitio in shannon_df to match for left_join
+# also change value to Shannon_Index
+colnames(shannon_df) <- c("Sitio","Shannon_Index")
+
+# join by "Sitio"
+shannon_df <- left_join(site_type, shannon_df, by = "Sitio")
+```
+
+do the same thing for simpson_df
+```{r}
+simpson_df <- enframe(simpson)
+
+colnames(simpson_df) <- c("Sitio","Simpson_Index")
+
+simpson_df <- left_join(site_type, simpson_df, by = "Sitio")
+```
+
+and inverse simpson_df
+```{r}
+inv_simpson_df <- enframe(inv_simpson)
+
+colnames(inv_simpson_df) <- c("Sitio","Inv_Simpson_Index")
+
+inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
+```
+
+
+--------------------------------------------------------------------------------
+## now run aovs across landuse types for each diversity index
+
+none of these are significant currently, but shannon and simpson are close
+- as more sequencing results come back it's possible this will become significant!
+```{r}
+shannon_aov <- aov(Shannon_Index ~ Tipo, data = shannon_df)
 summary(shannon_aov)
-# not sig - p > 0.7!
+# not sig - p = 0.14!
 
-simpson_aov <- aov(simpson ~ Tipo, data = site_type)
+simpson_aov <- aov(Simpson_Index ~ Tipo, data = simpson_df)
 summary(simpson_aov)
-# not sig - p > 0.7!
+# not sig - p = 0.2
 
-inv_simpson_aov <- aov(inv_simpson ~ Tipo, data = site_type)
+inv_simpson_aov <- aov(Inv_Simpson_Index ~ Tipo, data = inv_simpson_df)
 summary(inv_simpson_aov)
-# not sig - p > 0.7!
+# not sig - p = 0.49!
 ```
 
 
@@ -253,14 +289,10 @@ summary(inv_simpson_aov)
 
 shannon
 ```{r shannon diversity plot}
-shannon_df <- shannon %>% 
-  enframe() %>% 
-  full_join(site_type, by = c("name" = "Sitio"))
-
 shannon_df$Tipo <- factor(shannon_df$Tipo,     # Reorder factor levels
                          c("N", "C", "V", "B"))
 
-plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = value, fill = Tipo)) +
+plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   scale_x_discrete(labels = c(site_labels)) +
@@ -274,21 +306,16 @@ plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = value, fill = Tipo)) +
         legend.text = element_text(size = 12)) + 
   labs(x = "Landtype",
        y = "Shannon diversity",
-       title = "No significant difference in Shannon diversity across landtype 
-       (p 0.758)")
+       title = "Shannon diversity across landuse types")
 plot_shannon
 ```
 
 simpson
 ```{r simpson diversity plot}
-simpson_df <- simpson %>% 
-  enframe() %>% 
-  full_join(site_type, by = c("name" = "Sitio"))
-
 simpson_df$Tipo <- factor(simpson_df$Tipo,     # Reorder factor levels
                          c("N", "C", "V", "B"))
 
-plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
+plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
@@ -304,20 +331,17 @@ plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
         legend.text = element_text(size = 12)) + 
   labs(x = "Landtype",
        y = "Simpson diversity",
-       title = "There is no significant difference (p = 0.715) in Simpson diversity across landtypes")
+       title = "Simpson diversity across landuse types")
 plot_simpson
 ```
 
 inv simpson
 ```{r inv simpson diversity plot}
-inv_simpson_df <- inv_simpson %>% 
-  enframe() %>% 
-  full_join(site_type, by = c("name" = "Sitio"))
-
 inv_simpson_df$Tipo <- factor(inv_simpson_df$Tipo,     # Reorder factor levels
                          c("N", "C", "V", "B"))
 
-plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = value, fill = Tipo)) +
+plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = Inv_Simpson_Index, 
+                                               fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   scale_x_discrete(labels = c(site_labels)) +
@@ -331,20 +355,22 @@ plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = value, fill = Tipo)
         legend.text = element_text(size = 12)) + 
   labs(x = "Ecological landtype",
        y = "Inverse simpson diversity",
-       title = "There is no significant difference (p = 0.75) in Inverse Simpson diversity across landtypes")
+       title = "Inverse Simpson diversity across landuse types")
 plot_inv_simpson
 ```
 
+
+
+## NEXT STEP - COMPARE PLANTED AND UNPLANTED
+
+
+## AND RUN FALSE DISCOVERY RATE? A POST-HOC TEST NEEDED FOR DIVERSITY INDICES
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 
 # COMPOSITION ACROSS LANDUSE TYPES....
-
-
-## COPIED FROM RANAS_EXPLORE _ REVIEW
-
 
 
 --------------------------------------------------------------------------------
@@ -361,20 +387,94 @@ hist(bray, xlim = range(0.0,1.0))
 hist(gower, xlim = range(0.0,1.0))
 ```
 
-
+## CONTINUE HERE
 dissimilarity analysis is good way to explore variability in community comp
 - next steps would be to do some sort of cluster analysis
 - see where community associations exist
 - but switching gears to look at rarefaction
 
 
+--------------------------------------------------------------------------------
+# Non-metric Multidimensional Scaling
 
+
+## need to reorder new_mat rows to allow nmds to draw borders of communities
+- goal is to represent info from multiple dimensions into a few, so can visualize
+  and interpret.
+- so here, present the similarity of communities in 2-dimensional space
+
+this is going to be ugly, but have triple checked against original new_mat
+```{r}
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+```
+
+
+--------------------------------------------------------------------------------
+## create NMDS plot and draw boundaries of landuse types
+
+code from Peat Clark's vegan tutorial
+```{r}
+# use community by species matrix from above
+new_mat_NMDS=metaMDS(new_mat, k=2)
+
+plot(new_mat_NMDS)
+# here sites are open circles, species are red crosses
+
+# here help visualize by labeling specific sites and species
+
+# ordination plot function especially for congested plots
+ordiplot(new_mat_NMDS,type="n")
+# this function adds text or points to ordination plots
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+orditorp(new_mat_NMDS,display="sites",cex=1.25,air=0.01)
+```
+
+## use ordihull to help visualize different treatments unifying sites
+
+assign treatment levels per landuse type on reordered new_mat_reordered
+```{r}
+# ensure that labels are in correct order and have correct length
+landuse_treatments=c(rep("Shade",12),
+                     rep("Sun",11), 
+                     rep("Abandoned",4), 
+                     rep("Forest",5))
+
+ordiplot(new_mat_NMDS,type="n")
+
+ordihull(new_mat_NMDS,groups=landuse_treatments,draw="polygon",
+         col="grey90",label=F)
+
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+# here colors need to align with landuse_treatments from above!
+# of course need to use chocolate!
+orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
+                                            rep("chocolate1",11),
+                                            rep("lightgreen",4),
+                                            rep("darkgreen",5)), 
+         air=0.01,cex=1.25)
+```
+
+## very cool! see a lot of overlap in species simmilarity across landuse types
+- but, forest and abandoned sites are similar, minus 3 outliers (FLL-B, FLL-C, FCAT-B3)
+- these are also the lower elevation sites of the 9!
+- think that elevation will be an important thing to include when comparing communities!
+## CONTINUE HERE looking at elevation and group identity for NMDS
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 
-# RAREFACTION....
+# RAREFACTION....This is more of a richness approach?
 
 
 ## COPIED FROM RANAS_EXPLORE _ REVIEW
