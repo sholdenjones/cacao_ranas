@@ -34,14 +34,18 @@ new <- read_csv("data/processed_data/new_processed.csv")
 site_data <- read_csv("data/processed_data/site_data_processed.csv")
 ```
 
-define a consistent palet and labels to be used in multiple figures
+define a consistent palet, labels, and theme to be used in multiple figures
+## still would be nice to have palet for harvested comparison
 ```{r}
-# palet, keep consistent across 
+# palet for comparisons of all 4 site types
 pal <- brewer.pal(4, "BrBG")
 
-# site labels, use in several plots
+# site labels for 4 site comparison, use in several plots
 site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)", 
                               "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+
+# site labels for harvest, non-harvest comparison
+labels_harvest <-  c("Not harvested \n (n = 9)", "Harvested \n (n = 23)")
 
 # set a theme for ggplots
 my_theme <- function() {
@@ -56,7 +60,6 @@ my_theme <- function() {
         legend.text = element_text(size = 12))
 }
 ```
-
 
 
 
@@ -142,7 +145,8 @@ B+V have sig higher richness than N+C
 ```{r}
 # plot
 plot_richness_by_harvest <- ggplot(richness_by_site, 
-                                   aes(x = harvested, y = no_species)) +
+                                   aes(x = harvested, y = no_species, fill = harvested)) +
+  scale_x_discrete(labels = c(labels_harvest)) +
   geom_boxplot() +
   my_theme() +
   labs(x = "Active cacao plantation?", y = "Species richness") +
@@ -381,6 +385,21 @@ summary(inv_simpson_harvest_aov)
 
 now make figures for each
 ## aesthetically think about fill colors
+
+shannon_harvest
+```{r}
+plot_shannon_harvest <- ggplot(shannon_df, 
+                               aes(x = harvested, y = Shannon_Index, 
+                                   fill = harvested)) +
+  geom_boxplot() +
+  my_theme() +
+  labs(x = "Harvested",
+       y = "Shannon diversity",
+       title = "Shannon diversity across harvested and unharvested sites")
+plot_shannon_harvest
+```
+
+simpson_harvest
 ```{r}
 plot_simpson_harvest <- ggplot(simpson_df, 
                                aes(x = harvested, y = Simpson_Index, 
@@ -393,7 +412,18 @@ plot_simpson_harvest <- ggplot(simpson_df,
 plot_simpson_harvest
 ```
 
-
+inv_simpson_harvest
+```{r}
+plot_inv_simpson_harvest <- ggplot(inv_simpson_df, 
+                               aes(x = harvested, y = Inv_Simpson_Index, 
+                                   fill = harvested)) +
+  geom_boxplot() +
+  my_theme() +
+  labs(x = "Harvested",
+       y = "Inverse Simpson diversity",
+       title = "Inverse Simpson diversity across harvested and unharvested sites")
+plot_inv_simpson_harvest
+```
 
 
 ## AND RUN FALSE DISCOVERY RATE? A POST-HOC TEST NEEDED FOR DIVERSITY INDICES
