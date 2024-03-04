@@ -42,7 +42,22 @@ pal <- brewer.pal(4, "BrBG")
 # site labels, use in several plots
 site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)", 
                               "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+
+# set a theme for ggplots
+my_theme <- function() {
+  theme_minimal() + # Example: You can choose any base theme
+   theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12))
+}
 ```
+
+
 
 
 --------------------------------------------------------------------------------
@@ -69,31 +84,6 @@ richness_summary <- richness_by_site %>%
             median_species_richness = median(no_species),
             min_species_richness = min(no_species),
             max_species_richness = max(no_species))
-
-# Create a boxplot
-
-# reorder factor levels
-richness_by_site$Tipo <- factor(richness_by_site$Tipo,
-                         c("N", "C", "V", "B"))
-
-# plot species richness across landuse types using palet
-plot_richness_by_site <- ggplot(richness_by_site, aes(x = Tipo, y = no_species, fill = Tipo)) +
-  geom_boxplot() +
-  scale_fill_manual(values = pal) +
-  # order needs to match factor levels above
-  scale_x_discrete(labels = c(site_labels)) +
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(color = "gray25"),
-        legend.text = element_text(size = 12)) + 
-  labs(x = "Landuse types",
-       y = "Species richness",
-       title = "Species richness across landuse types")
-plot_richness_by_site
 ```
 
 run ANOVA on species richness across the 4 landuse types
@@ -104,13 +94,35 @@ aov_richness <- aov(no_species ~ Tipo, data = richness_by_site)
 summary(aov_richness)
 ```
 
+plot species richness across landuse types
+```{r}
+# reorder factor levels
+richness_by_site$Tipo <- factor(richness_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+# plot species richness across landuse types using palet, my_theme
+plot_richness_by_site <- ggplot(richness_by_site, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Landuse types",
+       y = "Species richness",
+       title = "Species richness across landuse types")
+
+plot_richness_by_site
+```
+
+
 --------------------------------------------------------------------------------
 # Harvested vs. non-harvested for richness
 
-B+V have higher richness than N+C
-## significantly higher richness in B+V
-## aesthetically would want to mix colors from previous plot
+AOV sp. richness against harvested, non-harvested
+- highly sig!
 ```{r}
+# add harvested column
 richness_by_site <- richness_by_site %>%
   mutate(harvested = case_when(
     Tipo == "N" ~ "Yes",
@@ -118,21 +130,24 @@ richness_by_site <- richness_by_site %>%
     Tipo == "B" ~ "No",
     Tipo == "V" ~ "No")
     )
-  
-# boxplot
-plot_richness_by_harvest <- ggplot(richness_by_site, aes(x = harvested, y = no_species)) +
-  geom_boxplot() +
-  labs(x = "Active cacao plantation?", y = "Species richness") +
-  ggtitle("Species richness in harvested and non-harvested areas")
-plot_richness_by_harvest
-```
 
-AOV sp. richness against harvested, non-harvested
-```{r}
 # then run aov here
 aov_richness_harvest <- aov(no_species ~ harvested, data = richness_by_site)
 
 summary(aov_richness_harvest)
+```
+
+B+V have sig higher richness than N+C
+## aesthetically would want to mix colors from previous plot
+```{r}
+# plot
+plot_richness_by_harvest <- ggplot(richness_by_site, 
+                                   aes(x = harvested, y = no_species)) +
+  geom_boxplot() +
+  my_theme() +
+  labs(x = "Active cacao plantation?", y = "Species richness") +
+  ggtitle("Species richness in harvested and non-harvested areas")
+plot_richness_by_harvest
 ```
 
 
@@ -144,6 +159,10 @@ summary(aov_richness_harvest)
 
 number of new individuals 
 ## could eventually complicate this to look at pop size estimates?
+
+
+anova for abundance
+- not sig
 ```{r}
 abundance_by_site <- new %>%
   group_by(Sitio, Tipo) %>%
@@ -151,18 +170,17 @@ abundance_by_site <- new %>%
 
 abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
 
+aov_abundance <- aov(n ~ Tipo, data = abundance_by_site)
+summary(aov_abundance)
+```
+
+
+```{r}
 plot_abundance_by_site <- ggplot(abundance_by_site, aes(x = Tipo, y = n, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   scale_x_discrete(labels = c(site_labels)) +
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(size = 14, color = "gray25"),
-        legend.text = element_text(size = 12)) + 
+  my_theme() +
   labs(x = "Landuse type",
        y = "Individuals per site",
        title = "Abundance across landuse types")
@@ -224,7 +242,7 @@ hist(shannon)
 
 
 --------------------------------------------------------------------------------
-## do a bit of dataframe creation here to run statistical tests
+# dataframe creation here to run statistical tests
 
 create site_type df and join to enframed shannon_df
 ```{r}
@@ -232,6 +250,18 @@ create site_type df and join to enframed shannon_df
 site_type <- site_data %>%
   filter(Transecto == 1) %>% # so just one row per site
   select(Sitio, Tipo)
+
+# reorder factor levels now for downstream plotting
+site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
+
+# here add harvested column for later analyses
+site_type <- site_type %>%
+  mutate(harvested = case_when(
+    Tipo == "N" ~ "Yes",
+    Tipo == "C" ~ "Yes",
+    Tipo == "B" ~ "No",
+    Tipo == "V" ~ "No")
+    )
 
 # enframe shannon which is currently a vector
 shannon_df <- enframe(shannon)
@@ -264,7 +294,7 @@ inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
 
 
 --------------------------------------------------------------------------------
-## now run aovs across landuse types for each diversity index
+# run aovs across landuse types for each diversity index
 
 none of these are significant currently, but shannon and simpson are close
 - as more sequencing results come back it's possible this will become significant!
@@ -275,7 +305,7 @@ summary(shannon_aov)
 
 simpson_aov <- aov(Simpson_Index ~ Tipo, data = simpson_df)
 summary(simpson_aov)
-# not sig - p = 0.2
+# not sig - p = 0.2!
 
 inv_simpson_aov <- aov(Inv_Simpson_Index ~ Tipo, data = inv_simpson_df)
 summary(inv_simpson_aov)
@@ -284,26 +314,17 @@ summary(inv_simpson_aov)
 
 
 --------------------------------------------------------------------------------
-## plot how diversity indices vary across land types
+# plot how diversity indices vary across land types
 - these are pretty much identical regardless of index used
 
 shannon
 ```{r shannon diversity plot}
-shannon_df$Tipo <- factor(shannon_df$Tipo,     # Reorder factor levels
-                         c("N", "C", "V", "B"))
-
-plot_shannon <- ggplot(shannon_df, aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
+plot_shannon <- ggplot(shannon_df, 
+                       aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   scale_x_discrete(labels = c(site_labels)) +
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(size = 14, color = "gray25"),
-        legend.text = element_text(size = 12)) + 
+  my_theme() +
   labs(x = "Landtype",
        y = "Shannon diversity",
        title = "Shannon diversity across landuse types")
@@ -312,23 +333,12 @@ plot_shannon
 
 simpson
 ```{r simpson diversity plot}
-simpson_df$Tipo <- factor(simpson_df$Tipo,     # Reorder factor levels
-                         c("N", "C", "V", "B"))
-
-plot_simpson <- ggplot(simpson_df, aes(x = Tipo, y = Simpson_Index, fill = Tipo)) +
+plot_simpson <- ggplot(simpson_df, 
+                       aes(x = Tipo, y = Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
-  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
-    ) +
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(size = 14, color = "gray25"),
-        legend.text = element_text(size = 12)) + 
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
   labs(x = "Landtype",
        y = "Simpson diversity",
        title = "Simpson diversity across landuse types")
@@ -337,22 +347,12 @@ plot_simpson
 
 inv simpson
 ```{r inv simpson diversity plot}
-inv_simpson_df$Tipo <- factor(inv_simpson_df$Tipo,     # Reorder factor levels
-                         c("N", "C", "V", "B"))
-
-plot_inv_simpson <- ggplot(inv_simpson_df, aes(x = Tipo, y = Inv_Simpson_Index, 
-                                               fill = Tipo)) +
+plot_inv_simpson <- ggplot(inv_simpson_df, 
+                           aes(x = Tipo, y = Inv_Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
   scale_x_discrete(labels = c(site_labels)) +
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(color = "gray25"),
-        legend.text = element_text(size = 12)) + 
+  my_theme() +
   labs(x = "Ecological landtype",
        y = "Inverse simpson diversity",
        title = "Inverse Simpson diversity across landuse types")
@@ -360,8 +360,40 @@ plot_inv_simpson
 ```
 
 
+--------------------------------------------------------------------------------
+# Compare diversity indices for harvested vs. unharvested sites
 
-## NEXT STEP - COMPARE PLANTED AND UNPLANTED
+do the same thing as above, using harvested, unharvested column
+- aovs across harvested, unharvested
+```{r}
+# shannon - sig
+shannon_harvest_aov <- aov(Shannon_Index ~ harvested, data = shannon_df)
+summary(shannon_harvest_aov)
+
+# simpson - sig
+simpson_harvest_aov <- aov(Simpson_Index ~ harvested, data = simpson_df)
+summary(simpson_harvest_aov)
+
+# inverse simpson - not sig
+inv_simpson_harvest_aov <- aov(Inv_Simpson_Index ~ harvested, data = inv_simpson_df)
+summary(inv_simpson_harvest_aov)
+```
+
+now make figures for each
+## aesthetically think about fill colors
+```{r}
+plot_simpson_harvest <- ggplot(simpson_df, 
+                               aes(x = harvested, y = Simpson_Index, 
+                                   fill = harvested)) +
+  geom_boxplot() +
+  my_theme() +
+  labs(x = "Harvested",
+       y = "Simpson diversity",
+       title = "Simpson diversity across harvested and unharvested sites")
+plot_simpson_harvest
+```
+
+
 
 
 ## AND RUN FALSE DISCOVERY RATE? A POST-HOC TEST NEEDED FOR DIVERSITY INDICES
