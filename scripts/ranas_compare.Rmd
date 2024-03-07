@@ -131,9 +131,8 @@ plot_richness_by_site
 AOV sp. richness against harvested, non-harvested
 - highly sig!
 ```{r}
-# add harvested column
 richness_by_site <- richness_by_site %>%
-  mutate(harvested = case_when(
+  mutate(harvested = case_when( # add harvested column
     Tipo == "N" ~ "Yes",
     Tipo == "C" ~ "Yes",
     Tipo == "B" ~ "No",
@@ -149,7 +148,6 @@ summary(aov_richness_harvest)
 B+V have sig higher richness than N+C
 ## aesthetically would want to mix colors from previous plot
 ```{r}
-# plot
 plot_richness_by_harvest <- ggplot(richness_by_site, 
                                    aes(x = harvested, y = no_species, fill = harvested)) +
   scale_x_discrete(labels = c(labels_harvest)) +
@@ -245,7 +243,8 @@ print(inv_simpson <- diversity(new_mat, index = "invsimpson"))
 
 compare these indices with histograms
 ```{r}
-par(mfrow = c(1, 2))  # use par to generate panels with 1 row of 2 graphs
+par(mfrow = c(1, 2))  
+# use par to generate panels with 1 row of 2 graphs
 hist(simpson)
 hist(shannon)
 ```
@@ -256,8 +255,7 @@ hist(shannon)
 
 create site_type df and join to enframed shannon_df
 ```{r}
-# create site_type df, just name of site and the type
-site_type <- site_data %>%
+site_type <- site_data %>% # create site_type df, just name of site and the type
   filter(Transecto == 1) %>% # so just one row per site
   select(Sitio, Tipo)
 
@@ -376,17 +374,14 @@ plot_inv_simpson
 do the same thing as above, using harvested, unharvested column
 - aovs across harvested, unharvested
 ```{r}
-# shannon - sig
 shannon_harvest_aov <- aov(Shannon_Index ~ harvested, data = shannon_df)
-summary(shannon_harvest_aov)
+summary(shannon_harvest_aov) # shannon - sig
 
-# simpson - sig
 simpson_harvest_aov <- aov(Simpson_Index ~ harvested, data = simpson_df)
-summary(simpson_harvest_aov)
+summary(simpson_harvest_aov) # simpson - sig
 
-# inverse simpson - not sig
 inv_simpson_harvest_aov <- aov(Inv_Simpson_Index ~ harvested, data = inv_simpson_df)
-summary(inv_simpson_harvest_aov)
+summary(inv_simpson_harvest_aov) # inverse simpson - not sig
 ```
 
 now make figures for each
@@ -473,12 +468,12 @@ dissimilarity analysis is good way to explore variability in community comp
 
 this is going to be ugly, but have triple checked against original new_mat
 ```{r}
-# Define the desired order of rows: Shade, Sun, Abandoned, Forest
 new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
                2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
                9,13,14,17, # abandoned (n=4)
                6,10,11,12,15 # forest (n=5)
                )
+# Defined the desired order of rows: Shade, Sun, Abandoned, Forest
 
 # Reorder rows
 new_mat <- new_mat[new_order, ]
@@ -490,8 +485,8 @@ new_mat <- new_mat[new_order, ]
 
 code from Peat Clark's vegan tutorial
 ```{r}
-# use community by species matrix from above
 new_mat_NMDS=metaMDS(new_mat, k=2)
+# use community by species matrix from above
 
 plot(new_mat_NMDS)
 # here sites are open circles, species are red crosses
@@ -510,11 +505,11 @@ orditorp(new_mat_NMDS,display="sites",cex=1.25,air=0.01)
 
 assign treatment levels per landuse type on reordered new_mat_reordered
 ```{r}
-# ensure that labels are in correct order and have correct length
 landuse_treatments=c(rep("Shade",12),
                      rep("Sun",11), 
                      rep("Abandoned",4), 
                      rep("Forest",5))
+# ensure that labels are in correct order and have correct length
 
 ordiplot(new_mat_NMDS,type="n")
 
