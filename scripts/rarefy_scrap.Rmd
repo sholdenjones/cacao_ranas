@@ -1,0 +1,85 @@
+---
+title: "rarefy_scrap"
+author: "Holden Jones"
+date: "2024-03-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# RAREFACTION - FOLLOWED FROM RICHNESS ABOVE
+# REVIEW ALL OF THIS - COPIED FROM RANAS_EXPLORE
+
+technique to estimate expected species richness
+- allows calculation of species richness for given number of samples based on
+  construction of rarefaction curves
+  
+issue is that the larger number of ind sampled, more species will be found
+- rarefaction curves created by randomly re-sampling pool of N samples multiple
+  times and then plotting average number of species found in each sample
+- rarefaction generates expected number of species in small collection of n ind
+  drawn from large pool of N samples
+- typically grow rapidly at first, then slowly as only rarest species remain to
+  be sampled
+
+use rarefy and rarecurve functions
+```{r}
+spAbund <- rowSums(new_mat)
+spAbund
+
+test <- colSums(new_mat)
+test
+```
+
+rarefaction uses smallest number of obs per sample to extrapolate expected
+number if all other samples only had that number of obs
+- VC-C only had 3!!! may want to proceed without this  in the future
+- GP-N also only 9, without these two the next lowest is 22
+```{r}
+# including VC-C raremin is 3
+raremin <- min(rowSums(new_mat))
+raremin
+
+sRare <- rarefy(new_mat, raremin)
+sRare
+
+# it won't allow us to override this to 22 (makes sense)
+# so will need to remove VC-C, GP-N from sites, via row position
+new_mat_abundant <- new_mat %>%
+  filter(!row_number() %in% c(19, 31))
+
+# let's see what happens with this as our raremin, and only using 30/32 sites
+raremin_abundant <- min(rowSums(new_mat_abundant))
+raremin_abundant
+
+# sRare gives expected 'rarefied' number of species (not obs) if only 22 collected
+sRare_abundant <- rarefy(new_mat_abundant, raremin_abundant)
+sRare_abundant
+
+rare_shannon_aov <- aov(value ~ Tipo, data = sRare_abundant_df)
+summary(rare_shannon_aov)
+```
+
+## no statistical difference in rarefied species richness across types
+*note that using rarefaction to remove effects of diff sample sizes is bad!*
+```{r}
+# join tipo data with sRare_abundant in a df
+sRare_abundant_df <- sRare_abundant %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+sRare_abundant_aov <- aov(value ~ Tipo, data = sRare_abundant_df)
+summary(sRare_abundant_aov)
+# p-value is 0.183 (04/9/23) - check back in when sequencing is done!
+```
+
+visualization using rarecurve, for ggplot?
+## make rarecurve for each type of site
+## stuck!
+```{r}
+# rarecurve for each site, would be nice to have for each type!
+rarecurve(new_mat_abundant, col = "blue", cex = 0.4)
+```
