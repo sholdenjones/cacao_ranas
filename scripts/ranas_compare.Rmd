@@ -26,9 +26,9 @@ library(RColorBrewer)
 ```
 
 load data
-## weird that dfs are of different lengths, wtf? why are columns getting added randomly?
-## also note that ranas is a tbl_df and new is spec_tbl_df despite being created from ranas
-```{r}
+## weird that dfs are of different lengths, why are columns getting added randomly?. Also note that ranas is a tbl_df and new is spec_tbl_df despite being created from ranas
+
+```{r, include=FALSE}
 ranas <- read_csv("data/processed_data/ranas_processed.csv")
 
 # remove '...1' column - not sure why this is being added
@@ -55,7 +55,7 @@ labels_harvest <-  c("Not harvested \n (n = 9)", "Harvested \n (n = 23)")
 
 # set a theme for ggplots
 my_theme <- function() {
-  theme_minimal() + # Example: You can choose any base theme
+  theme_minimal() + 
    theme(legend.position = "none",
         plot.background = element_rect("white"),
         panel.background = element_rect("white"),
