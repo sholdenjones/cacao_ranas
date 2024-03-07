@@ -326,7 +326,7 @@ summary(inv_simpson_aov)
 - these are pretty much identical regardless of index used
 
 shannon
-```{r shannon diversity plot}
+```{r}
 plot_shannon <- ggplot(shannon_df, 
                        aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
   geom_boxplot() +
@@ -340,7 +340,7 @@ plot_shannon
 ```
 
 simpson
-```{r simpson diversity plot}
+```{r}
 plot_simpson <- ggplot(simpson_df, 
                        aes(x = Tipo, y = Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
@@ -354,7 +354,7 @@ plot_simpson
 ```
 
 inv simpson
-```{r inv simpson diversity plot}
+```{r}
 plot_inv_simpson <- ggplot(inv_simpson_df, 
                            aes(x = Tipo, y = Inv_Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
