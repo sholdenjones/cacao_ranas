@@ -1,3 +1,9 @@
+---
+title: "Ranas_compare"
+author: "S. Holden Jones"
+date: "3/6/24"
+output: word_document
+---
 
 # COMPARE RICHNESS, ABUNDANCE, DIVERSITY, COMPOSITION ACROSS LANDUSE TYPES
 
@@ -12,7 +18,7 @@ response variables w/in specific landuse types.
 
 
 load packages
-```{r, results='hide'}
+```{r, include=FALSE}
 library(labdsv)
 library(tidyverse)
 library(vegan)
