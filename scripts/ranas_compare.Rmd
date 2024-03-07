@@ -125,11 +125,9 @@ plot_richness_by_site
 ```
 
 
---------------------------------------------------------------------------------
-# Harvested vs. non-harvested for richness
+## harvested vs. non-harvested for richness
 
-AOV sp. richness against harvested, non-harvested
-- highly sig!
+AOV sp. richness against harvested, non-harvested - highly sig!
 ```{r}
 richness_by_site <- richness_by_site %>%
   mutate(harvested = case_when( # add harvested column
@@ -211,7 +209,7 @@ summary(aov_abundance)
 
 Look at how different diversity metrics compare across landuse types
 
-# First need to convert data into 3 column format
+## First need to convert data into 3 column format
 habitat, species, abundance for labdsv - use matrify!
 
 new_mat - three column format to use in labdsv package
@@ -227,10 +225,8 @@ new_mat <- matrify(three_column)
 ```
 
 
---------------------------------------------------------------------------------
-# Diversity Indices
+## Diversity Indices
 
-# Wonderful tutorials!
 https://peat-clark.github.io/BIO381/veganTutorial.html
 https://www.youtube.com/watch?v=wq1SXGQYgCs
 
@@ -250,8 +246,7 @@ hist(shannon)
 ```
 
 
---------------------------------------------------------------------------------
-# dataframe creation here to run statistical tests
+## dataframe creation here to run statistical tests
 
 create site_type df and join to enframed shannon_df
 ```{r}
@@ -301,8 +296,7 @@ inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
 ```
 
 
---------------------------------------------------------------------------------
-# run aovs across landuse types for each diversity index
+## run aovs across landuse types for each diversity index
 
 none of these are significant currently, but shannon and simpson are close
 - as more sequencing results come back it's possible this will become significant!
@@ -321,8 +315,7 @@ summary(inv_simpson_aov)
 ```
 
 
---------------------------------------------------------------------------------
-# plot how diversity indices vary across land types
+## plot how diversity indices vary across land types
 - these are pretty much identical regardless of index used
 
 shannon
@@ -368,8 +361,7 @@ plot_inv_simpson
 ```
 
 
---------------------------------------------------------------------------------
-# Compare diversity indices for harvested vs. unharvested sites
+## Compare diversity indices for harvested vs. unharvested sites
 
 do the same thing as above, using harvested, unharvested column
 - aovs across harvested, unharvested
@@ -436,8 +428,7 @@ plot_inv_simpson_harvest
 # COMPOSITION ACROSS LANDUSE TYPES....
 
 
---------------------------------------------------------------------------------
-# Pair-wise dissimilarity
+## Pair-wise dissimilarity
 
 Calculate pair-wise dissimilarity (distance) using vegdist
 - gower and bray-curtis are good in detecting underlying ecological gradients
@@ -457,8 +448,7 @@ dissimilarity analysis is good way to explore variability in community comp
 - but switching gears to look at rarefaction
 
 
---------------------------------------------------------------------------------
-# Non-metric Multidimensional Scaling
+## Non-metric Multidimensional Scaling
 
 
 ## need to reorder new_mat rows to allow nmds to draw borders of communities
@@ -480,7 +470,7 @@ new_mat <- new_mat[new_order, ]
 ```
 
 
---------------------------------------------------------------------------------
+
 ## create NMDS plot and draw boundaries of landuse types
 
 code from Peat Clark's vegan tutorial
