@@ -34,8 +34,9 @@ load packages
 library(labdsv)
 library(tidyverse)
 library(vegan)
-library(RColorBrewer)
-library(DHARMa)
+library(RColorBrewer) # for assigning plot colors
+library(DHARMa) # for assessing model fit
+library(SuppDists) # needed for assessing additional dist fits
 ```
 
 load data
@@ -143,8 +144,9 @@ summary(richness_by_type_glm)
 
 # here use DHARMa package to see if we're using the correct model
 # no significant problems detected!
-simulationOutput <- simulateResiduals(fittedModel = richness_by_type_glm)
-plot(simulationOutput)
+simulationOutput_richness_by_type <- simulateResiduals(
+  fittedModel = richness_by_type_glm)
+plot(simulationOutput_richness_by_type)
 ```
 
 
@@ -165,14 +167,13 @@ plot_richness_by_site <- ggplot(richness_by_site,
   labs(x = "Landuse types",
        y = "Species richness",
        title = "Species richness across landuse types")
-
 plot_richness_by_site
 ```
 
 
 ## harvested vs. non-harvested for richness
 
-AOV sp. richness against harvested, non-harvested - highly sig!
+add harvest column (active plantation or not) to richness_by_site df
 ```{r}
 richness_by_site <- richness_by_site %>%
   mutate(harvested = case_when( # add harvested column
@@ -181,12 +182,22 @@ richness_by_site <- richness_by_site %>%
     Tipo == "B" ~ "No",
     Tipo == "V" ~ "No")
     )
-
-# then run aov here
-aov_richness_harvest <- aov(no_species ~ harvested, data = richness_by_site)
-
-summary(aov_richness_harvest)
 ```
+
+run glm for harvest on species richness using Poisson dist
+- sig difference between harvested and non-harvested areas
+```{r}
+richness_by_harvest_glm <- glm(no_species ~ harvested, data = richness_by_site, 
+             family = poisson(link = "log"))
+summary(richness_by_harvest_glm)
+
+# within group deviation from uniformity n.s.
+# Levene Test for homogeneity of variance n.s.
+simulationOutput_richness_by_harvest <- simulateResiduals(
+  fittedModel = richness_by_harvest_glm)
+plot(simulationOutput_richness_by_harvest)
+```
+
 
 B+V have sig higher richness than N+C
 ## aesthetically would want to mix colors from previous plot
@@ -273,7 +284,7 @@ rare_species_abundant
 ```
 
 now join rare_species_abundant with site_type
-# need to make sure that they're the same length!
+## need to make sure that they're the same length!
 
 ## COME BACK HERE MAKE SURE MATCHES!!!!##
 ```{r}
@@ -314,8 +325,7 @@ colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
 number of new individuals 
 ## could eventually complicate this to look at pop size estimates?
 
-anova for abundance
-- not sig
+abundance by site df
 ```{r}
 # note this is same as site_abundance above
 abundance_by_site <- new %>%
@@ -323,11 +333,34 @@ abundance_by_site <- new %>%
   count()
 
 abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
-
-aov_abundance <- aov(n ~ Tipo, data = abundance_by_site)
-summary(aov_abundance)
 ```
 
+
+## before selecting statistical test, need to look at dist. of abundance by site
+- use Poisson dist. b/c using count data with no upper limit!
+```{r}
+(abundance_by_site_hist <- ggplot(abundance_by_site, aes(n)) +
+  geom_histogram(binwidth = 5))
+```
+
+
+## run glm for abundance across landuse types, using Gaussian dist.
+
+DONT RUN POISSON HERE!
+- quantile deviations detected
+- combined adjusted quantile test significant
+
+There is no sig difference in abundance across landuse types
+```{r}
+# default family dist is Gaussian
+abundance_by_type_glm <- glm(n ~ Tipo, data = abundance_by_site)
+summary(abundance_by_type_glm)
+
+# no significant problems detected w/Gaussian!
+simulationOutput_abundance_by_type <- simulateResiduals(
+  fittedModel = abundance_by_type_glm)
+plot(simulationOutput_abundance_by_type)
+```
 
 ```{r}
 plot_abundance_by_site <- ggplot(abundance_by_site, aes(x = Tipo, y = n, fill = Tipo)) +
@@ -340,14 +373,6 @@ plot_abundance_by_site <- ggplot(abundance_by_site, aes(x = Tipo, y = n, fill = 
        title = "Abundance across landuse types")
 plot_abundance_by_site
 ```
-
-anova for abundance
-## abundance differences are not statistically significant
-```{r}
-aov_abundance <- aov(n ~ Tipo, data = abundance_by_site)
-summary(aov_abundance)
-```
-
 
 
 
@@ -394,8 +419,6 @@ new_mat <- matrify(three_column)
 
 ## Diversity Indices
 
-https://peat-clark.github.io/BIO381/veganTutorial.html
-https://www.youtube.com/watch?v=wq1SXGQYgCs
 
 use 3 column format to get diversity indices for each site!
 ```{r}
@@ -403,15 +426,6 @@ shannon <- diversity(new_mat, index = "shannon")
 simpson <- diversity(new_mat, index = "simpson")
 inv_simpson <- diversity(new_mat, index = "invsimpson")
 ```
-
-compare these indices with histograms
-```{r}
-par(mfrow = c(1, 2))  
-# use par to generate panels with 1 row of 2 graphs
-hist(simpson)
-hist(shannon)
-```
-
 
 join enframed shannon_df to site_type
 ```{r}
@@ -445,24 +459,70 @@ inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
 ```
 
 
-## run aovs across landuse types for each diversity index
-
-none of these are significant currently, but shannon and simpson are close
-- as more sequencing results come back it's possible this will become significant!
+## look at dist of diversity metrics
 ```{r}
-shannon_aov <- aov(Shannon_Index ~ Tipo, data = shannon_df)
-summary(shannon_aov)
-# not sig - p = 0.14!
+# shannon - clearly not normal dist! 
+(shannon_hist <- ggplot(shannon_df, aes(Shannon_Index)) +
+  geom_histogram(binwidth = .05))
 
-simpson_aov <- aov(Simpson_Index ~ Tipo, data = simpson_df)
-summary(simpson_aov)
-# not sig - p = 0.2!
+# simpson - clearly not normal dist! 
+(simpson_hist <- ggplot(simpson_df, aes(Simpson_Index)) +
+  geom_histogram(binwidth = .05))
 
-inv_simpson_aov <- aov(Inv_Simpson_Index ~ Tipo, data = inv_simpson_df)
-summary(inv_simpson_aov)
-# not sig - p = 0.49!
+# inv_simpson - clearly not normal dist! 
+(inv_simpson_hist <- ggplot(inv_simpson_df, aes(Inv_Simpson_Index)) +
+  geom_histogram(binwidth = .1))
 ```
 
+## Thought Poisson dist would work for these b/c not normal and from count data
+- woah! sig deviation for Poisson dist.
+- quantile deviations detected
+- combined adjusted quantile test sig
+## But instead use Gaussian dist! 
+
+## sig higher shannon div in Bosque vs. other sites
+```{r}
+# shannon w/ Gaussian dist - all good
+shannon_by_type_glm <- glm(Shannon_Index ~ Tipo, data = shannon_df)
+summary(shannon_by_type_glm)
+
+# no significant problems detected using Gaussian dist!
+simulationOutput_shannon_by_type <- simulateResiduals(
+  fittedModel = shannon_by_type_glm)
+plot(simulationOutput_shannon_by_type)
+```
+
+## sig higher simpson div in Bosque vs. other sites
+```{r}
+# simpson w/ Gaussian dist
+simpson_by_type_glm <- glm(Simpson_Index ~ Tipo, data = simpson_df)
+summary(simpson_by_type_glm)
+
+# no significant problems detected using Gaussian dist!
+simulationOutput_simpson_by_type <- simulateResiduals(
+  fittedModel = simpson_by_type_glm)
+plot(simulationOutput_simpson_by_type)
+```
+
+## no sig difference in inv_simpson diversity across landtypes
+# NOTE THAT HERE USING Inverse Gaussian Dist
+```{r}
+# inv_simpson w/ inverse gaussian dist.
+inv_simpson_by_type_glm <- glm(Inv_Simpson_Index ~ Tipo, data = inv_simpson_df,
+                               family = inverse.gaussian(link = "1/mu^2"))
+summary(inv_simpson_by_type_glm)
+
+# no significant problems detected using Gamma dist!
+# all other tested dist threw errors w/ DHARMa
+simulationOutput_inv_simpson_by_type <- simulateResiduals(
+  fittedModel = inv_simpson_by_type_glm)
+plot(simulationOutput_inv_simpson_by_type)
+
+# Gaussian - quantile deviations detected - comb adjust - quant test sig
+# Binomial - error - y values must be b/ween 0:1
+# Gamma - deviation significant w/ outlier test but better than others
+# Inv Gaussian - works! need to load additional cran package SuppDists
+```
 
 ## plot how diversity indices vary across land types
 - these are pretty much identical regardless of index used
@@ -510,19 +570,46 @@ plot_inv_simpson
 ```
 
 
-## Compare diversity indices for harvested vs. unharvested sites
+# Compare diversity indices for harvested vs. unharvested sites
 
 do the same thing as above, using harvested, unharvested column
-- aovs across harvested, unharvested
+- glms across harvested, unharvested
+
+## sig higher shannon div in non-harvested sites
 ```{r}
-shannon_harvest_aov <- aov(Shannon_Index ~ harvested, data = shannon_df)
-summary(shannon_harvest_aov) # shannon - sig
+# using Gaussian dist.
+shannon_harvest_glm <- glm(Shannon_Index ~ harvested, data = shannon_df)
+summary(shannon_harvest_glm)
 
-simpson_harvest_aov <- aov(Simpson_Index ~ harvested, data = simpson_df)
-summary(simpson_harvest_aov) # simpson - sig
+# no issues with Gaussian dist
+simulationOutput_shannon_harvest <- simulateResiduals(
+  fittedModel = shannon_harvest_glm)
+plot(simulationOutput_shannon_harvest)
+```
 
-inv_simpson_harvest_aov <- aov(Inv_Simpson_Index ~ harvested, data = inv_simpson_df)
-summary(inv_simpson_harvest_aov) # inverse simpson - not sig
+## sig higher simpson div in non-harvested sites
+```{r}
+# using Gaussian dist.
+simpson_harvest_glm <- glm(Simpson_Index ~ harvested, data = simpson_df)
+summary(simpson_harvest_glm)
+
+# no issues with Gaussian dist
+simulationOutput_simpson_harvest <- simulateResiduals(
+  fittedModel = simpson_harvest_glm)
+plot(simulationOutput_simpson_harvest)
+```
+
+## no sig difference in inv_simpson div in harvested vs. non-harvested
+# HERE THE GAUSSIAN DIST WORKS FINE FOR INV_SIMPSON - WHY?!?!?!
+```{r}
+# using Gaussian dist.
+inv_simpson_harvest_glm <- glm(Inv_Simpson_Index ~ harvested, data = inv_simpson_df)
+summary(inv_simpson_harvest_glm)
+
+# no issues with Gaussian dist
+simulationOutput_inv_simpson_harvest <- simulateResiduals(
+  fittedModel = inv_simpson_harvest_glm)
+plot(simulationOutput_inv_simpson_harvest)
 ```
 
 now make figures for each
@@ -567,8 +654,6 @@ plot_inv_simpson_harvest <- ggplot(inv_simpson_df,
 plot_inv_simpson_harvest
 ```
 
-
-## NEXT STEP: RUN A POST-HOC TEST NEEDED FOR DIVERSITY INDICES
 
 
 
