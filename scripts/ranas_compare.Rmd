@@ -5,16 +5,28 @@ date: "3/6/24"
 output: word_document
 ---
 
+
+
+
 # COMPARE RICHNESS, ABUNDANCE, DIVERSITY, COMPOSITION ACROSS LANDUSE TYPES
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 This script will take processed data as input, run statistic tests and produce
 figures comparing the dependent variables (diversity, abundance, composition) of
 each landuse type broadly. Other scripts will explore the variation in these
 response variables w/in specific landuse types.
-
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
 
 
 load packages
@@ -23,6 +35,7 @@ library(labdsv)
 library(tidyverse)
 library(vegan)
 library(RColorBrewer)
+library(DHARMa)
 ```
 
 load data
@@ -67,18 +80,34 @@ my_theme <- function() {
 }
 ```
 
+## make a site_type dataframe - for downstream comparisons 
+```{r}
+site_type <- site_data %>% # create site_type df, just name of site and the type
+  filter(Transecto == 1) %>% # so just one row per site
+  select(Sitio, Tipo)
+
+# reorder factor levels now for downstream plotting
+site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
+
+# here add harvested column for later analyses
+site_type <- site_type %>%
+  mutate(harvested = case_when(
+    Tipo == "N" ~ "Yes",
+    Tipo == "C" ~ "Yes",
+    Tipo == "B" ~ "No",
+    Tipo == "V" ~ "No")
+    )
+```
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
+
 
 
 # RICHNESS ACROSS LANDUSE TYPES
 
-richness by type - just number of species
 
-## sig difference in species richness across landuse types
-- although B, V are higher!
+richness by type - just number of species
 ```{r}
 # group by site and type to retain type for ggplot
 richness_by_site <- new %>%
@@ -95,13 +124,29 @@ richness_summary <- richness_by_site %>%
             max_species_richness = max(no_species))
 ```
 
-run ANOVA on species richness across the 4 landuse types
-- p-value: 0.0372
-```{r}
-aov_richness <- aov(no_species ~ Tipo, data = richness_by_site)
 
-summary(aov_richness)
+## before selecting statistical test, need to look at dist. of richness by site
+- use Poisson dist. b/c using count data with no upper limit!
+```{r}
+(richness_by_site_hist <- ggplot(richness_by_site, aes(no_species)) +
+  geom_histogram())
 ```
+
+
+## run glm for species richness across landuse types, using Poisson dist.
+- bosque is sig different from nacional, viejo almost is!
+- NEED these final IDs to come back!
+```{r}
+richness_by_type_glm <- glm(no_species ~ Tipo, data = richness_by_site, 
+             family = poisson(link = "log"))
+summary(richness_by_type_glm)
+
+# here use DHARMa package to see if we're using the correct model
+# no significant problems detected!
+simulationOutput <- simulateResiduals(fittedModel = richness_by_type_glm)
+plot(simulationOutput)
+```
+
 
 plot species richness across landuse types
 ```{r}
@@ -159,22 +204,120 @@ plot_richness_by_harvest
 
 ## rarified species richness
 
-# NEED TO GO THROUGH rarefy_scrap to piece this piece together
+## NEED TO GO THROUGH rarefy_scrap to piece this piece together
+
+technique to estimate expected species richness
+- allows calculation of species richness for given number of samples based on
+  construction of rarefaction curves
+  
+issue is that the larger number of ind sampled, more species will be found
+- rarefaction curves created by randomly re-sampling pool of N samples multiple
+  times and then plotting average number of species found in each sample
+- rarefaction generates expected number of species in small collection of n ind
+  drawn from large pool of N samples
+- typically grow rapidly at first, then slowly as only rarest species remain to
+  be sampled
+
+## First need to convert data into 3 column format
+habitat, species, abundance for labdsv - use matrify!
+
+new_mat - three column format to use in labdsv package
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+```
+
+use rarefy and rarecurve functions
+```{r}
+# ind for each site
+site_abundance <- rowSums(new_mat)
+site_abundance
+
+# ind for each species
+species_abundance <- colSums(new_mat)
+species_abundance
+```
+
+## remove VC-C - use new_mat_abundant for rarefaction
+
+rarefaction uses smallest number of obs per sample to extrapolate expected
+number of all other samples only had that number of obs
+- VC-C only had 6!!! may want to proceed without this  in the future
+- next lowest is 22
+```{r}
+# including VC-C raremin is 6
+rare_min <- min(rowSums(new_mat))
+rare_min
+
+rare_species_richness <- rarefy(new_mat, rare_min)
+rare_species_richness
+
+# it won't allow us to override this to 22 (makes sense)
+# so will need to remove VC-C via row position
+new_mat_abundant <- new_mat %>%
+  filter(!row_number() %in% c(31))
+
+# let's see what happens with this as our raremin, and only using 31/32 sites
+rare_min_abundant <- min(rowSums(new_mat_abundant))
+rare_min_abundant
+
+# rarefy gives expected 'rarefied' number of species per site(not obs) if only 22 collected
+rare_species_abundant <- rarefy(new_mat_abundant, rare_min_abundant)
+rare_species_abundant
+```
+
+now join rare_species_abundant with site_type
+# need to make sure that they're the same length!
+
+## COME BACK HERE MAKE SURE MATCHES!!!!##
+```{r}
+# enframe rare_species_abundant which is currently a vector
+rare_species_abundant_df <- enframe(rare_species_abundant)
+
+# need to change name to Sitio to match for left_join
+# also change value to Shannon_Index
+colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
+
+# need to make sure that site_type matches length
+### HERE!!!!!!!! ####
+
+# join by "Sitio" to site_type
+#rare_species_abundant_df <- left_join(site_type, rare_species_abundant, by = "Sitio")
+```
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 
 
 # ABUNDANCE ACROSS LANDUSE TYPES
 
+
+
+
+
+
+
+
 number of new individuals 
 ## could eventually complicate this to look at pop size estimates?
-
 
 anova for abundance
 - not sig
 ```{r}
+# note this is same as site_abundance above
 abundance_by_site <- new %>%
   group_by(Sitio, Tipo) %>%
   count()
@@ -206,11 +349,30 @@ summary(aov_abundance)
 ```
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
 
 # DIVERSITY ACROSS LANDUSE TYPES
+
+
+
+
+
+
+
+
+
+
+
+
 
 Look at how different diversity metrics compare across landuse types
 
@@ -251,26 +413,8 @@ hist(shannon)
 ```
 
 
-## dataframe creation here to run statistical tests
-
-create site_type df and join to enframed shannon_df
+join enframed shannon_df to site_type
 ```{r}
-site_type <- site_data %>% # create site_type df, just name of site and the type
-  filter(Transecto == 1) %>% # so just one row per site
-  select(Sitio, Tipo)
-
-# reorder factor levels now for downstream plotting
-site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
-
-# here add harvested column for later analyses
-site_type <- site_type %>%
-  mutate(harvested = case_when(
-    Tipo == "N" ~ "Yes",
-    Tipo == "C" ~ "Yes",
-    Tipo == "B" ~ "No",
-    Tipo == "V" ~ "No")
-    )
-
 # enframe shannon which is currently a vector
 shannon_df <- enframe(shannon)
 
@@ -426,11 +570,37 @@ plot_inv_simpson_harvest
 
 ## NEXT STEP: RUN A POST-HOC TEST NEEDED FOR DIVERSITY INDICES
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # COMPOSITION ACROSS LANDUSE TYPES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Pair-wise dissimilarity
 
@@ -528,9 +698,6 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 ## CONTINUE HERE looking at elevation and group identity for NMDS
 
 ## NEXT STEPS: MAKE ORDINATION OFF GROUP, COMMUNITY DISSIMILARITY
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
 
 
 
