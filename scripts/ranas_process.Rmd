@@ -22,7 +22,7 @@ data_dir <- file.path(".", "data/processed_data")
 ranas - individual occurrence data across all sites
 ```{r}
 # read raw ranas data
-ranas <- read_csv("data/raw_data/ranas_02_27_24.csv")
+ranas <- read_csv("data/raw_data/ranas_03_26_24.csv")
 
 # format dates
 ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
@@ -85,7 +85,7 @@ write.csv(environmental, file = filepath)
 site_data - location, canopy cover, and miscellaneous data for each site
 ```{r}
 # site_data - change VC-V to VC-N
-site_data <- read_csv("data/raw_data/site_data.csv")
+site_data <- read_csv("data/raw_data/site_data_03_26_24.csv")
 
 # update VC-N
 site_data <- site_data %>%

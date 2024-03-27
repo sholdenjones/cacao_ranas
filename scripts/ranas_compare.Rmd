@@ -83,9 +83,9 @@ my_theme <- function() {
 
 ## make a site_type dataframe - for downstream comparisons 
 ```{r}
-site_type <- site_data %>% # create site_type df, just name of site and the type
+site_type <- site_data %>% # create site_type df - include name, elevation
   filter(Transecto == 1) %>% # so just one row per site
-  select(Sitio, Tipo)
+  select(Sitio, Tipo, Elevation)
 
 # reorder factor levels now for downstream plotting
 site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
@@ -105,16 +105,25 @@ site_type <- site_type %>%
 
 
 
+
+
 # RICHNESS ACROSS LANDUSE TYPES
+
+
 
 
 richness by type - just number of species
 ```{r}
-# group by site and type to retain type for ggplot
+# group by site
 richness_by_site <- new %>%
-  group_by(Sitio, Tipo) %>%
+  group_by(Sitio) %>%
   summarize(species = list(sort(unique(`Final_ID`))),
             no_species = n_distinct(`Final_ID`))
+
+
+# join with site_type to carry over tipo, elevation, harvested info
+richness_by_site <- left_join(richness_by_site, site_type, by = "Sitio")
+
 
 # Group by land_use and calculate species richness
 richness_summary <- richness_by_site %>%
@@ -134,11 +143,15 @@ richness_summary <- richness_by_site %>%
 ```
 
 
+# ALSO IMPORTANT TO INCLUDE ELEVATION AS RANDOM EFFECT!
+
+
 ## run glm for species richness across landuse types, using Poisson dist.
 - bosque is sig different from nacional, viejo almost is!
 - NEED these final IDs to come back!
 ```{r}
-richness_by_type_glm <- glm(no_species ~ Tipo, data = richness_by_site, 
+richness_by_type_glm <- glm(no_species ~ Tipo + (1|Elevation), 
+                            data = richness_by_site, 
              family = poisson(link = "log"))
 summary(richness_by_type_glm)
 
