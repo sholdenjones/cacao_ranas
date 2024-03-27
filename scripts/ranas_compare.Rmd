@@ -143,12 +143,13 @@ richness_summary <- richness_by_site %>%
 ```
 
 
-# ALSO IMPORTANT TO INCLUDE ELEVATION AS RANDOM EFFECT!
-
-
 ## run glm for species richness across landuse types, using Poisson dist.
-- bosque is sig different from nacional, viejo almost is!
-- NEED these final IDs to come back!
+
+
+## NO SIG difference b/ween richness of bosque / viejo w/ elevation as random effect
+- bosque is sig diff from nacional w/out elevation as random fact - viejo almost
+- bosque and viejo very close to being significant - need final IDs back!
+- using poisson dist in glm - DHARMa simulation shows that it works well
 ```{r}
 richness_by_type_glm <- glm(no_species ~ Tipo + (1|Elevation), 
                             data = richness_by_site, 
@@ -197,11 +198,15 @@ richness_by_site <- richness_by_site %>%
     )
 ```
 
-run glm for harvest on species richness using Poisson dist
-- sig difference between harvested and non-harvested areas
+## run glm for harvest on species richness using Poisson dist
+
+## SIG higher richness in non-harvested sites
+- using Poisson dist
+- including elevation as random effect in glm
 ```{r}
-richness_by_harvest_glm <- glm(no_species ~ harvested, data = richness_by_site, 
-             family = poisson(link = "log"))
+richness_by_harvest_glm <- glm(no_species ~ harvested + (1|Elevation), 
+                               data = richness_by_site, 
+                               family = poisson(link = "log"))
 summary(richness_by_harvest_glm)
 
 # within group deviation from uniformity n.s.
@@ -357,6 +362,8 @@ abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
 ```
 
 
+## ADD ELEVATION AS RANDOM EFFECT HERE
+
 ## run glm for abundance across landuse types, using Gaussian dist.
 
 DONT RUN POISSON HERE!
@@ -486,6 +493,15 @@ inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
 (inv_simpson_hist <- ggplot(inv_simpson_df, aes(Inv_Simpson_Index)) +
   geom_histogram(binwidth = .1))
 ```
+
+
+
+
+## ADD ELEVATION AS RANDOM EFFECT HERE
+
+
+
+
 
 ## Thought Poisson dist would work for these b/c not normal and from count data
 - woah! sig deviation for Poisson dist.
