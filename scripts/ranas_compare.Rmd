@@ -188,7 +188,17 @@ plot_richness_by_site
 ```
 
 
-## harvested vs. non-harvested for richness
+
+
+
+
+# RICHNESS ACROSS HARVESTED UNHARVESTED
+
+
+
+
+
+
 
 add harvest column (active plantation or not) to richness_by_site df
 ```{r}
@@ -203,7 +213,7 @@ richness_by_site <- richness_by_site %>%
 
 ## run glm for harvest on species richness using Poisson dist
 
-## SIG DIFF RICHNESS NON_HARVESTED SITES
+## SIG HIGHER RICHNESS IN NON_HARVESTED SITES
 
 higher richness in non-harvested sites
 - using Poisson dist
@@ -249,7 +259,12 @@ plot_richness_by_harvest
 
 
 
-## NEED TO GO THROUGH rarefy_scrap to piece this piece together
+
+
+
+
+
+## need to go through rarefy_scrap to piece this piece together
 
 technique to estimate expected species richness
 - allows calculation of species richness for given number of samples based on
@@ -263,7 +278,7 @@ issue is that the larger number of ind sampled, more species will be found
 - typically grow rapidly at first, then slowly as only rarest species remain to
   be sampled
 
-## First need to convert data into 3 column format
+## convert data into 3 column format
 habitat, species, abundance for labdsv - use matrify!
 
 new_mat - three column format to use in labdsv package
@@ -289,7 +304,11 @@ use rarefy and rarecurve functions
 # species_abundance
 ```
 
+
+
 ## remove VC-C - use new_mat_abundant for rarefaction
+
+
 
 rarefaction uses smallest number of obs per sample to extrapolate expected
 number of all other samples only had that number of obs
@@ -442,7 +461,7 @@ plot_abundance_by_site
 
 Look at how different diversity metrics compare across landuse types
 
-## First need to convert data into 3 column format
+## first need to convert data into 3 column format
 habitat, species, abundance for labdsv - use matrify!
 
 new_mat - three column format to use in labdsv package
@@ -515,25 +534,21 @@ inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
   geom_histogram(binwidth = .1))
 ```
 
+## use Gaussian dist for Shannon, Simpson, inv_Gaussian for Inv_Simpson
 
-
-
-## ADD ELEVATION AS RANDOM EFFECT HERE
-
-
-
-
-
-## Thought Poisson dist would work for these b/c not normal and from count data
+Thought Poisson dist would work for these b/c not normal and from count data
 - woah! sig deviation for Poisson dist.
 - quantile deviations detected
 - combined adjusted quantile test sig
-## But instead use Gaussian dist! 
 
-## sig higher shannon div in Bosque vs. other sites
+
+## SIG HIGHER SHANNON DIV IN BOSQUE
+
+significantly higher shannon div in Bosque vs. other sites
+- viejo is close
 ```{r}
 # shannon w/ Gaussian dist - all good
-shannon_by_type_glm <- glm(Shannon_Index ~ Tipo, data = shannon_df)
+shannon_by_type_glm <- glm(Shannon_Index ~ Tipo + (1|Elevation), data = shannon_df)
 summary(shannon_by_type_glm)
 
 # no significant problems detected using Gaussian dist!
@@ -542,10 +557,15 @@ simulationOutput_shannon_by_type <- simulateResiduals(
 plot(simulationOutput_shannon_by_type)
 ```
 
-## sig higher simpson div in Bosque vs. other sites
+
+## SIG HIGHER SIMPSON DIV IN BOSQUE
+
+sig higher simpson div in Bosque vs. other sites
+- viejo not particularly close
 ```{r}
 # simpson w/ Gaussian dist
-simpson_by_type_glm <- glm(Simpson_Index ~ Tipo, data = simpson_df)
+simpson_by_type_glm <- glm(Simpson_Index ~ Tipo + (1|Elevation), 
+                           data = simpson_df)
 summary(simpson_by_type_glm)
 
 # no significant problems detected using Gaussian dist!
@@ -554,24 +574,28 @@ simulationOutput_simpson_by_type <- simulateResiduals(
 plot(simulationOutput_simpson_by_type)
 ```
 
-## no sig difference in inv_simpson diversity across landtypes
-# NOTE THAT HERE USING Inverse Gaussian Dist
+## NO SIG DIFF IN INV_SIMPSON DIV ACROSS LANDUSE TYPES
+
+no sig difference in inv_simpson diversity across landtypes
+- Bosque .18, viejo not close
+
+NOTE THAT HERE USING INVERSE GAUSSIAN DIST
+- Gaussian - quantile deviations detected - comb adjust - quant test sig
+- Binomial - error - y values must be b/ween 0:1
+- Gamma - deviation significant w/ outlier test but better than others
+- Inv Gaussian - works! need to load additional cran package SuppDists
 ```{r}
 # inv_simpson w/ inverse gaussian dist.
-inv_simpson_by_type_glm <- glm(Inv_Simpson_Index ~ Tipo, data = inv_simpson_df,
+inv_simpson_by_type_glm <- glm(Inv_Simpson_Index ~ Tipo + (1|Elevation), 
+                               data = inv_simpson_df,
                                family = inverse.gaussian(link = "1/mu^2"))
 summary(inv_simpson_by_type_glm)
 
-# no significant problems detected using Gamma dist!
+# no significant problems detected using inverse Gaussian dist!
 # all other tested dist threw errors w/ DHARMa
 simulationOutput_inv_simpson_by_type <- simulateResiduals(
   fittedModel = inv_simpson_by_type_glm)
 plot(simulationOutput_inv_simpson_by_type)
-
-# Gaussian - quantile deviations detected - comb adjust - quant test sig
-# Binomial - error - y values must be b/ween 0:1
-# Gamma - deviation significant w/ outlier test but better than others
-# Inv Gaussian - works! need to load additional cran package SuppDists
 ```
 
 ## plot how diversity indices vary across land types
@@ -620,15 +644,38 @@ plot_inv_simpson
 ```
 
 
-# Compare diversity indices for harvested vs. unharvested sites
 
-do the same thing as above, using harvested, unharvested column
+
+
+
+
+
+
+
+
+# DIVERSITY ACROSS HARVEST, UNHARVESTED
+
+
+do the same thing as above, compare each index using harvested, unharvested column
 - glms across harvested, unharvested
 
-## sig higher shannon div in non-harvested sites
+
+
+
+## use Gaussian dist for Shannon, Simpson, Inv_Simpson
+NOTE THAT HERE THE GAUSSIAN DIST WORKS FINE FOR NIV_SIMPSON
+
+
+
+
+
+## SIG HIGHER SHANNON DIV IN NON-HARVESTED SITES
+
+check w/ interpretation of this glm summary
 ```{r}
 # using Gaussian dist.
-shannon_harvest_glm <- glm(Shannon_Index ~ harvested, data = shannon_df)
+shannon_harvest_glm <- glm(Shannon_Index ~ harvested + (1|Elevation), 
+                           data = shannon_df)
 summary(shannon_harvest_glm)
 
 # no issues with Gaussian dist
@@ -637,10 +684,14 @@ simulationOutput_shannon_harvest <- simulateResiduals(
 plot(simulationOutput_shannon_harvest)
 ```
 
-## sig higher simpson div in non-harvested sites
+
+## SIG HIGHER SIMPSON DIV IN NON-HARVESTED SITES
+
+check interpretation of this glm summary
 ```{r}
 # using Gaussian dist.
-simpson_harvest_glm <- glm(Simpson_Index ~ harvested, data = simpson_df)
+simpson_harvest_glm <- glm(Simpson_Index ~ harvested + (1|Elevation), 
+                           data = simpson_df)
 summary(simpson_harvest_glm)
 
 # no issues with Gaussian dist
@@ -649,11 +700,13 @@ simulationOutput_simpson_harvest <- simulateResiduals(
 plot(simulationOutput_simpson_harvest)
 ```
 
-## no sig difference in inv_simpson div in harvested vs. non-harvested
-# HERE THE GAUSSIAN DIST WORKS FINE FOR INV_SIMPSON - WHY?!?!?!
+## NO SIG DIFF IN IN_SIMPSON ACROSS HARVEST, NON-HARVEST
+
+check interpretation of this glm summary
 ```{r}
 # using Gaussian dist.
-inv_simpson_harvest_glm <- glm(Inv_Simpson_Index ~ harvested, data = inv_simpson_df)
+inv_simpson_harvest_glm <- glm(Inv_Simpson_Index ~ harvested + (1|Elevation), 
+                               data = inv_simpson_df)
 summary(inv_simpson_harvest_glm)
 
 # no issues with Gaussian dist
@@ -662,8 +715,8 @@ simulationOutput_inv_simpson_harvest <- simulateResiduals(
 plot(simulationOutput_inv_simpson_harvest)
 ```
 
-now make figures for each
-## aesthetically think about fill colors
+## make figures for each
+- aesthetically think about fill colors
 
 shannon_harvest
 ```{r}
@@ -737,7 +790,7 @@ plot_inv_simpson_harvest
 
 
 
-## Pair-wise dissimilarity
+## pair-wise dissimilarity
 
 Calculate pair-wise dissimilarity (distance) using vegdist
 - gower and bray-curtis are good in detecting underlying ecological gradients
@@ -757,10 +810,10 @@ dissimilarity analysis is good way to explore variability in community comp
 - but switching gears to look at rarefaction
 
 
-## Non-metric Multidimensional Scaling
+## nmds
 
 
-## need to reorder new_mat rows to allow nmds to draw borders of communities
+## reorder new_mat rows to allow nmds to draw borders of communities
 - goal is to represent info from multiple dimensions into a few, so can visualize
   and interpret.
 - so here, present the similarity of communities in 2-dimensional space
@@ -780,7 +833,7 @@ new_mat <- new_mat[new_order, ]
 
 
 
-## create NMDS plot and draw boundaries of landuse types
+## create nmds plot and draw boundaries of landuse types
 
 code from Peat Clark's vegan tutorial
 ```{r}
