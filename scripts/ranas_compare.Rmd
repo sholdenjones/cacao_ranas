@@ -46,10 +46,14 @@ load data
 ranas <- read_csv("data/processed_data/ranas_processed.csv")
 
 # remove '...1' column - not sure why this is being added
+# remove Tipo column - make left_joins earlier down below
 ranas <- ranas %>%
-  select(-...1)
+  select(-c(...1,Tipo))
 
 new <- read_csv("data/processed_data/new_processed.csv")
+
+new <- new %>%
+  select(-c(...1,Tipo))
 
 site_data <- read_csv("data/processed_data/site_data_processed.csv")
 ```
@@ -111,7 +115,7 @@ site_type <- site_type %>%
 
 
 
-
+## make richness_by_type df
 richness by type - just number of species
 ```{r}
 # group by site
@@ -120,10 +124,9 @@ richness_by_site <- new %>%
   summarize(species = list(sort(unique(`Final_ID`))),
             no_species = n_distinct(`Final_ID`))
 
-
 # join with site_type to carry over tipo, elevation, harvested info
-richness_by_site <- left_join(richness_by_site, site_type, by = "Sitio")
-
+richness_by_site <- richness_by_site %>%
+  left_join(site_type, by = "Sitio")
 
 # Group by land_use and calculate species richness
 richness_summary <- richness_by_site %>%
@@ -146,7 +149,7 @@ richness_summary <- richness_by_site %>%
 ## run glm for species richness across landuse types, using Poisson dist.
 
 
-## NO SIG difference b/ween richness of bosque / viejo w/ elevation as random effect
+## NO SIG DIFF IN RICHNESS ACROSS LANDUSE TYPES
 - bosque is sig diff from nacional w/out elevation as random fact - viejo almost
 - bosque and viejo very close to being significant - need final IDs back!
 - using poisson dist in glm - DHARMa simulation shows that it works well
@@ -200,7 +203,9 @@ richness_by_site <- richness_by_site %>%
 
 ## run glm for harvest on species richness using Poisson dist
 
-## SIG higher richness in non-harvested sites
+## SIG DIFF RICHNESS NON_HARVESTED SITES
+
+higher richness in non-harvested sites
 - using Poisson dist
 - including elevation as random effect in glm
 ```{r}
@@ -221,7 +226,8 @@ B+V have sig higher richness than N+C
 ## aesthetically would want to mix colors from previous plot
 ```{r}
 plot_richness_by_harvest <- ggplot(richness_by_site, 
-                                   aes(x = harvested, y = no_species, fill = harvested)) +
+                                   aes(x = harvested, 
+                                       y = no_species, fill = harvested)) +
   scale_x_discrete(labels = c(labels_harvest)) +
   geom_boxplot() +
   my_theme() +
@@ -231,7 +237,17 @@ plot_richness_by_harvest
 ```
 
 
-## rarified species richness
+
+
+
+
+
+# RAREFIED RICHNESS ACROSS LANDUSE TYPES
+
+
+
+
+
 
 ## NEED TO GO THROUGH rarefy_scrap to piece this piece together
 
@@ -252,25 +268,25 @@ habitat, species, abundance for labdsv - use matrify!
 
 new_mat - three column format to use in labdsv package
 ```{r}
-three_column <- new %>%
-  group_by(Sitio) %>%
-  count(`Final_ID`)
-
-# needs to be converted to data.frame!
-three_column <- data.frame(three_column)
-
-new_mat <- matrify(three_column)
+# three_column <- new %>%
+#   group_by(Sitio) %>%
+#   count(`Final_ID`)
+# 
+# # needs to be converted to data.frame!
+# three_column <- data.frame(three_column)
+# 
+# new_mat <- matrify(three_column)
 ```
 
 use rarefy and rarecurve functions
 ```{r}
-# ind for each site
-site_abundance <- rowSums(new_mat)
-site_abundance
-
-# ind for each species
-species_abundance <- colSums(new_mat)
-species_abundance
+# # ind for each site
+# site_abundance <- rowSums(new_mat)
+# site_abundance
+# 
+# # ind for each species
+# species_abundance <- colSums(new_mat)
+# species_abundance
 ```
 
 ## remove VC-C - use new_mat_abundant for rarefaction
@@ -281,43 +297,43 @@ number of all other samples only had that number of obs
 - next lowest is 22
 ```{r}
 # including VC-C raremin is 6
-rare_min <- min(rowSums(new_mat))
-rare_min
-
-rare_species_richness <- rarefy(new_mat, rare_min)
-rare_species_richness
-
-# it won't allow us to override this to 22 (makes sense)
-# so will need to remove VC-C via row position
-new_mat_abundant <- new_mat %>%
-  filter(!row_number() %in% c(31))
-
-# let's see what happens with this as our raremin, and only using 31/32 sites
-rare_min_abundant <- min(rowSums(new_mat_abundant))
-rare_min_abundant
-
-# rarefy gives expected 'rarefied' number of species per site(not obs) if only 22 collected
-rare_species_abundant <- rarefy(new_mat_abundant, rare_min_abundant)
-rare_species_abundant
+# rare_min <- min(rowSums(new_mat))
+# rare_min
+# 
+# rare_species_richness <- rarefy(new_mat, rare_min)
+# rare_species_richness
+# 
+# # it won't allow us to override this to 22 (makes sense)
+# # so will need to remove VC-C via row position
+# new_mat_abundant <- new_mat %>%
+#   filter(!row_number() %in% c(31))
+# 
+# # let's see what happens with this as our raremin, and only using 31/32 sites
+# rare_min_abundant <- min(rowSums(new_mat_abundant))
+# rare_min_abundant
+# 
+# # rarefy gives expected 'rarefied' number of species per site(not obs) if only 22 collected
+# rare_species_abundant <- rarefy(new_mat_abundant, rare_min_abundant)
+# rare_species_abundant
 ```
 
 now join rare_species_abundant with site_type
 ## need to make sure that they're the same length!
 
-## COME BACK HERE MAKE SURE MATCHES!!!!##
+## come back here make sure matches
 ```{r}
-# enframe rare_species_abundant which is currently a vector
-rare_species_abundant_df <- enframe(rare_species_abundant)
-
-# need to change name to Sitio to match for left_join
-# also change value to Shannon_Index
-colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
-
-# need to make sure that site_type matches length
-### HERE!!!!!!!! ####
-
-# join by "Sitio" to site_type
-#rare_species_abundant_df <- left_join(site_type, rare_species_abundant, by = "Sitio")
+# # enframe rare_species_abundant which is currently a vector
+# rare_species_abundant_df <- enframe(rare_species_abundant)
+# 
+# # need to change name to Sitio to match for left_join
+# # also change value to Shannon_Index
+# colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
+# 
+# # need to make sure that site_type matches length
+# ### HERE!!!!!!!! ####
+# 
+# # join by "Sitio" to site_type
+# #rare_species_abundant_df <- left_join(site_type, rare_species_abundant, by = "Sitio")
 ```
 
 
@@ -343,12 +359,16 @@ colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
 number of new individuals 
 ## could eventually complicate this to look at pop size estimates?
 
-abundance by site df
+## make abundance_by_site df
 ```{r}
 # note this is same as site_abundance above
 abundance_by_site <- new %>%
-  group_by(Sitio, Tipo) %>%
+  group_by(Sitio) %>%
   count()
+
+# join with site_type to carry over tipo, elevation, harvested info
+abundance_by_site <- abundance_by_site %>%
+  left_join(site_type, by = "Sitio")
 
 abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
 ```
@@ -362,18 +382,19 @@ abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
 ```
 
 
-## ADD ELEVATION AS RANDOM EFFECT HERE
 
-## run glm for abundance across landuse types, using Gaussian dist.
+## run glm for abundance across landuse types, using Gaussian dist. Elev rand eff
 
 DONT RUN POISSON HERE!
 - quantile deviations detected
 - combined adjusted quantile test significant
 
-There is no sig difference in abundance across landuse types
+## NO SIG DIFF IN ABUNDANCE ACROSS LANDUSE TYPES
+
+- elevation random effect
 ```{r}
 # default family dist is Gaussian
-abundance_by_type_glm <- glm(n ~ Tipo, data = abundance_by_site)
+abundance_by_type_glm <- glm(n ~ Tipo + (1|Elevation), data = abundance_by_site)
 summary(abundance_by_type_glm)
 
 # no significant problems detected w/Gaussian!
