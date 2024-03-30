@@ -83,3 +83,97 @@ visualization using rarecurve, for ggplot?
 # rarecurve for each site, would be nice to have for each type!
 rarecurve(new_mat_abundant, col = "blue", cex = 0.4)
 ```
+
+
+
+
+
+# COPY PASTE BACK FROM COMPARE_WORKING 3/29/24
+
+
+
+technique to estimate expected species richness
+- allows calculation of species richness for given number of samples based on
+  construction of rarefaction curves
+  
+issue is that the larger number of ind sampled, more species will be found
+- rarefaction curves created by randomly re-sampling pool of N samples multiple
+  times and then plotting average number of species found in each sample
+- rarefaction generates expected number of species in small collection of n ind
+  drawn from large pool of N samples
+- typically grow rapidly at first, then slowly as only rarest species remain to
+  be sampled
+
+## convert data into 3 column format
+habitat, species, abundance for labdsv - use matrify!
+
+new_mat - three column format to use in labdsv package
+```{r}
+# three_column <- new %>%
+#   group_by(Sitio) %>%
+#   count(`Final_ID`)
+# 
+# # needs to be converted to data.frame!
+# three_column <- data.frame(three_column)
+# 
+# new_mat <- matrify(three_column)
+```
+
+use rarefy and rarecurve functions
+```{r}
+# # ind for each site
+# site_abundance <- rowSums(new_mat)
+# site_abundance
+# 
+# # ind for each species
+# species_abundance <- colSums(new_mat)
+# species_abundance
+```
+
+
+
+
+rarefaction uses smallest number of obs per sample to extrapolate expected
+number of all other samples only had that number of obs
+- VC-C only had 6!!! may want to proceed without this  in the future
+- next lowest is 22
+```{r}
+# including VC-C raremin is 6
+# rare_min <- min(rowSums(new_mat))
+# rare_min
+# 
+# rare_species_richness <- rarefy(new_mat, rare_min)
+# rare_species_richness
+# 
+# # it won't allow us to override this to 22 (makes sense)
+# # so will need to remove VC-C via row position
+# new_mat_abundant <- new_mat %>%
+#   filter(!row_number() %in% c(31))
+# 
+# # let's see what happens with this as our raremin, and only using 31/32 sites
+# rare_min_abundant <- min(rowSums(new_mat_abundant))
+# rare_min_abundant
+# 
+# # rarefy gives expected 'rarefied' number of species per site(not obs) if only 22 collected
+# rare_species_abundant <- rarefy(new_mat_abundant, rare_min_abundant)
+# rare_species_abundant
+```
+
+now join rare_species_abundant with site_type
+## need to make sure that they're the same length!
+
+## come back here make sure matches
+```{r}
+# # enframe rare_species_abundant which is currently a vector
+# rare_species_abundant_df <- enframe(rare_species_abundant)
+# 
+# # need to change name to Sitio to match for left_join
+# # also change value to Shannon_Index
+# colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
+# 
+# # need to make sure that site_type matches length
+# ### HERE!!!!!!!! ####
+# 
+# # join by "Sitio" to site_type
+# #rare_species_abundant_df <- left_join(site_type, rare_species_abundant, by = "Sitio")
+```

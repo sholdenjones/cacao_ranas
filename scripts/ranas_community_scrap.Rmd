@@ -1,0 +1,114 @@
+---
+title: "ranas_community_scrap"
+author: "Holden Jones"
+date: "2024-03-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## pair-wise dissimilarity
+
+Calculate pair-wise dissimilarity (distance) using vegdist
+- gower and bray-curtis are good in detecting underlying ecological gradients
+```{r}
+par(mfrow = c(1, 2))
+bray <- vegdist(new_mat, "bray") 
+gower <- vegdist(new_mat, "gower")
+
+hist(bray, xlim = range(0.0,1.0))
+hist(gower, xlim = range(0.0,1.0))
+```
+
+## CONTINUE HERE
+dissimilarity analysis is good way to explore variability in community comp
+- next steps would be to do some sort of cluster analysis
+- see where community associations exist
+- but switching gears to look at rarefaction
+
+
+## nmds
+
+
+## reorder new_mat rows to allow nmds to draw borders of communities
+- goal is to represent info from multiple dimensions into a few, so can visualize
+  and interpret.
+- so here, present the similarity of communities in 2-dimensional space
+
+this is going to be ugly, but have triple checked against original new_mat
+```{r}
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+# Defined the desired order of rows: Shade, Sun, Abandoned, Forest
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+```
+
+
+
+## create nmds plot and draw boundaries of landuse types
+
+code from Peat Clark's vegan tutorial
+```{r}
+new_mat_NMDS=metaMDS(new_mat, k=2)
+# use community by species matrix from above
+
+plot(new_mat_NMDS)
+# here sites are open circles, species are red crosses
+
+# here help visualize by labeling specific sites and species
+
+# ordination plot function especially for congested plots
+ordiplot(new_mat_NMDS,type="n")
+# this function adds text or points to ordination plots
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+orditorp(new_mat_NMDS,display="sites",cex=1.25,air=0.01)
+```
+
+## use ordihull to help visualize different treatments unifying sites
+
+assign treatment levels per landuse type on reordered new_mat_reordered
+```{r}
+landuse_treatments=c(rep("Shade",12),
+                     rep("Sun",11), 
+                     rep("Abandoned",4), 
+                     rep("Forest",5))
+# ensure that labels are in correct order and have correct length
+
+ordiplot(new_mat_NMDS,type="n")
+
+ordihull(new_mat_NMDS,groups=landuse_treatments,draw="polygon",
+         col="grey90",label=F)
+
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+# here colors need to align with landuse_treatments from above!
+# of course need to use chocolate!
+orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
+                                            rep("chocolate1",11),
+                                            rep("lightgreen",4),
+                                            rep("darkgreen",5)), 
+         air=0.01,cex=1.25)
+```
+
+## very cool! see a lot of overlap in species simmilarity across landuse types
+- but, forest and abandoned sites are similar, minus 3 outliers (FLL-B, FLL-C, FCAT-B3)
+- these are also the lower elevation sites of the 9!
+- think that elevation will be an important thing to include when comparing communities!
+## CONTINUE HERE looking at elevation and group identity for NMDS
+
+## NEXT STEPS: MAKE ORDINATION OFF GROUP, COMMUNITY DISSIMILARITY
+
+
+
+
+

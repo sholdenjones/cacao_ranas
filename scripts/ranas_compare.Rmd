@@ -40,25 +40,33 @@ library(SuppDists) # needed for assessing additional dist fits
 ```
 
 load data
-## weird that dfs are of different lengths, why are columns getting added randomly?. Also note that ranas is a tbl_df and new is spec_tbl_df despite being created from ranas
-
 ```{r, include=FALSE}
 ranas <- read_csv("data/processed_data/ranas_processed.csv")
-
-# remove '...1' column - not sure why this is being added
-# remove Tipo column - make left_joins earlier down below
-ranas <- ranas %>%
-  select(-c(...1,Tipo))
+ranas <- as_tibble(ranas)
 
 new <- read_csv("data/processed_data/new_processed.csv")
-
-new <- new %>%
-  select(-c(...1,Tipo))
+new <- as_tibble(new)
 
 site_data <- read_csv("data/processed_data/site_data_processed.csv")
+site_data <- as_tibble(site_data)
+
+site_type <- read_csv("data/processed_data/site_type_processed.csv")
+site_type <- as_tibble(site_type)
+
+richness_by_site <- read_csv(
+  "data/processed_data/richness_by_site_processed.csv")
+richness_by_site <- as_tibble(richness_by_site)
+
+abundance_by_site <- read_csv(
+  "data/processed_data/abundance_by_site_processed.csv")
+abundance_by_site <- as_tibble(abundance_by_site)
+
+diversity_by_site <- read_csv(
+  "data/processed_data/diversity_by_site_processed.csv")
+diversity_by_site <- as_tibble(diversity_by_site)
 ```
 
-define a consistent palet, labels, and theme to be used in multiple figures
+define a consistent palet, labels, and theme to be used in figures
 ## still would be nice to have palet for harvested comparison
 ```{r}
 # palet for comparisons of all 4 site types
@@ -85,24 +93,9 @@ my_theme <- function() {
 }
 ```
 
-## make a site_type dataframe - for downstream comparisons 
-```{r}
-site_type <- site_data %>% # create site_type df - include name, elevation
-  filter(Transecto == 1) %>% # so just one row per site
-  select(Sitio, Tipo, Elevation)
 
-# reorder factor levels now for downstream plotting
-site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
 
-# here add harvested column for later analyses
-site_type <- site_type %>%
-  mutate(harvested = case_when(
-    Tipo == "N" ~ "Yes",
-    Tipo == "C" ~ "Yes",
-    Tipo == "B" ~ "No",
-    Tipo == "V" ~ "No")
-    )
-```
+
 
 
 
@@ -115,27 +108,10 @@ site_type <- site_type %>%
 
 
 
-## make richness_by_type df
-richness by type - just number of species
-```{r}
-# group by site
-richness_by_site <- new %>%
-  group_by(Sitio) %>%
-  summarize(species = list(sort(unique(`Final_ID`))),
-            no_species = n_distinct(`Final_ID`))
 
-# join with site_type to carry over tipo, elevation, harvested info
-richness_by_site <- richness_by_site %>%
-  left_join(site_type, by = "Sitio")
 
-# Group by land_use and calculate species richness
-richness_summary <- richness_by_site %>%
-  group_by(Tipo) %>%
-  summarize(mean_species_richness = mean(no_species),
-            median_species_richness = median(no_species),
-            min_species_richness = min(no_species),
-            max_species_richness = max(no_species))
-```
+
+
 
 
 ## before selecting statistical test, need to look at dist. of richness by site
@@ -200,17 +176,6 @@ plot_richness_by_site
 
 
 
-add harvest column (active plantation or not) to richness_by_site df
-```{r}
-richness_by_site <- richness_by_site %>%
-  mutate(harvested = case_when( # add harvested column
-    Tipo == "N" ~ "Yes",
-    Tipo == "C" ~ "Yes",
-    Tipo == "B" ~ "No",
-    Tipo == "V" ~ "No")
-    )
-```
-
 ## run glm for harvest on species richness using Poisson dist
 
 ## SIG HIGHER RICHNESS IN NON_HARVESTED SITES
@@ -255,108 +220,8 @@ plot_richness_by_harvest
 # RAREFIED RICHNESS ACROSS LANDUSE TYPES
 
 
-
-
-
-
-
-
-
-
-
-## need to go through rarefy_scrap to piece this piece together
-
-technique to estimate expected species richness
-- allows calculation of species richness for given number of samples based on
-  construction of rarefaction curves
-  
-issue is that the larger number of ind sampled, more species will be found
-- rarefaction curves created by randomly re-sampling pool of N samples multiple
-  times and then plotting average number of species found in each sample
-- rarefaction generates expected number of species in small collection of n ind
-  drawn from large pool of N samples
-- typically grow rapidly at first, then slowly as only rarest species remain to
-  be sampled
-
-## convert data into 3 column format
-habitat, species, abundance for labdsv - use matrify!
-
-new_mat - three column format to use in labdsv package
-```{r}
-# three_column <- new %>%
-#   group_by(Sitio) %>%
-#   count(`Final_ID`)
-# 
-# # needs to be converted to data.frame!
-# three_column <- data.frame(three_column)
-# 
-# new_mat <- matrify(three_column)
-```
-
-use rarefy and rarecurve functions
-```{r}
-# # ind for each site
-# site_abundance <- rowSums(new_mat)
-# site_abundance
-# 
-# # ind for each species
-# species_abundance <- colSums(new_mat)
-# species_abundance
-```
-
-
-
-## remove VC-C - use new_mat_abundant for rarefaction
-
-
-
-rarefaction uses smallest number of obs per sample to extrapolate expected
-number of all other samples only had that number of obs
-- VC-C only had 6!!! may want to proceed without this  in the future
-- next lowest is 22
-```{r}
-# including VC-C raremin is 6
-# rare_min <- min(rowSums(new_mat))
-# rare_min
-# 
-# rare_species_richness <- rarefy(new_mat, rare_min)
-# rare_species_richness
-# 
-# # it won't allow us to override this to 22 (makes sense)
-# # so will need to remove VC-C via row position
-# new_mat_abundant <- new_mat %>%
-#   filter(!row_number() %in% c(31))
-# 
-# # let's see what happens with this as our raremin, and only using 31/32 sites
-# rare_min_abundant <- min(rowSums(new_mat_abundant))
-# rare_min_abundant
-# 
-# # rarefy gives expected 'rarefied' number of species per site(not obs) if only 22 collected
-# rare_species_abundant <- rarefy(new_mat_abundant, rare_min_abundant)
-# rare_species_abundant
-```
-
-now join rare_species_abundant with site_type
-## need to make sure that they're the same length!
-
-## come back here make sure matches
-```{r}
-# # enframe rare_species_abundant which is currently a vector
-# rare_species_abundant_df <- enframe(rare_species_abundant)
-# 
-# # need to change name to Sitio to match for left_join
-# # also change value to Shannon_Index
-# colnames(rare_species_abundant_df) <- c("Sitio","Shannon_Index")
-# 
-# # need to make sure that site_type matches length
-# ### HERE!!!!!!!! ####
-# 
-# # join by "Sitio" to site_type
-# #rare_species_abundant_df <- left_join(site_type, rare_species_abundant, by = "Sitio")
-```
-
-
-
+need to go through rarefy_scrap to piece this piece together
+- use Chao iNEXT package
 
 
 
@@ -372,25 +237,10 @@ now join rare_species_abundant with site_type
 
 
 
+here just simply number of new individuals 
+- could eventually complicate this to look at pop size estimates?
 
 
-
-number of new individuals 
-## could eventually complicate this to look at pop size estimates?
-
-## make abundance_by_site df
-```{r}
-# note this is same as site_abundance above
-abundance_by_site <- new %>%
-  group_by(Sitio) %>%
-  count()
-
-# join with site_type to carry over tipo, elevation, harvested info
-abundance_by_site <- abundance_by_site %>%
-  left_join(site_type, by = "Sitio")
-
-abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
-```
 
 
 ## before selecting statistical test, need to look at dist. of abundance by site
@@ -452,85 +302,21 @@ plot_abundance_by_site
 
 
 
-
-
-
-
-
-
-
 Look at how different diversity metrics compare across landuse types
-
-## first need to convert data into 3 column format
-habitat, species, abundance for labdsv - use matrify!
-
-new_mat - three column format to use in labdsv package
-```{r}
-three_column <- new %>%
-  group_by(Sitio) %>%
-  count(`Final_ID`)
-
-# needs to be converted to data.frame!
-three_column <- data.frame(three_column)
-
-new_mat <- matrify(three_column)
-```
-
-
-## Diversity Indices
-
-
-use 3 column format to get diversity indices for each site!
-```{r}
-shannon <- diversity(new_mat, index = "shannon")
-simpson <- diversity(new_mat, index = "simpson")
-inv_simpson <- diversity(new_mat, index = "invsimpson")
-```
-
-join enframed shannon_df to site_type
-```{r}
-# enframe shannon which is currently a vector
-shannon_df <- enframe(shannon)
-
-# need to change name to Sitio in shannon_df to match for left_join
-# also change value to Shannon_Index
-colnames(shannon_df) <- c("Sitio","Shannon_Index")
-
-# join by "Sitio"
-shannon_df <- left_join(site_type, shannon_df, by = "Sitio")
-```
-
-do the same thing for simpson_df
-```{r}
-simpson_df <- enframe(simpson)
-
-colnames(simpson_df) <- c("Sitio","Simpson_Index")
-
-simpson_df <- left_join(site_type, simpson_df, by = "Sitio")
-```
-
-and inverse simpson_df
-```{r}
-inv_simpson_df <- enframe(inv_simpson)
-
-colnames(inv_simpson_df) <- c("Sitio","Inv_Simpson_Index")
-
-inv_simpson_df <- left_join(site_type, inv_simpson_df, by = "Sitio")
-```
 
 
 ## look at dist of diversity metrics
 ```{r}
 # shannon - clearly not normal dist! 
-(shannon_hist <- ggplot(shannon_df, aes(Shannon_Index)) +
+(shannon_hist <- ggplot(diversity_by_site, aes(Shannon_Index)) +
   geom_histogram(binwidth = .05))
 
 # simpson - clearly not normal dist! 
-(simpson_hist <- ggplot(simpson_df, aes(Simpson_Index)) +
+(simpson_hist <- ggplot(diversity_by_site, aes(Simpson_Index)) +
   geom_histogram(binwidth = .05))
 
 # inv_simpson - clearly not normal dist! 
-(inv_simpson_hist <- ggplot(inv_simpson_df, aes(Inv_Simpson_Index)) +
+(inv_simpson_hist <- ggplot(diversity_by_site, aes(Inv_Simpson_Index)) +
   geom_histogram(binwidth = .1))
 ```
 
@@ -548,7 +334,8 @@ significantly higher shannon div in Bosque vs. other sites
 - viejo is close
 ```{r}
 # shannon w/ Gaussian dist - all good
-shannon_by_type_glm <- glm(Shannon_Index ~ Tipo + (1|Elevation), data = shannon_df)
+shannon_by_type_glm <- glm(Shannon_Index ~ Tipo + (1|Elevation), 
+                           data = diversity_by_site)
 summary(shannon_by_type_glm)
 
 # no significant problems detected using Gaussian dist!
@@ -565,7 +352,7 @@ sig higher simpson div in Bosque vs. other sites
 ```{r}
 # simpson w/ Gaussian dist
 simpson_by_type_glm <- glm(Simpson_Index ~ Tipo + (1|Elevation), 
-                           data = simpson_df)
+                           data = diversity_by_site)
 summary(simpson_by_type_glm)
 
 # no significant problems detected using Gaussian dist!
@@ -587,7 +374,7 @@ NOTE THAT HERE USING INVERSE GAUSSIAN DIST
 ```{r}
 # inv_simpson w/ inverse gaussian dist.
 inv_simpson_by_type_glm <- glm(Inv_Simpson_Index ~ Tipo + (1|Elevation), 
-                               data = inv_simpson_df,
+                               data = diversity_by_site,
                                family = inverse.gaussian(link = "1/mu^2"))
 summary(inv_simpson_by_type_glm)
 
@@ -603,7 +390,7 @@ plot(simulationOutput_inv_simpson_by_type)
 
 shannon
 ```{r}
-plot_shannon <- ggplot(shannon_df, 
+plot_shannon <- ggplot(diversity_by_site, 
                        aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
@@ -617,7 +404,7 @@ plot_shannon
 
 simpson
 ```{r}
-plot_simpson <- ggplot(simpson_df, 
+plot_simpson <- ggplot(diversity_by_site, 
                        aes(x = Tipo, y = Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
@@ -631,7 +418,7 @@ plot_simpson
 
 inv simpson
 ```{r}
-plot_inv_simpson <- ggplot(inv_simpson_df, 
+plot_inv_simpson <- ggplot(diversity_by_site, 
                            aes(x = Tipo, y = Inv_Simpson_Index, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) +
@@ -663,7 +450,7 @@ do the same thing as above, compare each index using harvested, unharvested colu
 
 
 ## use Gaussian dist for Shannon, Simpson, Inv_Simpson
-NOTE THAT HERE THE GAUSSIAN DIST WORKS FINE FOR NIV_SIMPSON
+NOTE THAT HERE THE GAUSSIAN DIST WORKS FINE FOR INV_SIMPSON
 
 
 
@@ -675,7 +462,7 @@ check w/ interpretation of this glm summary
 ```{r}
 # using Gaussian dist.
 shannon_harvest_glm <- glm(Shannon_Index ~ harvested + (1|Elevation), 
-                           data = shannon_df)
+                           data = diversity_by_site)
 summary(shannon_harvest_glm)
 
 # no issues with Gaussian dist
@@ -691,7 +478,7 @@ check interpretation of this glm summary
 ```{r}
 # using Gaussian dist.
 simpson_harvest_glm <- glm(Simpson_Index ~ harvested + (1|Elevation), 
-                           data = simpson_df)
+                           data = diversity_by_site)
 summary(simpson_harvest_glm)
 
 # no issues with Gaussian dist
@@ -706,7 +493,7 @@ check interpretation of this glm summary
 ```{r}
 # using Gaussian dist.
 inv_simpson_harvest_glm <- glm(Inv_Simpson_Index ~ harvested + (1|Elevation), 
-                               data = inv_simpson_df)
+                               data = diversity_by_site)
 summary(inv_simpson_harvest_glm)
 
 # no issues with Gaussian dist
@@ -720,7 +507,7 @@ plot(simulationOutput_inv_simpson_harvest)
 
 shannon_harvest
 ```{r}
-plot_shannon_harvest <- ggplot(shannon_df, 
+plot_shannon_harvest <- ggplot(diversity_by_site, 
                                aes(x = harvested, y = Shannon_Index, 
                                    fill = harvested)) +
   geom_boxplot() +
@@ -733,7 +520,7 @@ plot_shannon_harvest
 
 simpson_harvest
 ```{r}
-plot_simpson_harvest <- ggplot(simpson_df, 
+plot_simpson_harvest <- ggplot(diversity_by_site, 
                                aes(x = harvested, y = Simpson_Index, 
                                    fill = harvested)) +
   geom_boxplot() +
@@ -746,7 +533,7 @@ plot_simpson_harvest
 
 inv_simpson_harvest
 ```{r}
-plot_inv_simpson_harvest <- ggplot(inv_simpson_df, 
+plot_inv_simpson_harvest <- ggplot(diversity_by_site, 
                                aes(x = harvested, y = Inv_Simpson_Index, 
                                    fill = harvested)) +
   geom_boxplot() +
@@ -760,134 +547,6 @@ plot_inv_simpson_harvest
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# COMPOSITION ACROSS LANDUSE TYPES....
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## pair-wise dissimilarity
-
-Calculate pair-wise dissimilarity (distance) using vegdist
-- gower and bray-curtis are good in detecting underlying ecological gradients
-```{r}
-par(mfrow = c(1, 2))
-bray <- vegdist(new_mat, "bray") 
-gower <- vegdist(new_mat, "gower")
-
-hist(bray, xlim = range(0.0,1.0))
-hist(gower, xlim = range(0.0,1.0))
-```
-
-## CONTINUE HERE
-dissimilarity analysis is good way to explore variability in community comp
-- next steps would be to do some sort of cluster analysis
-- see where community associations exist
-- but switching gears to look at rarefaction
-
-
-## nmds
-
-
-## reorder new_mat rows to allow nmds to draw borders of communities
-- goal is to represent info from multiple dimensions into a few, so can visualize
-  and interpret.
-- so here, present the similarity of communities in 2-dimensional space
-
-this is going to be ugly, but have triple checked against original new_mat
-```{r}
-new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
-               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
-               9,13,14,17, # abandoned (n=4)
-               6,10,11,12,15 # forest (n=5)
-               )
-# Defined the desired order of rows: Shade, Sun, Abandoned, Forest
-
-# Reorder rows
-new_mat <- new_mat[new_order, ]
-```
-
-
-
-## create nmds plot and draw boundaries of landuse types
-
-code from Peat Clark's vegan tutorial
-```{r}
-new_mat_NMDS=metaMDS(new_mat, k=2)
-# use community by species matrix from above
-
-plot(new_mat_NMDS)
-# here sites are open circles, species are red crosses
-
-# here help visualize by labeling specific sites and species
-
-# ordination plot function especially for congested plots
-ordiplot(new_mat_NMDS,type="n")
-# this function adds text or points to ordination plots
-orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
-
-orditorp(new_mat_NMDS,display="sites",cex=1.25,air=0.01)
-```
-
-## use ordihull to help visualize different treatments unifying sites
-
-assign treatment levels per landuse type on reordered new_mat_reordered
-```{r}
-landuse_treatments=c(rep("Shade",12),
-                     rep("Sun",11), 
-                     rep("Abandoned",4), 
-                     rep("Forest",5))
-# ensure that labels are in correct order and have correct length
-
-ordiplot(new_mat_NMDS,type="n")
-
-ordihull(new_mat_NMDS,groups=landuse_treatments,draw="polygon",
-         col="grey90",label=F)
-
-orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
-
-# here colors need to align with landuse_treatments from above!
-# of course need to use chocolate!
-orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
-                                            rep("chocolate1",11),
-                                            rep("lightgreen",4),
-                                            rep("darkgreen",5)), 
-         air=0.01,cex=1.25)
-```
-
-## very cool! see a lot of overlap in species simmilarity across landuse types
-- but, forest and abandoned sites are similar, minus 3 outliers (FLL-B, FLL-C, FCAT-B3)
-- these are also the lower elevation sites of the 9!
-- think that elevation will be an important thing to include when comparing communities!
-## CONTINUE HERE looking at elevation and group identity for NMDS
-
-## NEXT STEPS: MAKE ORDINATION OFF GROUP, COMMUNITY DISSIMILARITY
-
-
-
+# COMPOSITION ACROSS LANDUSE TYPES
 
 

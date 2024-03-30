@@ -1,14 +1,16 @@
 
-# Processing raw data
+# Processing data
 
 Use this script to perform small tasks on raw data to make it tidier, 
 easier to work with. Output is processed data to be used in analysis scripts.
 
 
---------------------------------------------------------------------------------
-load packages
+
+# load packages
 ```{r}
 library(tidyverse)
+library(vegan)
+library(labdsv)
 ```
 
 define file path for processed outputs
@@ -18,7 +20,9 @@ data_dir <- file.path(".", "data/processed_data")
 ```
 
 
---------------------------------------------------------------------------------
+
+# ranas
+
 ranas - individual occurrence data across all sites
 ```{r}
 # read raw ranas data
@@ -43,11 +47,12 @@ filename <- "ranas_processed.csv"
 filepath <- file.path(data_dir, filename)
 
 # write df to csv
-write.csv(ranas, file = filepath)
+write_csv(ranas, file = filepath)
 ```
 
 
---------------------------------------------------------------------------------
+# new
+
 new - only new individuals from ranas dataset
 ```{r}
 # make new with only new ind
@@ -57,11 +62,13 @@ new <- ranas %>%
 # output
 filename <- "new_processed.csv"
 filepath <- file.path(data_dir, filename)
-write.csv(new, file = filepath)
+write_csv(new, file = filepath)
 ```
 
 
---------------------------------------------------------------------------------
+
+# environmental
+
 environmental - environmental data for each sampling event
 ```{r}
 # environmental data - change VC-V to VC-N
@@ -78,10 +85,12 @@ environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
 # output
 filename <- "environmental_processed.csv"
 filepath <- file.path(data_dir, filename)
-write.csv(environmental, file = filepath)
+write_csv(environmental, file = filepath)
 ```
 
---------------------------------------------------------------------------------
+
+# site_data
+
 site_data - location, canopy cover, and miscellaneous data for each site
 ```{r}
 # site_data - change VC-V to VC-N
@@ -96,7 +105,134 @@ site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
 # output
 filename <- "site_data_processed.csv"
 filepath <- file.path(data_dir, filename)
-write.csv(site_data, file = filepath)
+write_csv(site_data, file = filepath)
 ```
+
+# site_type
+
+site_type - retains elevation, tipo data
+```{r}
+site_type <- site_data %>% # create site_type df - include name, elevation
+  filter(Transecto == 1) %>% # so just one row per site
+  select(Sitio, Tipo, Elevation)
+
+# reorder factor levels now for downstream plotting
+site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
+
+# here add harvested column for later analyses
+site_type <- site_type %>%
+  mutate(harvested = case_when(
+    Tipo == "N" ~ "Yes",
+    Tipo == "C" ~ "Yes",
+    Tipo == "B" ~ "No",
+    Tipo == "V" ~ "No")
+    )
+
+# output
+filename <- "site_type_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(site_type, file = filepath)
+```
+
+
+
+# richness_by_site
+richness by site - just number of species
+```{r}
+# group by site
+richness_by_site <- new %>%
+  group_by(Sitio) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+# join with site_type to carry over tipo, elevation, harvested info
+richness_by_site <- richness_by_site %>%
+  left_join(site_type, by = "Sitio")
+
+# Group by land_use and calculate species richness
+richness_summary <- richness_by_site %>%
+  group_by(Tipo) %>%
+  summarize(mean_species_richness = mean(no_species),
+            median_species_richness = median(no_species),
+            min_species_richness = min(no_species),
+            max_species_richness = max(no_species))
+
+# output
+filename <- "richness_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(richness_by_site, file = filepath)
+```
+
+
+
+# abundance_by_site
+
+just number of ind
+```{r}
+# note this is same as site_abundance above
+abundance_by_site <- new %>%
+  group_by(Sitio) %>%
+  count()
+
+# join with site_type to carry over tipo, elevation, harvested info
+abundance_by_site <- abundance_by_site %>%
+  left_join(site_type, by = "Sitio")
+
+abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
+
+# output
+filename <- "abundance_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(abundance_by_site, file = filepath)
+```
+
+
+
+
+# diversity_by_site
+
+
+first need to convert data into 3 column format
+habitat, species, abundance for labdsv - use matrify!
+
+new_mat - three column format to use in labdsv package
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+```
+
+
+
+use 3 column format to get diversity indices for each site using vegan package
+
+diversity_by_site - each major diversity metric
+```{r}
+# use diversity function from vegan package
+diversity_by_site <- site_type %>%
+    mutate(Shannon_Index = diversity(new_mat, index = "shannon")) %>%
+    mutate(Simpson_Index = diversity(new_mat, index = "simpson")) %>%
+    mutate(Inv_Simpson_Index = diversity(new_mat, index = "invsimpson"))
+
+# output
+filename <- "diversity_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(diversity_by_site, file = filepath)
+```
+
+
+
+
+
+
+
+
+
+
 
 
