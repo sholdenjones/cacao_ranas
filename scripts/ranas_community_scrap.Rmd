@@ -106,7 +106,12 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 - think that elevation will be an important thing to include when comparing communities!
 ## CONTINUE HERE looking at elevation and group identity for NMDS
 
+
+
+
 ## NEXT STEPS: MAKE ORDINATION OFF GROUP, COMMUNITY DISSIMILARITY
+
+
 
 
 

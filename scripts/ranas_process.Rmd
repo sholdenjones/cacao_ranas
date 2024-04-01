@@ -1,9 +1,8 @@
 
-# Processing data
+# PROCESSING DATA
 
 Use this script to perform small tasks on raw data to make it tidier, 
 easier to work with. Output is processed data to be used in analysis scripts.
-
 
 
 # load packages
@@ -18,7 +17,6 @@ define file path for processed outputs
 # this will be consistent for each output in this script
 data_dir <- file.path(".", "data/processed_data")
 ```
-
 
 
 # ranas
@@ -66,7 +64,6 @@ write_csv(new, file = filepath)
 ```
 
 
-
 # environmental
 
 environmental - environmental data for each sampling event
@@ -108,6 +105,7 @@ filepath <- file.path(data_dir, filename)
 write_csv(site_data, file = filepath)
 ```
 
+
 # site_type
 
 site_type - retains elevation, tipo data
@@ -133,7 +131,6 @@ filename <- "site_type_processed.csv"
 filepath <- file.path(data_dir, filename)
 write_csv(site_type, file = filepath)
 ```
-
 
 
 # richness_by_site
@@ -164,7 +161,6 @@ write_csv(richness_by_site, file = filepath)
 ```
 
 
-
 # abundance_by_site
 
 just number of ind
@@ -187,15 +183,16 @@ write_csv(abundance_by_site, file = filepath)
 ```
 
 
+# new_mat
 
-
-# diversity_by_site
-
+## NEED TO REVIEW HERE - HOW IS NEW_MAT GETTING EXPORTED? 
+## NEED TO RETAIN ROW NAMES SOMEHOW FOR VISUALIZATION WITH VEGAN PACKAGE
 
 first need to convert data into 3 column format
 habitat, species, abundance for labdsv - use matrify!
 
 new_mat - three column format to use in labdsv package
+- reorder rows to allow NMDS to draw by site type
 ```{r}
 three_column <- new %>%
   group_by(Sitio) %>%
@@ -205,9 +202,28 @@ three_column <- new %>%
 three_column <- data.frame(three_column)
 
 new_mat <- matrify(three_column)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+
+# output
+filename <- "new_mat_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(new_mat, file = filepath)
+
+# may need to change the write_csv to retain row names in export matrix?
+# write.csv(new_mat, file = filepath, row.names = TRUE)
 ```
 
 
+# diversity_by_site
 
 use 3 column format to get diversity indices for each site using vegan package
 

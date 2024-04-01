@@ -39,6 +39,8 @@ library(DHARMa) # for assessing model fit
 library(SuppDists) # needed for assessing additional dist fits
 ```
 
+
+## LOOK HERE TO REVIEW IMPORT OF NEW_MAT - MAYBE DO MATRIX INSTEAD OF TIBBLE?
 load data
 ```{r, include=FALSE}
 ranas <- read_csv("data/processed_data/ranas_processed.csv")
@@ -60,6 +62,12 @@ richness_by_site <- as_tibble(richness_by_site)
 abundance_by_site <- read_csv(
   "data/processed_data/abundance_by_site_processed.csv")
 abundance_by_site <- as_tibble(abundance_by_site)
+
+new_mat <- read_csv(
+  "data/processed_data/new_mat_processed.csv")
+new_mat <- as_tibble(new_mat)
+
+# may be running into issues above with new_mat, perhaps convert to matrix?
 
 diversity_by_site <- read_csv(
   "data/processed_data/diversity_by_site_processed.csv")
@@ -548,5 +556,85 @@ plot_inv_simpson_harvest
 
 
 # COMPOSITION ACROSS LANDUSE TYPES
+
+
+
+
+
+Variety of ways to look at this, can't do all of them!
+- NMDS - more for visualizing differences - start here
+- Bray-Curtiss Dissimilarity Index - quantifies dissimilarity - 0:1 (same:diff)
+  - this one preferred b/c incorporates species abundances
+- Jaccard Similarity Index - doesn't incorporate species abundances
+- Analysis of similarities for statistics
+
+
+## create nmds plot and draw boundaries of landuse types
+
+## WHY ARE NUMBERS INSTEAD OF SITES SHOWING?
+```{r}
+# assign treatment levels per landuse type on reordered new_mat_reordered
+landuse_treatments=c(rep("Shade",12),
+                     rep("Sun",11), 
+                     rep("Abandoned",4), 
+                     rep("Forest",5))
+# ensure that labels are in correct order and have correct length
+
+# use community by species matrix
+new_mat_NMDS = metaMDS(new_mat, k = 2)
+
+# sites are open circles, species are red crosses
+plot(new_mat_NMDS)
+
+# help visualize by labeling specific sites and species
+
+# ordination plot function especially for congested plots
+ordiplot(new_mat_NMDS,type="n")
+# this function adds text or points to ordination plots
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+orditorp(new_mat_NMDS,display="sites",cex=1.25,air=0.01)
+
+ordiplot(new_mat_NMDS,type="n")
+
+ordihull(new_mat_NMDS,groups=landuse_treatments,draw="polygon",
+         col="grey90",label=F)
+
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+# here colors need to align with landuse_treatments from above!
+# of course need to use chocolate!
+orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
+                                            rep("chocolate1",11),
+                                            rep("lightgreen",4),
+                                            rep("darkgreen",5)), 
+         air=0.01,cex=1.25)
+```
+
+
+## calculate Bray-Curtis Index
+
+- maybe move this to ranas_process actually! 
+
+## WHY ARENT ROW NAMES BEING USED? HEATMAP UNINTELLIGBLE
+
+```{r}
+# Step 1: Calculate Bray-Curtis distance
+bray_matrix <- vegdist(new_mat, method="bray")
+
+# Step 2: Convert distance matrix to percentage similarity
+# Convert distances to similarities (1 - distance)
+similarity_matrix <- 1 - as.matrix(bray_matrix)
+
+# Step 3: Plot the percentage similarity matrix
+# Example heatmap plot
+heatmap(similarity_matrix, 
+        main="Percentage Similarity Heatmap",
+        xlab="Samples", ylab="Samples",
+        labRow=NA, labCol=NA,
+        col=rev(heat.colors(10)))  # Reversed heat colors for better visualization
+```
+
+
 
 
