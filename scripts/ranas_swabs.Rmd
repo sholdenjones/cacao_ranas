@@ -1,0 +1,72 @@
+---
+title: "ranas_bd"
+author: "Holden Jones"
+date: "2024-04-01"
+output: html_document
+---
+
+
+# Very quickly bring in ranas_swabs results from David's lab group.
+- Unfortunately it looks this data will not be useful - quick spread of postives
+  across season and landuse types make it seem like there is no underlying pattern,
+  and if there is it is too sensitive to be detected given the issues with sample
+  storage and processing.
+  
+
+
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+ranas_swabs <- read_csv("data/raw_data/ranas_swabs.csv")
+ranas_swabs <- as_tibble(ranas_swabs)
+
+new <- read_csv("data/processed_data/new_processed.csv")
+new <- as_tibble(new)
+
+# note there are 3 NAs here and 5411 doesn't make sense as a number
+
+# tidying - get numero column to match, and make numeric
+ranas_swabs <- ranas_swabs %>%
+  separate(Sample_ID, into = c("project", "Numero"), sep = " ") %>%
+  mutate(Numero = as.numeric(Numero),
+         Concentration = `Concentration (Copies/無)`,
+         Intensity = `Bd_Loads (Copies/無)`
+         ) %>%
+  select(Numero, Concentration, Intensity)
+
+ranas_swabs <- ranas_swabs %>%
+  mutate(year = substr(Fecha, nchar(Fecha) - 1, nchar(Fecha)))
+
+
+# left_join and filter 
+
+ranas_swabs <- left_join(ranas_swabs, new, by = "Numero") 
+
+
+
+ranas_swabs_by_site <- ranas_swabs %>% 
+  group_by(Sitio) %>%
+  summary(Intensity)
+
+
+
+
+#p <- ggplot(ranas_swabs, aes(x=Sitio, y=(Concentration), color=Tipo)) + 
+  geom_boxplot() 
+#p + scale_y_log10()
+
+
+ggplot(ranas_swabs, aes(log(Concentration), fill = Tipo)) +
+  geom_histogram()
+
+
+ggplot(ranas_swabs, aes(log(Concentration), fill = year)) +
+  geom_histogram()
+
+
+```
+
