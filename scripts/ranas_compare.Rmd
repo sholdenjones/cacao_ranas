@@ -63,11 +63,17 @@ abundance_by_site <- read_csv(
   "data/processed_data/abundance_by_site_processed.csv")
 abundance_by_site <- as_tibble(abundance_by_site)
 
-new_mat <- read_csv(
-  "data/processed_data/new_mat_processed.csv")
-new_mat <- as_tibble(new_mat)
+# new_mat - from vegan package - finicky!
+#new_mat <- read_csv(
+ # "data/processed_data/new_mat_processed.csv")
+
+# WTF? ISSUES HERE:
+# new_mat <- as_tibble(new_mat)
+# rownames(new_mat) <- new_mat[,1]
+
 
 # may be running into issues above with new_mat, perhaps convert to matrix?
+# perhaps shouldn't be converted to 
 
 diversity_by_site <- read_csv(
   "data/processed_data/diversity_by_site_processed.csv")
@@ -558,9 +564,6 @@ plot_inv_simpson_harvest
 # COMPOSITION ACROSS LANDUSE TYPES
 
 
-
-
-
 Variety of ways to look at this, can't do all of them!
 - NMDS - more for visualizing differences - start here
 - Bray-Curtiss Dissimilarity Index - quantifies dissimilarity - 0:1 (same:diff)
@@ -569,18 +572,45 @@ Variety of ways to look at this, can't do all of them!
 - Analysis of similarities for statistics
 
 
+
+## create new_mat matrix
+
+new_mat - three column format to use in labdsv package
+        - reorder rows to allow NMDS to draw by site type
+        - creating here b/c was running into row names issue importing from
+          processing script
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+```
+
+
 ## create nmds plot and draw boundaries of landuse types
 
-## WHY ARE NUMBERS INSTEAD OF SITES SHOWING?
 ```{r}
 # assign treatment levels per landuse type on reordered new_mat_reordered
-landuse_treatments=c(rep("Shade",12),
-                     rep("Sun",11), 
-                     rep("Abandoned",4), 
-                     rep("Forest",5))
-# ensure that labels are in correct order and have correct length
+# landuse_treatments=c(rep("Shade",12),
+#                      rep("Sun",11), 
+#                      rep("Abandoned",4), 
+#                      rep("Forest",5))
 
-# use community by species matrix
+# use community by species matrix - stress = 0.26 - okay representation
 new_mat_NMDS = metaMDS(new_mat, k = 2)
 
 # sites are open circles, species are red crosses
@@ -616,6 +646,9 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 
 - maybe move this to ranas_process actually! 
 
+
+
+
 ## WHY ARENT ROW NAMES BEING USED? HEATMAP UNINTELLIGBLE
 
 ```{r}
@@ -633,6 +666,44 @@ heatmap(similarity_matrix,
         xlab="Samples", ylab="Samples",
         labRow=NA, labCol=NA,
         col=rev(heat.colors(10)))  # Reversed heat colors for better visualization
+```
+
+
+## adjacent, random piece from Riffomonas project
+
+```{r}
+# ordination of bray_matrix using cmdscale
+
+cmdscale(bray_matrix) %>% plot()
+
+pcoa <- cmdscale(bray_matrix)
+colnames(pcoa) <- c("pcoa1", "pcoa2")
+pcoa %>% head()
+```
+
+## adjacent, jaccard similarity index
+
+```{r}
+# create a sample data frame with mixed data types 
+df <- data.frame( 
+  numeric_var = c(1,2,3,4), 
+  categorical_var = c("A", "B", "A", "C"), 
+  binary_var = c(0,1,0,1) 
+) 
+  
+# convert categorical variable to binary 
+df$categorical_var <- ifelse(df$categorical_var == "A", 1, 0) 
+  
+# convert binary variable to binary 
+df$binary_var <- as.numeric(df$binary_var) 
+  
+# calculate the Jaccard distance  
+# matrix using the dist function 
+jaccard_distance_matrix <- dist(df, 
+                                method = "binary") 
+  
+#Print the distance matrix 
+print(jaccard_distance_matrix)
 ```
 
 
