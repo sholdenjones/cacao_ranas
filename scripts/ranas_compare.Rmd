@@ -601,14 +601,14 @@ new_mat <- new_mat[new_order, ]
 ```
 
 
-## create nmds plot and draw boundaries of landuse types
-
+## create nmds plot
+-  draw boundaries of landuse types
 ```{r}
-# assign treatment levels per landuse type on reordered new_mat_reordered
-# landuse_treatments=c(rep("Shade",12),
-#                      rep("Sun",11), 
-#                      rep("Abandoned",4), 
-#                      rep("Forest",5))
+# assign treatment levels per landuse type on reordered new_mat
+landuse_treatments=c(rep("Shade",12),
+                      rep("Sun",11), 
+                      rep("Abandoned",4), 
+                      rep("Forest",5))
 
 # use community by species matrix - stress = 0.26 - okay representation
 new_mat_NMDS = metaMDS(new_mat, k = 2)
@@ -642,9 +642,18 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 ```
 
 
-## calculate Bray-Curtis Index
 
+ 
+
+
+
+## calculate Bray-Curtis Index
 - maybe move this to ranas_process actually! 
+```{r}
+
+```
+
+
 
 
 
@@ -669,7 +678,13 @@ heatmap(similarity_matrix,
 ```
 
 
+
+
 ## adjacent, random piece from Riffomonas project
+
+
+
+
 
 ```{r}
 # ordination of bray_matrix using cmdscale
@@ -681,7 +696,15 @@ colnames(pcoa) <- c("pcoa1", "pcoa2")
 pcoa %>% head()
 ```
 
+
+
+
 ## adjacent, jaccard similarity index
+
+
+
+
+
 
 ```{r}
 # create a sample data frame with mixed data types 
