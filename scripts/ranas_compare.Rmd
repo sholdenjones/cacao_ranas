@@ -40,7 +40,6 @@ library(SuppDists) # needed for assessing additional dist fits
 ```
 
 
-## LOOK HERE TO REVIEW IMPORT OF NEW_MAT - MAYBE DO MATRIX INSTEAD OF TIBBLE?
 load data
 ```{r, include=FALSE}
 ranas <- read_csv("data/processed_data/ranas_processed.csv")
@@ -62,18 +61,6 @@ richness_by_site <- as_tibble(richness_by_site)
 abundance_by_site <- read_csv(
   "data/processed_data/abundance_by_site_processed.csv")
 abundance_by_site <- as_tibble(abundance_by_site)
-
-# new_mat - from vegan package - finicky!
-#new_mat <- read_csv(
- # "data/processed_data/new_mat_processed.csv")
-
-# WTF? ISSUES HERE:
-# new_mat <- as_tibble(new_mat)
-# rownames(new_mat) <- new_mat[,1]
-
-
-# may be running into issues above with new_mat, perhaps convert to matrix?
-# perhaps shouldn't be converted to 
 
 diversity_by_site <- read_csv(
   "data/processed_data/diversity_by_site_processed.csv")
@@ -650,8 +637,39 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 ## calculate Bray-Curtis Index
 - maybe move this to ranas_process actually! 
 ```{r}
+# Here calculating distance first, then creating NMDS off this
+dist <- bray_matrix <- vegdist(new_mat, method="bray")
 
+# set seed so consistent across iterations of nmds
+set.seed(19960710)
+
+nmds <- metaMDS(dist)
+# very low stress!
+
+scores(nmds) %>%
+  as_tibble(rownames = "Group") %>% # needs to be converted to tibble for ggplot2
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_point()
 ```
+
+
+## can add rarefaction into vegdist!
+```{r}
+# need to set sanmple here, what should it be? randomly picked 50
+dist <- avgdist(new_mat, dmethod = "bray", sample = 50)
+# this is a rarefied dist - trying to account for uneven sampling effort
+# these metrics are very sensitive to uneven sampling effort
+
+nmds <- metaMDS(dist)
+
+scores(nmds) %>%
+  as_tibble(rownames = "Group") %>%
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_point()
+```
+
+
+
 
 
 
