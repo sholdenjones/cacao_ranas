@@ -5,22 +5,7 @@ date: "3/6/24"
 output: word_document
 ---
 
-
-
-
 # COMPARE RICHNESS, ABUNDANCE, DIVERSITY, COMPOSITION ACROSS LANDUSE TYPES
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 This script will take processed data as input, run statistic tests and produce
@@ -34,6 +19,7 @@ load packages
 library(labdsv)
 library(tidyverse)
 library(vegan)
+library(iNEXT)
 library(RColorBrewer) # for assigning plot colors
 library(DHARMa) # for assessing model fit
 library(SuppDists) # needed for assessing additional dist fits
@@ -559,6 +545,8 @@ Variety of ways to look at this, can't do all of them!
 - Analysis of similarities for statistics
 
 
+## NEED TO GET THIS CODE REVIEWED - NOT SURE IF CORRECT
+
 
 ## create new_mat matrix
 
@@ -638,7 +626,7 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 - maybe move this to ranas_process actually! 
 ```{r}
 # Here calculating distance first, then creating NMDS off this
-dist <- bray_matrix <- vegdist(new_mat, method="bray")
+dist <- vegdist(new_mat, method="bray")
 
 # set seed so consistent across iterations of nmds
 set.seed(19960710)
