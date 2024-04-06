@@ -620,6 +620,56 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 
 
 
+
+
+
+
+# INCORPORATE iNEXT PACKAGE
+
+not sure how to interpret this data - lots of warning messages
+
+# ugh wtf - not working - take a break!
+
+# WARNING MESSAGES: WARNING THIS SITE HAS ONLY ONE SPECIES
+```{r}
+# maybe have to transpose (swap matrix?)
+
+test <- t(new_mat)
+out <- iNEXT(test, q = 0, datatype = "abundance")
+ggiNEXT(out, type=1, facet.var="Assemblage")
+
+# str(new_mat)
+# out <- iNEXT(new_mat, q = 0, datatype = "abundance")
+
+
+ggiNEXT(out, type=1, facet.var="Assemblage")
+
+
+
+
+sample_matrix <- matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)
+
+# Original matrix
+print("Original matrix:")
+print(sample_matrix)
+
+# Transpose the matrix using dplyr
+transposed_matrix <- t(sample_matrix)
+
+# Transposed matrix
+print("Transposed matrix:")
+print(transposed_matrix)
+```
+
+
+
+
+
+
+
+
+
+
  
 # ERRORS SHOWING UP BELOW HERE
 
