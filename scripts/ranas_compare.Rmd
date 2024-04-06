@@ -95,16 +95,18 @@ my_theme <- function() {
 
 
 
-
-
-
-
+## 31 total species
+```{r}
+new %>%
+  distinct(Final_ID) %>%
+  count()
+```
 
 
 ## before selecting statistical test, need to look at dist. of richness by site
 - use Poisson dist. b/c using count data with no upper limit!
 ```{r}
-(richness_by_site_hist <- ggplot(richness_by_site, aes(no_species)) +
+(richness_by_site_hist <- ggplot(richness_by_site, aes(no_species, fill = Tipo)) +
   geom_histogram())
 ```
 
@@ -233,7 +235,7 @@ here just simply number of new individuals
 ## before selecting statistical test, need to look at dist. of abundance by site
 - use Poisson dist. b/c using count data with no upper limit!
 ```{r}
-(abundance_by_site_hist <- ggplot(abundance_by_site, aes(n)) +
+(abundance_by_site_hist <- ggplot(abundance_by_site, aes(n, fill = Tipo)) +
   geom_histogram(binwidth = 5))
 ```
 
@@ -619,41 +621,41 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 
 
  
-
+# ERRORS SHOWING UP BELOW HERE
 
 
 ## calculate Bray-Curtis Index
 - maybe move this to ranas_process actually! 
 ```{r}
-# Here calculating distance first, then creating NMDS off this
-dist <- vegdist(new_mat, method="bray")
-
-# set seed so consistent across iterations of nmds
-set.seed(19960710)
-
-nmds <- metaMDS(dist)
-# very low stress!
-
-scores(nmds) %>%
-  as_tibble(rownames = "Group") %>% # needs to be converted to tibble for ggplot2
-  ggplot(aes(x = NMDS1, y = NMDS2)) +
-  geom_point()
+# # Here calculating distance first, then creating NMDS off this
+# dist <- vegdist(new_mat, method="bray")
+# 
+# # set seed so consistent across iterations of nmds
+# set.seed(19960710)
+# 
+# nmds <- metaMDS(dist)
+# # very low stress!
+# 
+# scores(nmds) %>%
+#   as_tibble(rownames = "Group") %>% # needs to be converted to tibble for ggplot2
+#   ggplot(aes(x = NMDS1, y = NMDS2)) +
+#   geom_point()
 ```
 
 
 ## can add rarefaction into vegdist!
 ```{r}
-# need to set sanmple here, what should it be? randomly picked 50
-dist <- avgdist(new_mat, dmethod = "bray", sample = 50)
-# this is a rarefied dist - trying to account for uneven sampling effort
-# these metrics are very sensitive to uneven sampling effort
-
-nmds <- metaMDS(dist)
-
-scores(nmds) %>%
-  as_tibble(rownames = "Group") %>%
-  ggplot(aes(x = NMDS1, y = NMDS2)) +
-  geom_point()
+# # need to set sanmple here, what should it be? randomly picked 50
+# dist <- avgdist(new_mat, dmethod = "bray", sample = 50)
+# # this is a rarefied dist - trying to account for uneven sampling effort
+# # these metrics are very sensitive to uneven sampling effort
+# 
+# nmds <- metaMDS(dist)
+# 
+# scores(nmds) %>%
+#   as_tibble(rownames = "Group") %>%
+#   ggplot(aes(x = NMDS1, y = NMDS2)) +
+#   geom_point()
 ```
 
 
@@ -668,19 +670,19 @@ scores(nmds) %>%
 
 ```{r}
 # Step 1: Calculate Bray-Curtis distance
-bray_matrix <- vegdist(new_mat, method="bray")
-
-# Step 2: Convert distance matrix to percentage similarity
-# Convert distances to similarities (1 - distance)
-similarity_matrix <- 1 - as.matrix(bray_matrix)
-
-# Step 3: Plot the percentage similarity matrix
-# Example heatmap plot
-heatmap(similarity_matrix, 
-        main="Percentage Similarity Heatmap",
-        xlab="Samples", ylab="Samples",
-        labRow=NA, labCol=NA,
-        col=rev(heat.colors(10)))  # Reversed heat colors for better visualization
+# bray_matrix <- vegdist(new_mat, method="bray")
+# 
+# # Step 2: Convert distance matrix to percentage similarity
+# # Convert distances to similarities (1 - distance)
+# similarity_matrix <- 1 - as.matrix(bray_matrix)
+# 
+# # Step 3: Plot the percentage similarity matrix
+# # Example heatmap plot
+# heatmap(similarity_matrix, 
+#         main="Percentage Similarity Heatmap",
+#         xlab="Samples", ylab="Samples",
+#         labRow=NA, labCol=NA,
+#         col=rev(heat.colors(10)))  # Reversed heat colors for better visualization
 ```
 
 
@@ -693,13 +695,13 @@ heatmap(similarity_matrix,
 
 
 ```{r}
-# ordination of bray_matrix using cmdscale
-
-cmdscale(bray_matrix) %>% plot()
-
-pcoa <- cmdscale(bray_matrix)
-colnames(pcoa) <- c("pcoa1", "pcoa2")
-pcoa %>% head()
+# # ordination of bray_matrix using cmdscale
+# 
+# cmdscale(bray_matrix) %>% plot()
+# 
+# pcoa <- cmdscale(bray_matrix)
+# colnames(pcoa) <- c("pcoa1", "pcoa2")
+# pcoa %>% head()
 ```
 
 
@@ -713,26 +715,26 @@ pcoa %>% head()
 
 
 ```{r}
-# create a sample data frame with mixed data types 
-df <- data.frame( 
-  numeric_var = c(1,2,3,4), 
-  categorical_var = c("A", "B", "A", "C"), 
-  binary_var = c(0,1,0,1) 
-) 
-  
-# convert categorical variable to binary 
-df$categorical_var <- ifelse(df$categorical_var == "A", 1, 0) 
-  
-# convert binary variable to binary 
-df$binary_var <- as.numeric(df$binary_var) 
-  
-# calculate the Jaccard distance  
-# matrix using the dist function 
-jaccard_distance_matrix <- dist(df, 
-                                method = "binary") 
-  
-#Print the distance matrix 
-print(jaccard_distance_matrix)
+# # create a sample data frame with mixed data types 
+# df <- data.frame( 
+#   numeric_var = c(1,2,3,4), 
+#   categorical_var = c("A", "B", "A", "C"), 
+#   binary_var = c(0,1,0,1) 
+# ) 
+#   
+# # convert categorical variable to binary 
+# df$categorical_var <- ifelse(df$categorical_var == "A", 1, 0) 
+#   
+# # convert binary variable to binary 
+# df$binary_var <- as.numeric(df$binary_var) 
+#   
+# # calculate the Jaccard distance  
+# # matrix using the dist function 
+# jaccard_distance_matrix <- dist(df, 
+#                                 method = "binary") 
+#   
+# #Print the distance matrix 
+# print(jaccard_distance_matrix)
 ```
 
 
