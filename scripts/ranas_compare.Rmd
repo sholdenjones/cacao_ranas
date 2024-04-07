@@ -20,6 +20,7 @@ library(labdsv)
 library(tidyverse)
 library(vegan)
 library(iNEXT)
+library(sjmisc)
 library(RColorBrewer) # for assigning plot colors
 library(DHARMa) # for assessing model fit
 library(SuppDists) # needed for assessing additional dist fits
