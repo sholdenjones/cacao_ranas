@@ -626,11 +626,145 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 
 # INCORPORATE iNEXT PACKAGE
 
-not sure how to interpret this data - lots of warning messages
+not sure how to interpret this data
+
+
+## look at rarefaction curves of all sites at once
+
+all sites - pretty crazy
+```{r}
+# just forest sites:
+
+# okay, so it seems like it thinks that species are sites and sites are species
+# can we rotate the dataframe?
+new_mat_test <- new_mat %>% 
+  rotate_df()
+
+
+out <- iNEXT(new_mat_test, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# Sample-size-based R/E curves, separating plots by "Assemblage"
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+
+## unsightly! too many sites at once - go one site type at a time
+
+try subsetting new_mat into only forest sites for example - may be easier to visualize
+```{r}
+# just forest sites:
+forest_mat <- new_mat[28:32,]
+
+# okay, so it seems like it thinks that species are sites and sites are species
+# can we rotate the dataframe?
+forest_mat <- forest_mat %>% 
+  rotate_df()
+
+
+out <- iNEXT(forest_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# Sample-size-based R/E curves, separating plots by "Assemblage"
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+how about just abandoned sites?
+```{r}
+# just forest sites:
+abandoned_mat <- new_mat[24:27,]
+
+# okay, so it seems like it thinks that species are sites and sites are species
+# can we rotate the dataframe?
+abandoned_mat <- abandoned_mat %>% 
+  rotate_df()
+
+
+out <- iNEXT(abandoned_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# Sample-size-based R/E curves, separating plots by "Assemblage"
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+sun sites
+```{r}
+# just forest sites:
+sun_mat <- new_mat[13:23,]
+
+# okay, so it seems like it thinks that species are sites and sites are species
+# can we rotate the dataframe?
+sun_mat <- sun_mat %>% 
+  rotate_df()
+
+
+out <- iNEXT(sun_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# Sample-size-based R/E curves, separating plots by "Assemblage"
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+shade sites
+```{r}
+# just forest sites:
+shade_mat <- new_mat[1:12,]
+
+# okay, so it seems like it thinks that species are sites and sites are species
+# can we rotate the dataframe?
+shade_mat <- shade_mat %>% 
+  rotate_df()
+
+out <- iNEXT(shade_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# Sample-size-based R/E curves, separating plots by "Assemblage"
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## BELOW HERE NOT WORKING
+
+
+
+
+
+
 
 # ugh wtf - not working - take a break!
 
 # WARNING MESSAGES: WARNING THIS SITE HAS ONLY ONE SPECIES
+
+
+## try again here - what is output of bird data?
+```{r}
+# data(spider)
+# out <- iNEXT(spider, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# # Sample-size-based R/E curves, separating plots by "Assemblage"
+# ggiNEXT(out, type=1, facet.var="Assemblage")
+# 
+# 
+# test <- as.matrix(new_mat)
+# 
+# 
+# 
+# out <- iNEXT(test, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# # Sample-size-based R/E curves, separating plots by "Assemblage"
+# ggiNEXT(out, type=1, facet.var="Assemblage")
+# 
+# 
+# data(new_mat)
+```
+
+
+
+
+
+
+
 ```{r}
 # maybe have to transpose (swap matrix?)
 
