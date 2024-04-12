@@ -44,6 +44,10 @@ ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
 ranas <- ranas %>% 
   filter(Final_ID != "sequence")
 
+# change all epibou to epiesp 
+# Lopez-Hervas et al. 2024 show that epibou in this area is actually epiesp
+ranas$Final_ID[ranas$Final_ID == "epibou"] <- "epiesp"
+
 # make processed csv output
 filename <- "ranas_processed.csv"
 filepath <- file.path(data_dir, filename)
@@ -65,6 +69,23 @@ new <- ranas %>%
 filename <- "new_processed.csv"
 filepath <- file.path(data_dir, filename)
 write_csv(new, file = filepath)
+```
+
+
+new_threatened - only new individuals from sp of conservation concern - listed as DD or higher
+```{r}
+new_threatened <- new %>%
+  filter(Final_ID == 'epiesp' |
+         Final_ID == 'lepper' |
+         Final_ID == 'oopsyl' |
+         Final_ID == 'leubil' |
+         Final_ID == 'prilatic'
+           )
+
+# output
+filename <- "new_threatened_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(new_threatened, file = filepath)
 ```
 
 
@@ -162,6 +183,37 @@ richness_summary <- richness_by_site %>%
 filename <- "richness_by_site_processed.csv"
 filepath <- file.path(data_dir, filename)
 write_csv(richness_by_site, file = filepath)
+```
+
+
+
+# FIX WHY THE FUCK IS THIS NOT WORKING? NAS REMAIN WHEN I NEED THEM TO BE ZEROS
+
+# threatened_richness_by_site
+number of threatened species
+```{r}
+# group by site
+threatened_richness_by_site <- new_threatened %>%
+  group_by(Sitio) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+# join with site_type to carry over tipo, elevation, harvested info
+threatened_richness_by_site <- threatened_richness_by_site %>%
+  left_join(site_type, by = "Sitio")
+
+# Group by land_use and calculate species richness
+threatened_richness_summary <- threatened_richness_by_site %>%
+  group_by(Tipo) %>%
+  summarize(mean_species_richness = mean(no_species),
+            median_species_richness = median(no_species),
+            min_species_richness = min(no_species),
+            max_species_richness = max(no_species))
+
+# output
+filename <- "threatened_richness_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(threatened_richness_by_site, file = filepath)
 ```
 
 

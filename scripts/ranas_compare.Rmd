@@ -35,6 +35,9 @@ ranas <- as_tibble(ranas)
 new <- read_csv("data/processed_data/new_processed.csv")
 new <- as_tibble(new)
 
+new_threatened <- read_csv("data/processed_data/new_threatened_processed.csv")
+new_threatened <- as_tibble(new_threatened)
+
 site_data <- read_csv("data/processed_data/site_data_processed.csv")
 site_data <- as_tibble(site_data)
 
@@ -44,6 +47,10 @@ site_type <- as_tibble(site_type)
 richness_by_site <- read_csv(
   "data/processed_data/richness_by_site_processed.csv")
 richness_by_site <- as_tibble(richness_by_site)
+
+threatened_richness_by_site <- read_csv(
+  "data/processed_data/threatened_richness_by_site_processed.csv")
+richness_by_site <- as_tibble(threatened_richness_by_site)
 
 abundance_by_site <- read_csv(
   "data/processed_data/abundance_by_site_processed.csv")
@@ -96,7 +103,7 @@ my_theme <- function() {
 
 
 
-## 31 total species
+## 30 total species
 ```{r}
 new %>%
   distinct(Final_ID) %>%
@@ -200,6 +207,38 @@ plot_richness_by_harvest <- ggplot(richness_by_site,
   ggtitle("Species richness in harvested and non-harvested areas")
 plot_richness_by_harvest
 ```
+
+
+
+
+
+
+# RICHNESS OF THREATENED SPECIES ACROSS LANDUSE TYPES
+
+
+## HAVE TO LOOK AT THIS _ THIS IS NOT CORRECT!!!! not bringing in sites that don't have any threatened species
+
+
+here just focus on species listed by IUCN as NT or higher, or DD
+```{r}
+threatened_richness_by_site$Tipo <- factor(threatened_richness_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+# plot species richness across landuse types using palet, my_theme
+plot_threatened_richness_by_site <- ggplot(threatened_richness_by_site,
+                                     aes(x = Tipo, y = no_species,
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() +
+  labs(x = "Landuse types",
+       y = "Threatened species richness",
+       title = "Threatened species richness across landuse types")
+plot_threatened_richness_by_site
+```
+
 
 
 
@@ -537,7 +576,20 @@ plot_inv_simpson_harvest
 
 
 
-# COMPOSITION ACROSS LANDUSE TYPES
+
+
+
+
+
+
+
+
+
+
+
+
+
+# COMPOSITION ACROSS LANDUSE TYPES - different script?
 
 
 Variety of ways to look at this, can't do all of them!

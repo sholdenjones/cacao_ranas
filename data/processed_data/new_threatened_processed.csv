@@ -1,0 +1,117 @@
+Sitio,Grupo,Tipo,Fecha,Transecto,Bloque,Numero,SHJ_ID,FVE_ID,DFM_ID,Final_ID,Codigo,Largo,Swab,Dedo,Recap,Foto,Muerto,Notas,...21,sample_date,year
+LL-N,Estacion,N,06/09/22,4,C,66,epibou,epibou,epibou,epiesp,0002,1.6,Y,Y,N,66,NA,NA,NA,2022-09-06,2022
+FCAT-V2,Estacion,V,08/09/22,1,C,93,oopsyl,oopsyl,oopsyl,oopsyl,0030,2.5,Y,Y,N,93,NA,NA,NA,2022-09-08,2022
+FCAT-B2,Estacion,B,08/09/22,1,B,97,oopsyl,oopsyl,oopsyl,oopsyl,0030 + 0040,1.8,Y,Y,N,93,NA,"mal corté, tuve que arreglarlo",NA,2022-09-08,2022
+FCAT-B2,Estacion,B,08/09/22,2,D,101,epiesp,epiesp,epiesp,epiesp,0030 + 0040,1.8,Y,Y,N,101,NA,Epipedobates espinosai,NA,2022-09-08,2022
+FCAT-B2,Estacion,B,08/09/22,3,A,102,oopsyl,oopsyl,oopsyl,oopsyl,0040,2.2,Y,Y,N,93,NA,NA,NA,2022-09-08,2022
+FCAT-B2,Estacion,B,08/09/22,4,D,105,leubil,leubil,leubil,leubil,0040,2.5,Y,Y,N,105,colectado,muerto - tomamos el individuo para llevar al USFQ,NA,2022-09-08,2022
+FCAT-B2,Estacion,B,10/09/22,1,A,137,epibou,epibou,epibou,epiesp,0040,1.6,Y,Y,N,137,NA,NA,NA,2022-09-10,2022
+FCAT-B2,Estacion,B,13/09/22,1,C,188,oopsyl,oopsyl,oopsyl,oopsyl,4000 + 0040 + 0030,3.1,Y,Y,N,188,NA,mal corté pero arreglado,NA,2022-09-13,2022
+FCAT-B2,Estacion,B,13/09/22,3,B,193,lepper,leprho,leppen,lepper,0040,11.7,Y,Y,N,193,NA,SEQUENCED - lepper,NA,2022-09-13,2022
+AL-N,Estacion,N,14/09/22,4,C,204,prilab,priesm,prilat,prilatic,0200,1.4,Y,Y,N,204,colectado,"Pristimantis cf. laticlavius confirmado por sequencia traido a la USFQ, FVE no esta seguro que es P. esmeraldas",NA,2022-09-14,2022
+FCAT-B1,Estacion,B,15/09/22,3,A,231,epibou,epibou,epibou,epiesp,0500,1.9,Y,Y,N,231,NA,NA,NA,2022-09-15,2022
+FCAT-B1,Estacion,B,15/09/22,3,C,233,oopsyl,oopsyl,oopsyl,oopsyl,0500,2.1,Y,Y,N,233,NA,NA,NA,2022-09-15,2022
+FCAT-B1,Estacion,B,15/09/22,3,C,235,epibou,epibou,epibou,epiesp,0500,1.8,Y,Y,N,231,NA,NA,NA,2022-09-15,2022
+FCAT-B1,Estacion,B,15/09/22,4,A,237,oopsyl,oopsyl,oopsyl,oopsyl,0500,2.8,Y,Y,N,233,NA,NA,NA,2022-09-15,2022
+FCAT-V1,Estacion,V,15/09/22,2,C,243,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.1,Y,Y,N,233,NA,NA,NA,2022-09-15,2022
+FCAT-V1,Estacion,V,15/09/22,2,C,244,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.3,Y,Y,N,233,NA,NA,NA,2022-09-15,2022
+FCAT-V1,Estacion,V,17/09/22,1,C,256,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.7,Y,Y,N,256,NA,NA,NA,2022-09-17,2022
+FCAT-V1,Estacion,V,17/09/22,3,C,265,oopsyl,oopsyl,NA,oopsyl,2000,2,Y,Y,N,256,NA,NA,NA,2022-09-17,2022
+FCAT-B1,Estacion,B,17/09/22,4,C,275,lepper,lepven,lepper,lepper,0500,12.5,Y,Y,N,275,NA,SEQUENCED - foto correcta,NA,2022-09-17,2022
+FCAT-B1,Estacion,B,19/09/22,1,A,277,oopsyl,oopsyl,oopsyl,oopsyl,0500,2.4,Y,Y,N,277,NA,NA,NA,2022-09-19,2022
+FCAT-V1,Estacion,V,19/09/22,4,C,290,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.4,Y,Y,N,272,NA,NA,NA,2022-09-19,2022
+FLL-V,Laguna,V,03/10/22,1,C,298,epibou,epibou,epibou,epiesp,0020,1.6,Y,Y,N,298,NA,NA,NA,2022-10-03,2022
+FLL-C,Laguna,C,03/10/22,2,B,317,epibou,epibou,epibou,epiesp,0003,1.5,Y,Y,N,298,NA,NA,NA,2022-10-03,2022
+FLL-C,Laguna,C,03/10/22,2,B,318,epibou,epibou,epibou,epiesp,0003,1.7,Y,Y,N,298,NA,NA,NA,2022-10-03,2022
+JS-N,Laguna,N,03/10/22,3,B,341,epibou,epibou,epibou,epiesp,0002,1.6,Y,Y,N,298,NA,NA,NA,2022-10-03,2022
+JS-N,Laguna,N,03/10/22,3,C,342,epibou,epibou,epibou,epiesp,0002,1.7,Y,Y,N,298,NA,NA,NA,2022-10-03,2022
+FLL-V,Laguna,V,05/10/22,3,A,378,epibou,epibou,epibou,epiesp,0020,1.6,Y,Y,N,378,NA,NA,NA,2022-10-05,2022
+FLL-V,Laguna,V,05/10/22,3,A,379,epibou,epibou,epibou,epiesp,0020,1.5,Y,Y,N,378,NA,NA,NA,2022-10-05,2022
+JS-N,Laguna,N,05/10/22,3,B,398,epibou,epibou,epibou,epiesp,0005,1.5,Y,Y,N,378,NA,NA,NA,2022-10-05,2022
+FLL-V,Laguna,V,07/10/22,3,B,419,epibou,epibou,epibou,epiesp,0020,1.5,Y,Y,N,419,NA,NA,NA,2022-10-07,2022
+FLL-V,Laguna,V,07/10/22,3,B,420,epibou,epibou,epibou,epiesp,0020,1.6,Y,Y,N,419,NA,NA,NA,2022-10-07,2022
+JS-N,Laguna,N,07/10/22,3,A,430,epibou,epibou,epibou,epiesp,0002,1.7,Y,Y,N,414,NA,NA,NA,2022-10-07,2022
+DG-B,Gavilanes,B,06/11/22,1,C,523,epibou,epibou,epibou,epiesp,0005,1.7,Y,Y,N,523,NA,NA,NA,2022-11-06,2022
+DG-V,Gavilanes,V,06/11/22,3,B,540,epibou,epibou,epibou,epiesp,0020,1.6,Y,Y,N,523,NA,NA,NA,2022-11-06,2022
+DG-V,Gavilanes,V,06/11/22,3,C,543,epibou,epibou,epibou,epiesp,0020,1.7,Y,Y,N,523,NA,NA,NA,2022-11-06,2022
+DG-V,Gavilanes,V,06/11/22,4,D,548,epibou,epibou,epibou,epiesp,0020,1.6,Y,Y,N,523,NA,NA,NA,2022-11-06,2022
+DG-V,Gavilanes,V,08/11/22,1,C,617,epibou,epibou,epibou,epiesp,0020,1.5,Y,Y,N,617,NA,NA,NA,2022-11-08,2022
+DG-V,Gavilanes,V,08/11/22,1,D,618,pri?,pri?,prilaticlavius,prilatic,0020,2.6,Y,Y,N,618,colectado,llevado a la USFQ,NA,2022-11-08,2022
+DG-V,Gavilanes,V,08/11/22,3,B,625,epibou,epibou,epibou,epiesp,0020,2,Y,Y,N,617,NA,NA,NA,2022-11-08,2022
+DG-V,Gavilanes,V,08/11/22,4,B,628,epibou,epibou,epibou,epiesp,0020,1.8,Y,Y,N,617,NA,NA,NA,2022-11-08,2022
+DG-B,Gavilanes,B,08/11/22,1,A,629,epibou,epibou,epibou,epiesp,0005,1.6,Y,Y,N,617,NA,NA,NA,2022-11-08,2022
+DG-B,Gavilanes,B,08/11/22,1,C,633,epibou,epibou,epibou,epiesp,0005,1.5,Y,Y,N,617,NA,NA,NA,2022-11-08,2022
+DG-B,Gavilanes,B,08/11/22,1,D,634,epibou,epibou,epibou,epiesp,0005,3.7,Y,Y,N,R101,NA,NA,NA,2022-11-08,2022
+DG-B,Gavilanes,B,10/11/22,1,D,698,epibou,epibou,epibou,epiesp,0005,1.5,Y,Y,N,698,NA,NA,NA,2022-11-10,2022
+DG-V,Gavilanes,V,10/11/22,4,A,711,epibou,epibou,epibou,epiesp,0020,1.7,Y,Y,N,698,NA,NA,NA,2022-11-10,2022
+DG-V,Gavilanes,V,10/11/22,4,D,713,oopsyl,oopsyl,oopsyl,oopsyl,0020,2.8,Y,Y,N,713,NA,NA,NA,2022-11-10,2022
+GP-N,Aniseto-Caucho,N,21/11/22,2,D,888,pri?,pri?,prilat,prilatic,3000,2.4,Y,Y,N,888,colectado,NA,NA,2022-11-21,2022
+FCAT-B3,Aniseto-Caucho,B,27/11/22,2,B,1016,pri?,pri?,prislatic,prilatic,2000,1.8,Y,Y,N,1016,"Pristimantis cf. laticlavius, confirmado por sequencia - colectado",NA,NA,2022-11-27,2022
+FCAT-V1,Estacion,V,09/01/23,1,D,1118,oopsyl,oopsyl,oopsyl,oopsyl,2000,3.1,Y,Y,N,1118,NA,NA,NA,2023-01-09,2023
+FCAT-V1,Estacion,V,09/01/23,4,B,1123,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.8,Y,Y,N,1118,NA,NA,NA,2023-01-09,2023
+FCAT-B1,Estacion,B,09/01/23,1,A,1124,lepper,lepper,lepper,lepper,0500,8.1,Y,Y,N,1124,NA,identical to sequenced ind,NA,2023-01-09,2023
+FCAT-V1,Estacion,V,13/01/23,2,C,1171,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.6,Y,Y,N,R260,NA,NA,NA,2023-01-13,2023
+FCAT-V1,Estacion,V,13/01/23,4,B,1174,oopsyl,oopsyl,oopsyl,oopsyl,2000,2.6,Y,Y,N,R260,NA,NA,NA,2023-01-13,2023
+FCAT-B2,Estacion,B,16/01/23,1,B,1198,oopsyl,NA,oopsyl,oopsyl,0040,2.7,Y,Y,N,1198,NA,NA,NA,2023-01-16,2023
+FCAT-B2,Estacion,B,16/01/23,1,C,1200,epibou,NA,epibou,epiesp,0040,1.8,Y,Y,N,1200,NA,NA,NA,2023-01-16,2023
+FCAT-B2,Estacion,B,16/01/23,2,D,1202,epibou,NA,epibou,epiesp,0040,1.9,Y,Y,N,1200,NA,NA,NA,2023-01-16,2023
+FCAT-B2,Estacion,B,16/01/23,3,C,1204,epibou,NA,epibou,epiesp,0040,1.6,Y,Y,N,1200,NA,NA,NA,2023-01-16,2023
+FCAT-V2,Estacion,V,16/01/23,3,B,1212,oopsyl,NA,oopsyl,oopsyl,0030,2.8,Y,Y,N,1198,NA,NA,NA,2023-01-16,2023
+FCAT-V2,Estacion,V,16/01/23,4,D,1215,oopsyl,NA,oopsyl,oopsyl,0030,2.8,Y,Y,N,1198,NA,NA,NA,2023-01-16,2023
+FCAT-B2,Estacion,B,18/01/23,2,A,1221,pri?,NA,prilat,prilatic,0040,4.2,Y,Y,N,1221,NA,P. muricatus para D&J,NA,2023-01-18,2023
+FCAT-B2,Estacion,B,18/01/23,2,B,1222,pri?,NA,prilat,prilatic,0040,4,Y,Y,N,1221,NA,P. muricatus para D&J,NA,2023-01-18,2023
+FCAT-B2,Estacion,B,18/01/23,2,D,1224,epibou,NA,epibou,epiesp,0040,1.1,Y,Y,N,1224,NA,NA,NA,2023-01-18,2023
+FCAT-V2,Estacion,V,18/01/23,4,C,1238,epibou,NA,epibou,epiesp,0030,1.7,Y,Y,N,1224,NA,NA,NA,2023-01-18,2023
+LL-N,Estacion,N,23/01/23,4,C,1281,epibou,NA,epibou,epiesp,0002,1.8,Y,Y,N,1281,NA,NA,NA,2023-01-23,2023
+LL-N,Estacion,N,23/01/23,4,D,1282,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,1281,NA,NA,NA,2023-01-23,2023
+FLL-B,Laguna,B,07/02/23,1,C,1325,epibou,NA,epibou,epiesp,0005,1.5,Y,Y,N,1325,NA,NA,NA,2023-02-07,2023
+FLL-B,Laguna,B,07/02/23,1,D,1326,epibou,NA,epibou,epiesp,0005,1.3,Y,Y,N,1325,NA,NA,NA,2023-02-07,2023
+JS-N,Laguna,N,08/02/23,1,B,1333,epibou,NA,epibou,epiesp,0002,2.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,2,A,1335,epibou,NA,epibou,epiesp,0002,1.3,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,2,B,1337,epibou,NA,epibou,epiesp,0002,1.4,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,2,B,1338,epibou,NA,epibou,epiesp,0002,1.8,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,2,C,1339,epibou,NA,epibou,epiesp,0002,1.2,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,2,C,1340,epibou,NA,epibou,epiesp,0002,1.6,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,3,A,1341,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,3,A,1342,epibou,NA,epibou,epiesp,0002,2,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,3,A,1343,epibou,NA,epibou,epiesp,0002,1.5,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,3,A,1344,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,3,C,1345,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,3,D,1346,epibou,NA,epibou,epiesp,0002,2,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,4,C,1348,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+JS-N,Laguna,N,08/02/23,4,C,1349,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+FLL-C,Laguna,C,08/02/23,3,A,1360,epibou,NA,epibou,epiesp,0003,1.7,Y,Y,N,1333,NA,NA,NA,2023-02-08,2023
+FLL-B,Laguna,B,09/02/23,1,A,1380,epibou,NA,epibou,epiesp,0005,1.5,Y,Y,N,1380,NA,NA,NA,2023-02-09,2023
+FLL-B,Laguna,B,09/02/23,2,A,1382,epibou,NA,epibou,epiesp,0005,1.4,Y,Y,N,1380,NA,NA,NA,2023-02-09,2023
+FLL-B,Laguna,B,09/02/23,3,A,1383,epibou,NA,epibou,epiesp,0005,1.5,Y,Y,N,1380,NA,NA,NA,2023-02-09,2023
+JS-N,Laguna,N,10/02/23,1,D,1402,epibou,NA,epibou,epiesp,0002,1.6,Y,Y,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,10/02/23,2,A,R318,epibou,NA,epibou,epiesp,0002,NA,NA,N,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,10/02/23,2,D,R319,epibou,NA,epibou,epiesp,0002,NA,NA,N,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,10/02/23,3,A,1403,epibou,NA,epibou,epiesp,0002,1.8,Y,Y,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,10/02/23,3,A,1404,epibou,NA,epibou,epiesp,0002,1.8,Y,Y,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,10/02/23,3,A,1406,epibou,NA,epibou,epiesp,0002,1.8,Y,Y,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,10/02/23,4,D,1409,epibou,NA,epibou,epiesp,0002,1.8,Y,Y,N,1402,NA,NA,NA,2023-02-10,2023
+JS-N,Laguna,N,12/02/23,3,B,1419,epibou,NA,epibou,epiesp,0002,1.7,Y,Y,N,R330,NA,NA,NA,2023-02-12,2023
+DB-C,Laguna,C,14/02/23,1,B,1428,epibou,NA,epibou,epiesp,0030,1.7,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,14/02/23,2,A,1429,epibou,NA,epibou,epiesp,0030,1.8,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,14/02/23,2,B,1430,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,14/02/23,2,C,1431,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,14/02/23,2,D,1432,epibou,NA,epibou,epiesp,0030,1.4,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,14/02/23,2,D,1433,epibou,NA,epibou,epiesp,0030,1.7,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,14/02/23,3,A,1434,epibou,NA,epibou,epiesp,0030,1.2,Y,Y,N,1428,NA,NA,NA,2023-02-14,2023
+DB-C,Laguna,C,16/02/23,1,B,1459,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,2,A,1463,epibou,NA,epibou,epiesp,0030,1.7,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,2,B,1464,epibou,NA,epibou,epiesp,0030,1.6,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,2,B,1465,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,2,C,1466,epibou,NA,epibou,epiesp,0030,1.7,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,2,C,1467,epibou,NA,epibou,epiesp,0030,2,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,2,C,1468,epibou,NA,epibou,epiesp,0030,1.8,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,3,A,1469,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,16/02/23,3,C,1470,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1459,NA,NA,NA,2023-02-16,2023
+DB-C,Laguna,C,18/02/23,1,A,1482,epibou,NA,epibou,epiesp,0030,2.2,Y,Y,N,1482,NA,NA,NA,2023-02-18,2023
+DB-C,Laguna,C,18/02/23,1,B,1483,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1482,NA,NA,NA,2023-02-18,2023
+DB-C,Laguna,C,18/02/23,1,B,1484,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1482,NA,NA,NA,2023-02-18,2023
+DB-C,Laguna,C,18/02/23,2,B,1486,epibou,NA,epibou,epiesp,0030,1.5,Y,Y,N,1482,NA,NA,NA,2023-02-18,2023
+DG-B,Gavilanes,B,20/02/23,1,B,1495,epibou,NA,epibou,epiesp,0005,1.7,Y,Y,N,1495,NA,NA,NA,2023-02-20,2023
+DG-B,Gavilanes,B,20/02/23,1,C,1496,epibou,NA,epibou,epiesp,0005,1.6,Y,Y,N,1495,NA,NA,NA,2023-02-20,2023
+DG-B,Gavilanes,B,24/02/23,4,A,1597,epibou,NA,epibou,epiesp,0005,2,Y,Y,N,1597,NA,NA,NA,2023-02-24,2023
