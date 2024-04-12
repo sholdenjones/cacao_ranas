@@ -716,6 +716,91 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 
 
 
+## How about visualize by groups of sites? That could be cool!
+- Need to just make different matrices
+
+Grupo Estacion
+```{r}
+# just estacion sites: order to help with visualizations
+rows <- c('LL-C', 'JZ-C', 'JZJ-C', # sun
+          'LL-N', 'JZ-N', 'AL-N', # shade
+          'FCAT-V1', 'FCAT-V2', # abandoned
+          'FCAT-B1', 'FCAT-B2') # forest
+
+estacion_mat <- new_mat[rows,] %>%
+  rotate_df()
+
+out <- iNEXT(estacion_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+Grupo Laguna
+```{r}
+# just laguna sites: order to help with visualizations
+rows <- c('FLL-C', 'DB-C', # sun
+          'JS-N', 'DB-N',  # shade
+          'FLL-V',         # abandoned
+          'FLL-B')         # forest
+
+laguna_mat <- new_mat[rows,] %>%
+  rotate_df()
+
+out <- iNEXT(laguna_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+Grupo Gavilanes
+```{r}
+# just gavilanes sites: order to help with visualizations
+rows <- c('DG-C',  # sun
+          'DG-N',  # shade
+          'DG-V',  # abandoned
+          'DG-B')  # forest
+
+gavilanes_mat <- new_mat[rows,] %>%
+  rotate_df()
+
+out <- iNEXT(gavilanes_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+Grupo Aniseto-Caucho
+## note that VC-C and GP-N had extremely low sampling coverage 
+- try without these sites?
+```{r}
+# just aniseto_caucho sites: order to help with visualizations
+rows <- c('AZ-C', 'LG-C', 'GP-C', 'PM-C', 'VC-C', # sun
+          'AZ-N', 'LG-N', 'GP-N', 'PM-N', 'VC-N', 'PV-N', # shade
+          'FCAT-B3') # forest
+
+aniseto_mat <- new_mat[rows,] %>%
+  rotate_df()
+
+out <- iNEXT(aniseto_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
+
+Grupo Aniseto-Caucho, no VC-C, no GP-N
+## note that VC-C and GP-N had extremely low sampling coverage 
+- try without these sites?
+```{r}
+# just aniseto_caucho sites: order to help with visualizations
+rows <- c('AZ-C', 'LG-C', 'GP-C', 'PM-C', #'VC-C', # sun
+          'AZ-N', 'LG-N', #'GP-N', 
+          'PM-N', 'VC-N', 'PV-N', # shade
+          'FCAT-B3') # forest
+
+aniseto_mat <- new_mat[rows,] %>%
+  rotate_df()
+
+out <- iNEXT(aniseto_mat, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+
+ggiNEXT(out, type=1, facet.var="Assemblage")
+```
 
 
 
@@ -727,7 +812,6 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 
 
 
-## BELOW HERE NOT WORKING
 
 
 
@@ -735,9 +819,50 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 
 
 
-# ugh wtf - not working - take a break!
+
+# BELOW HERE NOT WORKING - SCRATCH
+
 
 # WARNING MESSAGES: WARNING THIS SITE HAS ONLY ONE SPECIES
+
+
+
+
+
+
+```{r}
+# # maybe have to transpose (swap matrix?)
+# 
+# test <- t(new_mat)
+# out <- iNEXT(test, q = 0, datatype = "abundance")
+# ggiNEXT(out, type=1, facet.var="Assemblage")
+# 
+# # str(new_mat)
+# # out <- iNEXT(new_mat, q = 0, datatype = "abundance")
+# 
+# 
+# ggiNEXT(out, type=1, facet.var="Assemblage")
+# 
+# sample_matrix <- matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)
+# 
+# # Original matrix
+# print("Original matrix:")
+# print(sample_matrix)
+# 
+# # Transpose the matrix using dplyr
+# transposed_matrix <- t(sample_matrix)
+# 
+# # Transposed matrix
+# print("Transposed matrix:")
+# print(transposed_matrix)
+```
+
+
+
+
+
+
+
 
 
 ## try again here - what is output of bird data?
@@ -763,35 +888,6 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 
 
 
-
-
-
-```{r}
-# maybe have to transpose (swap matrix?)
-
-test <- t(new_mat)
-out <- iNEXT(test, q = 0, datatype = "abundance")
-ggiNEXT(out, type=1, facet.var="Assemblage")
-
-# str(new_mat)
-# out <- iNEXT(new_mat, q = 0, datatype = "abundance")
-
-
-ggiNEXT(out, type=1, facet.var="Assemblage")
-
-sample_matrix <- matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)
-
-# Original matrix
-print("Original matrix:")
-print(sample_matrix)
-
-# Transpose the matrix using dplyr
-transposed_matrix <- t(sample_matrix)
-
-# Transposed matrix
-print("Transposed matrix:")
-print(transposed_matrix)
-```
 
 
 
