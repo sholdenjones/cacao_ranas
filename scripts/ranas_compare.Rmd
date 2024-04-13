@@ -227,16 +227,14 @@ threatened_richness_by_site$Tipo <- factor(threatened_richness_by_site$Tipo,
 
 # plot species richness across landuse types using palet, my_theme
 plot_threatened_richness_by_site <- ggplot(threatened_richness_by_site,
-                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
-                                     geom_boxplot() +
-                                     scale_fill_manual(values = pal) +
-  # order needs to match factor levels above
-                                     scale_x_discrete(labels = c(site_labels)) +
-                                     my_theme() +
-                                     labs(x = "Landuse types",
-                                     y = "Threatened species richness",
-                                     title = "Threatened species richness 
-                                     across landuse types")
+     aes(x = Tipo, y = no_species, fill = Tipo)) +
+     geom_boxplot() +
+     scale_fill_manual(values = pal) +
+   # order needs to match factor levels above
+     scale_x_discrete(labels = c(site_labels)) +
+     my_theme() +
+     labs(x = "Landuse types", y = "Threatened species richness",
+     title = "Threatened species richness across landuse types")
 plot_threatened_richness_by_site
 ```
 
