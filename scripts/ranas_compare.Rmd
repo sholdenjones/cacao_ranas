@@ -216,7 +216,8 @@ plot_richness_by_harvest
 # RICHNESS OF THREATENED SPECIES ACROSS LANDUSE TYPES
 
 
-## HAVE TO LOOK AT THIS _ THIS IS NOT CORRECT!!!! not bringing in sites that don't have any threatened species
+
+
 
 
 here just focus on species listed by IUCN as NT or higher, or DD
@@ -226,18 +227,21 @@ threatened_richness_by_site$Tipo <- factor(threatened_richness_by_site$Tipo,
 
 # plot species richness across landuse types using palet, my_theme
 plot_threatened_richness_by_site <- ggplot(threatened_richness_by_site,
-                                     aes(x = Tipo, y = no_species,
-                                         fill = Tipo)) +
-  geom_boxplot() +
-  scale_fill_manual(values = pal) +
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+                                     geom_boxplot() +
+                                     scale_fill_manual(values = pal) +
   # order needs to match factor levels above
-  scale_x_discrete(labels = c(site_labels)) +
-  my_theme() +
-  labs(x = "Landuse types",
-       y = "Threatened species richness",
-       title = "Threatened species richness across landuse types")
+                                     scale_x_discrete(labels = c(site_labels)) +
+                                     my_theme() +
+                                     labs(x = "Landuse types",
+                                     y = "Threatened species richness",
+                                     title = "Threatened species richness 
+                                     across landuse types")
 plot_threatened_richness_by_site
 ```
+
+
+
 
 
 

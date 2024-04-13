@@ -198,9 +198,12 @@ threatened_richness_by_site <- new_threatened %>%
   summarize(species = list(sort(unique(`Final_ID`))),
             no_species = n_distinct(`Final_ID`))
 
-# join with site_type to carry over tipo, elevation, harvested info
-threatened_richness_by_site <- threatened_richness_by_site %>%
-  left_join(site_type, by = "Sitio")
+# left_join with site_type to get type, elevation data
+threatened_richness_by_site <- site_type %>%
+  left_join(threatened_richness_by_site, by = "Sitio")
+
+# change NAs to 0 for plotting
+threatened_richness_by_site[is.na(threatened_richness_by_site)] <- 0
 
 # Group by land_use and calculate species richness
 threatened_richness_summary <- threatened_richness_by_site %>%
