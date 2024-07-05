@@ -35,6 +35,9 @@ ranas <- as_tibble(ranas)
 new <- read_csv("data/processed_data/new_processed.csv")
 new <- as_tibble(new)
 
+new_no_priach <- read_csv("data/processed_data/new_no_priach_processed.csv")
+new <- as_tibble(new_no_priach)
+
 new_threatened <- read_csv("data/processed_data/new_threatened_processed.csv")
 new_threatened <- as_tibble(new_threatened)
 
@@ -48,17 +51,29 @@ richness_by_site <- read_csv(
   "data/processed_data/richness_by_site_processed.csv")
 richness_by_site <- as_tibble(richness_by_site)
 
+richness_by_site_no_priach <- read_csv(
+  "data/processed_data/richness_by_site_no_priach_processed.csv")
+richness_by_site_no_priach <- as_tibble(richness_by_site_no_priach)
+
 threatened_richness_by_site <- read_csv(
   "data/processed_data/threatened_richness_by_site_processed.csv")
-richness_by_site <- as_tibble(threatened_richness_by_site)
+threatened_richness_by_site <- as_tibble(threatened_richness_by_site)
 
 abundance_by_site <- read_csv(
   "data/processed_data/abundance_by_site_processed.csv")
 abundance_by_site <- as_tibble(abundance_by_site)
 
+abundance_by_site_no_priach <- read_csv(
+  "data/processed_data/abundance_by_site_no_priach_processed.csv")
+abundance_by_site <- as_tibble(abundance_by_site_no_priach)
+
 diversity_by_site <- read_csv(
   "data/processed_data/diversity_by_site_processed.csv")
 diversity_by_site <- as_tibble(diversity_by_site)
+
+diversity_by_site_no_priach <- read_csv(
+  "data/processed_data/diversity_by_site_no_priach_processed.csv")
+diversity_by_site_no_priach <- as_tibble(diversity_by_site_no_priach)
 ```
 
 define a consistent palet, labels, and theme to be used in figures
@@ -122,7 +137,7 @@ new %>%
 ## run glm for species richness across landuse types, using Poisson dist.
 
 
-## NO SIG DIFF IN RICHNESS ACROSS LANDUSE TYPES
+NO SIG DIFF IN RICHNESS ACROSS LANDUSE TYPES
 - bosque is sig diff from nacional w/out elevation as random fact - viejo almost
 - bosque and viejo very close to being significant - need final IDs back!
 - using poisson dist in glm - DHARMa simulation shows that it works well
@@ -160,6 +175,50 @@ plot_richness_by_site <- ggplot(richness_by_site,
 plot_richness_by_site
 ```
 
+plot species richness across landuse types using point
+```{r}
+# reorder factor levels
+richness_by_site$Tipo <- factor(richness_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+# plot species richness across landuse types using palet, my_theme
+plot_richness_by_site <- ggplot(richness_by_site, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_violin() +
+  scale_fill_manual(values = pal) +
+  # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Landuse types",
+       y = "Species richness",
+       title = "Species richness across landuse types")
+plot_richness_by_site
+```
+
+
+
+
+## glm species richness with pair as random effect - instead of elevation
+
+
+## NOT WORKING HERE - PROBLEMS WITH NA FOR RANDOM EFFECTS IN SUMMARY
+```{r}
+# richness_by_type_pair_glm <- glm(no_species ~ Tipo + (1|Pair), 
+#                             data = richness_by_site, 
+#              family = poisson(link = "log"))
+# summary(richness_by_type_pair_glm)
+# 
+# # here use DHARMa package to see if we're using the correct model
+# # no significant problems detected!
+# simulationOutput_richness_by_type <- simulateResiduals(
+#   fittedModel = richness_by_type_pair_glm)
+# plot(simulationOutput_richness_by_type)
+```
+
+
+
+
+
 
 
 
@@ -175,7 +234,7 @@ plot_richness_by_site
 
 ## run glm for harvest on species richness using Poisson dist
 
-## SIG HIGHER RICHNESS IN NON_HARVESTED SITES
+SIG HIGHER RICHNESS IN NON_HARVESTED SITES
 
 higher richness in non-harvested sites
 - using Poisson dist
@@ -289,7 +348,7 @@ DONT RUN POISSON HERE!
 - quantile deviations detected
 - combined adjusted quantile test significant
 
-## NO SIG DIFF IN ABUNDANCE ACROSS LANDUSE TYPES
+NO SIG DIFF IN ABUNDANCE ACROSS LANDUSE TYPES
 
 - elevation random effect
 ```{r}
@@ -359,7 +418,7 @@ Thought Poisson dist would work for these b/c not normal and from count data
 - combined adjusted quantile test sig
 
 
-## SIG HIGHER SHANNON DIV IN BOSQUE
+SIG HIGHER SHANNON DIV IN BOSQUE
 
 significantly higher shannon div in Bosque vs. other sites
 - viejo is close
@@ -376,7 +435,7 @@ plot(simulationOutput_shannon_by_type)
 ```
 
 
-## SIG HIGHER SIMPSON DIV IN BOSQUE
+SIG HIGHER SIMPSON DIV IN BOSQUE
 
 sig higher simpson div in Bosque vs. other sites
 - viejo not particularly close
@@ -392,7 +451,7 @@ simulationOutput_simpson_by_type <- simulateResiduals(
 plot(simulationOutput_simpson_by_type)
 ```
 
-## NO SIG DIFF IN INV_SIMPSON DIV ACROSS LANDUSE TYPES
+NO SIG DIFF IN INV_SIMPSON DIV ACROSS LANDUSE TYPES
 
 no sig difference in inv_simpson diversity across landtypes
 - Bosque .18, viejo not close
@@ -487,7 +546,7 @@ NOTE THAT HERE THE GAUSSIAN DIST WORKS FINE FOR INV_SIMPSON
 
 
 
-## SIG HIGHER SHANNON DIV IN NON-HARVESTED SITES
+SIG HIGHER SHANNON DIV IN NON-HARVESTED SITES
 
 check w/ interpretation of this glm summary
 ```{r}
@@ -503,7 +562,7 @@ plot(simulationOutput_shannon_harvest)
 ```
 
 
-## SIG HIGHER SIMPSON DIV IN NON-HARVESTED SITES
+SIG HIGHER SIMPSON DIV IN NON-HARVESTED SITES
 
 check interpretation of this glm summary
 ```{r}
@@ -518,7 +577,7 @@ simulationOutput_simpson_harvest <- simulateResiduals(
 plot(simulationOutput_simpson_harvest)
 ```
 
-## NO SIG DIFF IN IN_SIMPSON ACROSS HARVEST, NON-HARVEST
+NO SIG DIFF IN IN_SIMPSON ACROSS HARVEST, NON-HARVEST
 
 check interpretation of this glm summary
 ```{r}
@@ -573,6 +632,33 @@ plot_inv_simpson_harvest <- ggplot(diversity_by_site,
        y = "Inverse Simpson diversity",
        title = "Inverse Simpson diversity across harvested and unharvested sites")
 plot_inv_simpson_harvest
+```
+
+
+
+
+
+
+
+
+
+# NON PRIACH ABUNDANCE AND DIVERSITY
+
+
+
+
+
+priach just completely dominates everything
+- what does abundance, diversity look like without this species?
+
+## abundance w/out priach
+
+## dist. of non priach abundance by site
+- use Poisson dist. b/c using count data with no upper limit!
+```{r}
+(abundance_by_site_hist_no_priach <- ggplot(abundance_by_site_no_priach, 
+                                            aes(n, fill = Tipo)) +
+  geom_histogram(binwidth = 5))
 ```
 
 
@@ -877,7 +963,7 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 # BELOW HERE NOT WORKING - SCRATCH
 
 
-# WARNING MESSAGES: WARNING THIS SITE HAS ONLY ONE SPECIES
+WARNING MESSAGES: WARNING THIS SITE HAS ONLY ONE SPECIES
 
 
 
@@ -919,7 +1005,7 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 
 
 
-## try again here - what is output of bird data?
+try again here - what is output of bird data?
 ```{r}
 # data(spider)
 # out <- iNEXT(spider, q=c(0, 1, 2), datatype="abundance", endpoint=500)
@@ -945,8 +1031,8 @@ ggiNEXT(out, type=1, facet.var="Assemblage")
 
 
 
-# tutorial from Francisco - need to import matrix as .txt file
-# move this to process eventually
+tutorial from Francisco - need to import matrix as .txt file
+move this to process eventually
 https://www.youtube.com/watch?v=4yUXG28QPLM&t=28s
 ```{r}
 # # # Define the file path where you want to save the matrix
@@ -1057,10 +1143,10 @@ https://www.youtube.com/watch?v=4yUXG28QPLM&t=28s
 
 
  
-# ERRORS SHOWING UP BELOW HERE
+ERRORS SHOWING UP BELOW HERE
 
 
-## calculate Bray-Curtis Index
+calculate Bray-Curtis Index
 - maybe move this to ranas_process actually! 
 ```{r}
 # # Here calculating distance first, then creating NMDS off this
@@ -1079,7 +1165,7 @@ https://www.youtube.com/watch?v=4yUXG28QPLM&t=28s
 ```
 
 
-## can add rarefaction into vegdist!
+can add rarefaction into vegdist!
 ```{r}
 # # need to set sanmple here, what should it be? randomly picked 50
 # dist <- avgdist(new_mat, dmethod = "bray", sample = 50)
@@ -1102,7 +1188,7 @@ https://www.youtube.com/watch?v=4yUXG28QPLM&t=28s
 
 
 
-## WHY ARENT ROW NAMES BEING USED? HEATMAP UNINTELLIGBLE
+WHY ARENT ROW NAMES BEING USED? HEATMAP UNINTELLIGBLE
 
 ```{r}
 # Step 1: Calculate Bray-Curtis distance
@@ -1124,7 +1210,7 @@ https://www.youtube.com/watch?v=4yUXG28QPLM&t=28s
 
 
 
-## adjacent, random piece from Riffomonas project
+adjacent, random piece from Riffomonas project
 
 
 
@@ -1143,7 +1229,7 @@ https://www.youtube.com/watch?v=4yUXG28QPLM&t=28s
 
 
 
-## adjacent, jaccard similarity index
+adjacent, jaccard similarity index
 
 
 

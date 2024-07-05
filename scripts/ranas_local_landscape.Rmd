@@ -1,0 +1,8 @@
+---
+title: "ranas_local_landscape"
+author: "Holden Jones"
+date: "2024-07-01"
+output: html_document
+---
+
+# Build and assess models to understand importance of local and landscape vars
