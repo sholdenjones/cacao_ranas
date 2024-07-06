@@ -147,7 +147,7 @@ filename <- "site_data_processed.csv"
 filepath <- file.path(data_dir, filename)
 write_csv(site_data, file = filepath)
 ```
-## WORKING
+
 # local_by_trans
 
 For local - not at a quadrant level, but at a transect level
@@ -175,16 +175,44 @@ So now need to fill these columns based on the values of previous visits:
 ```{r}
 environment_fill <- environmental %>%
   group_by(Sitio, Fecha, Transecto, Bloque) %>%
-  mutate(Veg_fill = if_else(Veg == 'same', NA_character_, Veg))
+  mutate(Veg_fill = if_else(Veg == 'same', NA_character_, Veg),
+         Hoja_fill = if_else(Hoja =='same', NA_character_, Hoja))
 
 environment_fill <- environment_fill %>%
   group_by(Sitio, Transecto, Bloque) %>%
   fill(Veg_fill, .direction = "down") %>%
+  fill(Hoja_fill, .direction = "down") %>%
   ungroup()
 
 print(environment_fill)
 ```
 
+now can calculate transect visit averages for vegetation and hojarasca
+```{r}
+environment_fill$Veg_fill <- as.numeric(environment_fill$Veg_fill)
+environment_fill$Hoja_fill <- as.numeric(environment_fill$Hoja_fill)
+
+environment_fill_by_trans <- environment_fill %>%
+  group_by(Sitio, Fecha, Transecto) %>%
+  summarize(tran_mean_veg = mean(Veg_fill, na.rm = TRUE),
+            tran_mean_hoja = mean(Hoja_fill, na.rm = TRUE)
+            )
+```
+
+now join this dataframe with local_by_trans
+```{r}
+local_by_trans <- left_join(environment_fill_by_trans, local_by_trans,
+                                 by = c("Sitio", "Transecto"))
+
+local_by_trans <- local_by_trans %>%
+  select(Sitio, Fecha, Transecto, 
+         tran_mean_veg, tran_mean_hoja, Pair,
+         tran_mean_CC, tran_coef_var_CC)
+
+filename <- "local_by_trans_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(local_by_trans, file = filepath)
+```
 
 
 
