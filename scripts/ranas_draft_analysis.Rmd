@@ -1,0 +1,424 @@
+---
+title: "ranas_draft_analysis"
+author: "S. Holden Jones"
+date: "2024-09-26"
+output: html_document
+---
+
+Use this document for analyses and figures to be used in paper
+
+load packages
+```{r, include=FALSE}
+library(labdsv)
+library(tidyverse)
+library(vegan)
+library(iNEXT)
+library(sjmisc)
+library(RColorBrewer) # for assigning plot colors
+library(DHARMa) # for assessing model fit
+library(SuppDists) # needed for assessing additional dist fits
+library(lme4)
+library(ggpubr) # for arranging multi-panel figures
+library(iNEXT)
+```
+
+load data
+```{r, include=FALSE}
+ranas <- read_csv("data/processed_data/ranas_processed.csv")
+ranas <- as_tibble(ranas)
+
+new <- read_csv("data/processed_data/new_processed.csv")
+new <- as_tibble(new)
+
+new_no_priach <- read_csv("data/processed_data/new_no_priach_processed.csv")
+new_no_priach <- as_tibble(new_no_priach)
+
+new_threatened <- read_csv("data/processed_data/new_threatened_processed.csv")
+new_threatened <- as_tibble(new_threatened)
+
+### REVIEW THIS SECTION ###
+new_mat <- read_csv("data/processed_data/new_mat_processed.csv")
+new_mat <- as.matrix(new_mat)
+
+new_mat_test <- read_csv("data/processed_data/new_mat_test_processed.csv")
+new_mat_test <- as.matrix(new_mat_test)
+### REVIEW THIS SECTION ###
+
+site_data <- read_csv("data/processed_data/site_data_processed.csv")
+site_data <- as_tibble(site_data)
+
+site_type <- read_csv("data/processed_data/site_type_processed.csv")
+site_type <- as_tibble(site_type)
+
+richness_by_site <- read_csv(
+  "data/processed_data/richness_by_site_processed.csv")
+richness_by_site <- as_tibble(richness_by_site)
+
+richness_by_site_no_priach <- read_csv(
+  "data/processed_data/richness_by_site_no_priach_processed.csv")
+richness_by_site_no_priach <- as_tibble(richness_by_site_no_priach)
+
+threatened_richness_by_site <- read_csv(
+  "data/processed_data/threatened_richness_by_site_processed.csv")
+threatened_richness_by_site <- as_tibble(threatened_richness_by_site)
+
+abundance_by_site <- read_csv(
+  "data/processed_data/abundance_by_site_processed.csv")
+abundance_by_site <- as_tibble(abundance_by_site)
+
+abundance_by_site_no_priach <- read_csv(
+  "data/processed_data/abundance_by_site_no_priach_processed.csv")
+abundance_by_site <- as_tibble(abundance_by_site_no_priach)
+
+diversity_by_site <- read_csv(
+  "data/processed_data/diversity_by_site_processed.csv")
+diversity_by_site <- as_tibble(diversity_by_site)
+
+diversity_by_site_no_priach <- read_csv(
+  "data/processed_data/diversity_by_site_no_priach_processed.csv")
+diversity_by_site_no_priach <- as_tibble(diversity_by_site_no_priach)
+```
+
+define a consistent palet, labels, and theme to be used in figures
+```{r, include=FALSE}
+# palet for comparisons of all 4 site types
+pal <- brewer.pal(4, "BrBG")
+
+# set a theme for ggplots
+my_theme <- function() {
+  theme_minimal() + 
+   theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12))
+}
+```
+
+
+#1. Compare richness and Shannon diversity of CCN-51 and Nacional
+
+##a. Richness
+- Use two-sample t-test b/c not perfectly paired in landscape and dif number of sites
+- If remove VC-N (weird site turned out to be N, not paired), then can run paired t-test
+```{r}
+# create species richness vector for each cacao type
+rich_ccn <- richness_by_site %>%
+  filter(Tipo == 'C') %>%
+  pull(no_species)
+  
+rich_n <- richness_by_site %>%
+  filter(Tipo == 'N') %>%
+  pull(no_species)
+
+# run two-sample t-test for species richness
+t.test(rich_ccn, rich_n, paired = FALSE)
+```
+
+- Here run paired t-test w/out VC-N
+```{r}
+# drop VC-N from df, this site messes up pairing for t-test
+pair_rich_by_site <- richness_by_site %>%
+  filter(Sitio != 'VC-N') %>%
+  arrange(Pair) # sort by Pair so vectors pulled align with pairs
+
+# create species richness vector for each cacao type
+pair_rich_ccn <- pair_rich_by_site %>%
+  filter(Tipo == 'C') %>%
+  pull(no_species)
+  
+pair_rich_n <- pair_rich_by_site %>%
+  filter(Tipo == 'N') %>%
+  pull(no_species)
+
+t.test(pair_rich_ccn, pair_rich_n, paired = TRUE)
+```
+
+Boxplot figure for CCN vs. Nacional species richness
+```{r}
+# site labels for 2 site comparison
+site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)")
+
+# reorder factor levels
+richness_by_site$Tipo <- factor(richness_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+richness_by_site_cacao <- richness_by_site %>%
+  filter(Tipo == "C" | Tipo == 'N')
+
+# plot species richness across landuse types using palet, my_theme
+plot_richness_by_site_cacao <- ggplot(richness_by_site_cacao, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Cacao type",
+       y = "Species richness")
+
+plot_richness_by_site_cacao
+#ggsave("output/plot_richness_by_site_cacao.png", width = 10, height = 10)
+```
+
+
+##b. Shannon diversity
+Compare Shannon diversity of CCN and Nacional
+- same process as above, can be done with paired or two-sample t-test
+
+two-sample t-test
+```{r}
+# Two sample t-test for shannon diversity:
+
+# create Shannon diversity vector for each cacao type
+shannon_ccn <- diversity_by_site %>%
+  filter(Tipo == 'C') %>%
+  pull(Shannon_Index)
+  
+shannon_n <- diversity_by_site %>%
+  filter(Tipo == 'N') %>%
+  pull(Shannon_Index)
+
+# run two-sample t-test for shannon diversity
+t.test(shannon_ccn, shannon_n, paired = FALSE)
+```
+
+paired t-test
+```{r}
+# Paired t-test for Shannon diversity 
+
+# drop VC-N from df, this site messes up pairing for t-test
+pair_diversity_by_site <- diversity_by_site %>%
+  filter(Sitio != 'VC-N') %>%
+  arrange(Pair) # sort by Pair so vectors pulled align with pairs
+
+# create Shannon diversity vector for each cacao type
+pair_shannon_ccn <- pair_diversity_by_site %>%
+  filter(Tipo == 'C') %>%
+  pull(Shannon_Index)
+  
+pair_shannon_n <- pair_diversity_by_site %>%
+  filter(Tipo == 'N') %>%
+  pull(Shannon_Index)
+
+t.test(pair_shannon_ccn, pair_shannon_n, paired = TRUE)
+```
+
+Boxplot figure for CCN vs. Nacional Shannon diversity
+```{r}
+# reorder factor levels
+diversity_by_site$Tipo <- factor(diversity_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+shannon_by_site_cacao <- diversity_by_site %>%
+  filter(Tipo == "C" | Tipo == 'N')
+
+# plot Shannon diversity across landuse types using palet, my_theme
+plot_shannon_by_site_cacao <- ggplot(shannon_by_site_cacao, 
+                                     aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Cacao type",
+       y = "Shannon diversity")
+
+plot_shannon_by_site_cacao
+#ggsave("output/plot_shannon_by_site_cacao.png", width = 10, height = 10)
+```
+
+
+#2.Compare richness and Shannon diversity of forest and abandoned plantations
+
+##a. Richness
+- Use two-sample t-test b/c not paired and dif number of sites
+```{r}
+# create species richness vector for each cacao type
+rich_forest <- richness_by_site %>%
+  filter(Tipo == 'B') %>%
+  pull(no_species)
+  
+rich_abandon <- richness_by_site %>%
+  filter(Tipo == 'V') %>%
+  pull(no_species)
+
+# run two-sample t-test for species richness
+t.test(rich_forest, rich_abandon, paired = FALSE)
+```
+
+Boxplot figure for forest vs. abandoned species richness
+```{r}
+site_labels <- c("Abandoned \n (n = 4)", "Forest \n (n = 5)")
+
+# reorder factor levels
+richness_by_site$Tipo <- factor(richness_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+richness_by_site_inactive <- richness_by_site %>%
+  filter(Tipo == "B" | Tipo == 'V')
+
+# plot species richness across landuse types using palet, my_theme
+plot_richness_by_site_inactive <- ggplot(richness_by_site_inactive, 
+                                     aes(x = Tipo, y = no_species, 
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#80CDC1", "#018571")) +
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Reference type",
+       y = "Species richness")
+
+plot_richness_by_site_inactive
+#ggsave("output/plot_richness_by_site_inactive.png", width = 10, height = 10)
+```
+
+##b. Shannon diversity
+Compare Shannon diversity of abandoned plantations and remnant forest
+
+two-sample t-test
+```{r}
+# Two sample t-test for shannon diversity:
+
+# create Shannon diversity vector for each type
+shannon_abandon <- diversity_by_site %>%
+  filter(Tipo == 'V') %>%
+  pull(Shannon_Index)
+  
+shannon_forest <- diversity_by_site %>%
+  filter(Tipo == 'B') %>%
+  pull(Shannon_Index)
+
+# run two-sample t-test for shannon diversity
+t.test(shannon_abandon, shannon_forest, paired = FALSE)
+```
+
+Boxplot figure for abandoned vs. forest Shannon diversity
+```{r}
+# reorder factor levels
+diversity_by_site$Tipo <- factor(diversity_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+shannon_by_site_inactive <- diversity_by_site %>%
+  filter(Tipo == "V" | Tipo == 'B')
+
+# plot Shannon diversity across landuse types using palet, my_theme
+plot_shannon_by_site_inactive <- ggplot(shannon_by_site_inactive, 
+                                     aes(x = Tipo, y = Shannon_Index, 
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#80CDC1", "#018571")) +
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Reference type",
+       y = "Shannon diversity")
+
+plot_shannon_by_site_inactive
+#ggsave("output/plot_shannon_by_site_inactive.png", width = 10, height = 10)
+```
+
+#3. Arrange figures for publication
+arrange these four figures as panels in one window
+```{r}
+compare_rich_shannon <- ggarrange(
+  plot_richness_by_site_cacao + rremove("xlab"), 
+  plot_richness_by_site_inactive + rremove("xlab") + rremove("ylab"),
+  plot_shannon_by_site_cacao,
+  plot_shannon_by_site_inactive + rremove("ylab"),
+  labels = c("A", "B", "C", "D"),
+  ncol = 2, nrow = 2,
+  label.x = 0.01, 
+  label.y = 0.08 
+)
+
+compare_rich_shannon
+#ggsave("output/compare_rich_shannon.png", width = 10, height = 10)
+```
+
+
+#4. Contextualize cacao sites against reference sites
+
+To do this, need to use estimates of asymptotic species richness 
+- b/c these sites did not have even sample coverage
+
+# GOAL - use iNEXT to show what the sampling coverage is for each site
+- then compare sampling coverage!
+- then graphically display this?
+
+
+
+
+```{r}
+# library(iNEXT)
+# 
+# # Convert the flipped_df (where each column is a site) into a list of vectors
+# site_list <- as.list(as.data.frame(t(new_mat_test[,-1])))  # Transpose and remove Final_ID column
+# 
+# # Names of each site (columns in the original data)
+# names(site_list) <- colnames(new_mat_test)[-1]
+# 
+# # Calculate sampling coverage for each site using iNEXT
+# # The first argument is the list of abundance vectors for each site
+# iNEXT_out <- iNEXT(site_list, q = 0, datatype = "abundance")
+# 
+# # View the results
+# iNEXT_out
+# 
+# # You can also visualize the sampling coverage curves
+# library(ggplot2)
+# ggiNEXT(iNEXT_out, type = 2)  # type=2 plots sampling coverage curve
+
+```
+
+
+
+
+
+
+Why is this so hard? Isn't this the whole fucking point of the iNEXT package?
+```{r}
+# need to convert new_mat to a list I guess?
+# new_mat_list <- apply(new_mat_test, 1, as.numeric)
+# new_mat_list <- split(new_mat_list, seq(nrow(new_mat_test)))
+# 
+# out <- iNEXT(new_mat_list, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# 
+# #ggiNEXT(out, type=3)  # type=3 produces sample coverage-based rarefaction/extrapolation curves
+# 
+# # Define a custom shape palette (e.g., 32 different shapes, some repeating)
+# shape_palette <- rep(1:6, length.out=32)  # Only 6 shapes available, so repeating them
+# 
+# # Plot using ggiNEXT with custom shapes
+# ggiNEXT(out, type=3) +
+#   scale_shape_manual(values = shape_palette)
+# 
+# 
+# ## not sure how to interact with this data
+# 
+# # Check the structure of the iNEXT result
+# str(out$iNextEst)
+# 
+# # Extract the sample coverage data
+# coverage_data <- out$iNextEst %>% filter(method == "observed")
+# 
+# 
+# # Convert your matrix to a list and assign site names
+# site_names <- rownames(new_mat)  # Extract site names
+# coverage_data$site <- site_names
+# 
+# library(ggplot2)
+# 
+# # Create a bar plot comparing sample coverage across sites
+# ggplot(coverage_data, aes(x = site, y = SC, fill = site)) +
+#   geom_bar(stat = "identity") +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#   labs(title = "Sample Coverage Across Sites", x = "Site", y = "Sample Coverage")
+# 
+# 
+# 
+# print(coverage_data)
+```
+
+
+

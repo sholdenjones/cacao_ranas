@@ -24,6 +24,7 @@ library(sjmisc)
 library(RColorBrewer) # for assigning plot colors
 library(DHARMa) # for assessing model fit
 library(SuppDists) # needed for assessing additional dist fits
+library(lme4)
 ```
 
 
@@ -36,7 +37,7 @@ new <- read_csv("data/processed_data/new_processed.csv")
 new <- as_tibble(new)
 
 new_no_priach <- read_csv("data/processed_data/new_no_priach_processed.csv")
-new <- as_tibble(new_no_priach)
+new_no_priach <- as_tibble(new_no_priach)
 
 new_threatened <- read_csv("data/processed_data/new_threatened_processed.csv")
 new_threatened <- as_tibble(new_threatened)
@@ -175,7 +176,7 @@ plot_richness_by_site <- ggplot(richness_by_site,
 plot_richness_by_site
 ```
 
-plot species richness across landuse types using point
+plot species richness across landuse types using violin
 ```{r}
 # reorder factor levels
 richness_by_site$Tipo <- factor(richness_by_site$Tipo,
@@ -194,31 +195,6 @@ plot_richness_by_site <- ggplot(richness_by_site,
        title = "Species richness across landuse types")
 plot_richness_by_site
 ```
-
-
-
-
-## glm species richness with pair as random effect - instead of elevation
-
-
-## NOT WORKING HERE - PROBLEMS WITH NA FOR RANDOM EFFECTS IN SUMMARY
-```{r}
-# richness_by_type_pair_glm <- glm(no_species ~ Tipo + (1|Pair), 
-#                             data = richness_by_site, 
-#              family = poisson(link = "log"))
-# summary(richness_by_type_pair_glm)
-# 
-# # here use DHARMa package to see if we're using the correct model
-# # no significant problems detected!
-# simulationOutput_richness_by_type <- simulateResiduals(
-#   fittedModel = richness_by_type_pair_glm)
-# plot(simulationOutput_richness_by_type)
-```
-
-
-
-
-
 
 
 
@@ -303,6 +279,31 @@ plot_threatened_richness_by_site
 
 
 
+# NON PRIACH RICHNESS ACROSS LANDUSE TYPES
+
+```{r}
+# reorder factor levels
+richness_by_site_no_priach$Tipo <- factor(richness_by_site_no_priach$Tipo,
+                         c("N", "C", "V", "B"))
+
+# plot species richness across landuse types using palet, my_theme
+plot_richness_by_site_no_priach <- ggplot(richness_by_site_no_priach, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Landuse types",
+       y = "Species richness",
+       title = "Non P. achatinus species richness across landuse types")
+plot_richness_by_site_no_priach
+```
+
+
+
+
+
 
 
 
@@ -373,6 +374,72 @@ plot_abundance_by_site <- ggplot(abundance_by_site, aes(x = Tipo, y = n, fill = 
        title = "Abundance across landuse types")
 plot_abundance_by_site
 ```
+
+
+
+
+
+
+
+# NON PRIACH ABUNDANCE ACROSS LANDUSE TYPES
+
+
+
+
+
+## before selecting statistical test, need to look at dist. of abundance by site
+- use Poisson dist. b/c using count data with no upper limit!
+```{r}
+(abundance_by_site_no_priach_hist <- ggplot(abundance_by_site_no_priach, 
+                                            aes(n, fill = Tipo)) +
+  geom_histogram(binwidth = 5))
+```
+
+
+## run glm for abundance across landuse types, using Gaussian dist. Elev rand eff
+
+DONT RUN POISSON HERE!
+- quantile deviations detected
+- combined adjusted quantile test significant
+
+NO SIG DIFF IN ABUNDANCE ACROSS LANDUSE TYPES
+
+- elevation random effect
+```{r}
+# default family dist is Gaussian
+abundance_by_type_no_priach_glm <- glm(n ~ Tipo + (1|Elevation), 
+                                       data = abundance_by_site_no_priach,
+                                       family = poisson(link = "log"))
+
+summary(abundance_by_type_no_priach_glm)
+
+# no significant problems detected w/Gaussian!
+simulationOutput_abundance_by_type_no_priach <- simulateResiduals(
+  fittedModel = abundance_by_type_no_priach_glm)
+plot(simulationOutput_abundance_by_type_no_priach)
+```
+
+```{r}
+plot_abundance_by_site_no_priach <- ggplot(abundance_by_site_no_priach, 
+                                           aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() +
+  labs(x = "Landuse type",
+       y = "Individuals per site",
+       title = "Non P. achatinus abundance across landuse types")
+plot_abundance_by_site_no_priach
+```
+
+
+
+
+
+
+
+
+
 
 
 
@@ -523,6 +590,43 @@ plot_inv_simpson
 
 
 
+
+
+# NON PRIACH DIVERSITY ACROSS LANDUSE TYPES
+
+## Only going to look at Shannon diversity - start with dist
+```{r}
+# shannon - clearly not normal dist! 
+(shannon_hist_no_priach <- ggplot(diversity_by_site_no_priach, aes(Shannon_Index)) +
+  geom_histogram(binwidth = .05))
+```
+
+Actually close to normal distribution? I have no clue!
+```{r}
+# shannon w/ Gaussian dist - all good
+shannon_by_type_no_priach_glm <- glm(Shannon_Index ~ Tipo + (1|Elevation), 
+                           data = diversity_by_site_no_priach)
+summary(shannon_by_type_no_priach_glm)
+
+# no significant problems detected using Gaussian dist!
+simulationOutput_shannon_by_type_no_priach <- simulateResiduals(
+  fittedModel = shannon_by_type_no_priach_glm)
+plot(simulationOutput_shannon_by_type_no_priach)
+```
+
+No difference here!
+```{r}
+plot_shannon_no_priach <- ggplot(diversity_by_site_no_priach, 
+                       aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() +
+  labs(x = "Landtype",
+       y = "Shannon diversity",
+       title = "Shannon diversity without P. achatinus across landuse types")
+plot_shannon_no_priach
+```
 
 
 

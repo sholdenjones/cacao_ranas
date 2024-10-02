@@ -1,0 +1,55 @@
+---
+title: "iNEXT_tutorial"
+author: "Holden Jones"
+date: "2024-09-28"
+output: html_document
+---
+
+# PRACTICE RUNNING iNEXT
+- using their tutorial
+https://github.com/JohnsonHsieh/iNEXT
+```{r}
+library(iNEXT)
+library(ggplot2)
+```
+
+# spider
+Spider data (datatype = "abundance")
+Description
+The data include spider species abundances in two canopy manipulation treatments 
+(Girdled and Logged) of hemlock trees (Ellison et al. 2010, Sackett et al. 2011). 
+In the Girdled treatment site, there were 26 species among 168 individuals; 
+in the Logged treatment site, there were 37 species among 252 individuals.
+
+The format for each site is a list of species abundances:
+A list of 2 vectors
+$ Girdled: num [1:26] 46 22 17 15 15 9 8 6 6 4 ...
+$ Logged : num [1:37] 88 22 16 15 13 10 8 8 7 7 ...
+```{r}
+data(spider)
+
+
+
+out <- iNEXT(spider, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# Sample-size-based R/E curves, separating plots by "Assemblage"
+ggiNEXT(out, type=1, facet.var="Assemblage")
+
+# Sample-size-based R/E curves, separating plots by "Order.q"
+ggiNEXT(out, type=1, facet.var="Order.q")
+
+# To link the sample-sized and coverage-based sampling curves, 
+#it would be informative to first examine the sample completeness curve using 
+#the following command:
+ggiNEXT(out, type=2)
+
+# The following commands return the coverage-based R/E sampling curves. The argument facet.var=“Assemblage” in the ggiNEXT() function creates a separate plot for each site, as shown below:
+ggiNEXT(out, type=3, facet.var="Assemblage")
+```
+
+
+
+
+
+
+
+

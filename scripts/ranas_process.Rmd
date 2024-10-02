@@ -72,11 +72,11 @@ write_csv(new, file = filepath)
 ```
 
 
-# new_no_priach
+# new_no_priach & ranas_no_priach
 
 new_no_priach - remove all priach to look at underlying diversity + abundance
 ```{r}
-# make new with only new ind
+# make new with only non-priach ind
 new_no_priach <- new %>%
   filter(Final_ID != "priach")
 
@@ -84,13 +84,22 @@ new_no_priach <- new %>%
 filename <- "new_no_priach_processed.csv"
 filepath <- file.path(data_dir, filename)
 write_csv(new_no_priach, file = filepath)
-```
 
+# og ranas with only non-priach ind
+ranas_no_priach <- ranas %>%
+  filter(Final_ID != "priach")
+
+# output
+filename <- "ranas_no_priach_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(ranas_no_priach, file = filepath)
+```
 
 
 # new_threatened
 
-new_threatened - only new individuals from sp of conservation concern - listed as DD or higher
+new_threatened - only new individuals from sp of conservation concern - 
+- listed as DD or higher
 ```{r}
 new_threatened <- new %>%
   filter(Final_ID == 'epiesp' |
@@ -107,12 +116,165 @@ write_csv(new_threatened, file = filepath)
 ```
 
 
+# new_mat 
+matrix for iNEXT package 
+- to extrapolate and control for uneven sampling coverage across site types
+
+# REVIEW ALL OF THIS
+
+## HAVING SOME ISSUES HERE - MAY NEED TO DELETE THIS SECTION
+```{r}
+# # Step 1: Group by Sitio and Final_ID and count occurrences
+# three_column <- new %>%
+#   group_by(Sitio, Final_ID) %>%
+#   summarise(count = n(), .groups = 'drop')
+# 
+# # Step 2: Reshape the data to have 'Final_ID' as rows and 'Sitio' as columns
+# # pivot_wider is used to "spread" the 'Sitio' values into columns
+# flipped_matrix <- three_column %>%
+#   pivot_wider(names_from = Sitio, values_from = count, values_fill = 0)
+# 
+# # Step 3: Convert to matrix and remove the 'Final_ID' column for use in iNEXT
+# flipped_matrix <- as.matrix(flipped_matrix[,-1])  # Exclude the 'Final_ID' column
+# rownames(flipped_matrix) <- three_column$Final_ID  # Assign 'Final_ID' to rownames
+```
+
+
+# NEW_MAT - TRY THIS METHOD FOR iNEXT
+- needs species as rows, sites as columns
+- code from Chat GPT, ensures retains species names?
+```{r}
+# #Step 1: Group by Sitio and Final_ID and count occurrences
+# three_column <- new %>%
+#   group_by(Sitio, Final_ID) %>%
+#   summarise(count = n(), .groups = 'drop')
+# 
+# # Step 2: Reshape the data to have 'Final_ID' as rows and 'Sitio' as columns
+# # pivot_wider spreads the Sitio values into columns
+# flipped_df <- three_column %>%
+#   pivot_wider(names_from = Sitio, values_from = count, values_fill = 0)
+# 
+# # Step 3: Check if the row count and unique Final_IDs match
+# rownames_check <- length(unique(three_column$Final_ID))
+# matrix_row_count <- nrow(flipped_df)
+# 
+# if (rownames_check == matrix_row_count) {
+#   # Step 4: Convert to matrix and assign rownames correctly
+#   flipped_matrix <- as.matrix(flipped_df[,-1])  # Exclude the 'Final_ID' column
+#   rownames(flipped_matrix) <- flipped_df$Final_ID  # Assign 'Final_ID' to rownames
+# } else {
+#   stop("Mismatch between number of Final_IDs and matrix row count.")
+# }
+# 
+# # Remove the Final_ID column (species names), if present, since it's not needed in the list of abundances
+# abundance_df <- flipped_df[,-1]
+# 
+# # Convert the data frame to a list of species abundances (each element in the list corresponds to a site)
+# abundance_list <- as.list(as.data.frame(t(abundance_df)))
+# 
+# # Set the names of the list elements to be the column names (site names)
+# names(abundance_list) <- colnames(df)[-1]
+# 
+# # Print the result
+# abundance_list
+# 
+# class(abundance_list)
+# 
+# 
+# 
+# 
+# out <- iNEXT(abundance_list, q=c(0, 1, 2), datatype="abundance", endpoint=500)
+# # Sample-size-based R/E curves, separating plots by "Assemblage"
+# ggiNEXT(out, type=1, facet.var="Assemblage")
+# 
+# # Sample-size-based R/E curves, separating plots by "Order.q"
+# ggiNEXT(out, type=1, facet.var="Order.q")
+# 
+# # To link the sample-sized and coverage-based sampling curves, 
+# #it would be informative to first examine the sample completeness curve using 
+# #the following command:
+# ggiNEXT(out, type=2)
+# 
+# # The following commands return the coverage-based R/E sampling curves. The argument facet.var=“Assemblage” in the ggiNEXT() function creates a separate plot for each site, as shown below:
+# ggiNEXT(out, type=3, facet.var="Assemblage")
+# 
+# 
+# 
+
+# output
+# filename <- "new_mat_test_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(flipped_df, file = filepath)
+```
+
+
+
+## DIFFERENT WAY OF TRYING TO MAKE NEW_MAT - WRONG FORMAT for iNEXT?
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+
+
+
+### NOT SURE ABOUT THIS"
+
+# Sample data frame where rows represent species and columns represent sites
+df <- data.frame(
+  Final_ID = c("species1", "species2", "species3"),
+  Site_A = c(10, 5, 0),
+  Site_B = c(4, 0, 2),
+  Site_C = c(1, 3, 7)
+)
+
+# Remove the Final_ID column (species names), if present, since it's not needed in the list of abundances
+abundance_df <- df[,-1]
+
+# Convert the data frame to a list of species abundances (each element in the list corresponds to a site)
+abundance_list <- as.list(as.data.frame(t(abundance_df)))
+
+# Set the names of the list elements to be the column names (site names)
+names(abundance_list) <- colnames(df)[-1]
+
+# Print the result
+abundance_list
+
+class(abundance_list)
+
+
+
+
+
+
+
+# # output
+# filename <- "new_mat_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(new_mat, file = filepath)
+```
+
+
 # environmental
 
 environmental - environmental data for each sampling event
 ```{r}
 # environmental data - change VC-V to VC-N
-environmental <- read_csv("data/raw_data/environment_04_08_23.csv")
+environmental <- read_csv("data/raw_data/environment_07_12_24.csv")
 
 environmental$sample_date <- as.Date(environmental$Fecha, format = "%d/%m/%y")
 
@@ -134,7 +296,7 @@ write_csv(environmental, file = filepath)
 site_data - location, canopy cover, and miscellaneous data for each site
 ```{r}
 # site_data - change VC-V to VC-N
-site_data <- read_csv("data/raw_data/site_data_04_28_24.csv")
+site_data <- read_csv("data/raw_data/site_data_08_19_24.csv")
 
 # update VC-N
 site_data <- site_data %>%
@@ -200,21 +362,46 @@ environment_fill_by_trans <- environment_fill %>%
 ```
 
 now join this dataframe with local_by_trans
+- ONLY INCLUDING PLANTATIONS HERE! SO ONLY N, C
 ```{r}
 local_by_trans <- left_join(environment_fill_by_trans, local_by_trans,
                                  by = c("Sitio", "Transecto"))
 
 local_by_trans <- local_by_trans %>%
-  select(Sitio, Fecha, Transecto, 
+  select(Sitio, Tipo, Fecha, Transecto, 
          tran_mean_veg, tran_mean_hoja, Pair,
-         tran_mean_CC, tran_coef_var_CC)
+         tran_mean_CC, tran_coef_var_CC,
+         forest_cover_400, water_dist) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+
+# bin all transect measurements to categories used in Islas studies
+
+# Define the breaks (bins) and labels
+breaks <- c(0, 1, 5, 10, 25, 50, 75, 95, 100)
+labels <- c("0", "1-5", "5-10", "10-25", "25-50", "50-75", "75-95", "95-100")
+
+local_by_trans$veg_bins <- cut(local_by_trans$tran_mean_veg, 
+                                   breaks = breaks, 
+                                   labels = labels, 
+                                   include.lowest = TRUE, 
+                                   right = FALSE)
+
+local_by_trans$hoja_bins <- cut(local_by_trans$tran_mean_hoja, 
+                                   breaks = breaks, 
+                                   labels = labels, 
+                                   include.lowest = TRUE, 
+                                   right = FALSE)
+
+local_by_trans$CC_bins <- cut(local_by_trans$tran_mean_CC, 
+                                   breaks = breaks, 
+                                   labels = labels, 
+                                   include.lowest = TRUE, 
+                                   right = FALSE)
 
 filename <- "local_by_trans_processed.csv"
 filepath <- file.path(data_dir, filename)
 write_csv(local_by_trans, file = filepath)
 ```
-
-
 
 
 # landscape_by_site

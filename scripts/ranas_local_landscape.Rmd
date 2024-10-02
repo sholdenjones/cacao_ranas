@@ -21,9 +21,18 @@ ranas <- as_tibble(ranas)
 
 local_by_trans <- read_csv("data/processed_data/local_by_trans_processed.csv")
 local_by_trans <- as_tibble(local_by_trans)
+
+new <- read_csv("data/processed_data/new_processed.csv")
+new <- as_tibble(new)
+
+ranas_no_priach <- read_csv("data/processed_data/ranas_no_priach_processed.csv")
+ranas_no_priach <- as_tibble(ranas_no_priach)
+
+site_data <- read_csv("data/processed_data/site_data_processed.csv")
+site_data <- as_tibble(site_data)
 ```
 
-# need to summarize the species in each transect visit
+# tally sp. & ind. in each transect visit
 ```{r}
 trans_richness <- ranas %>%
   group_by(Sitio, Transecto, Fecha) %>%
@@ -31,6 +40,38 @@ trans_richness <- ranas %>%
 
 trans_richness_local <- left_join(trans_richness, local_by_trans,
                                  by = c("Sitio", "Transecto", "Fecha"))
+
+trans_abundance <- ranas %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+trans_richness_local <- left_join(trans_abundance, trans_richness_local,
+                                 by = c("Sitio", "Transecto", "Fecha")) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+```
+
+# non priach: tally sp. & ind. in each transect visit 
+```{r}
+trans_richness_no_priach <- ranas_no_priach %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_species = n_distinct(Final_ID))
+
+trans_richness_local_no_priach <- left_join(trans_richness_no_priach, 
+                                            local_by_trans,
+                                 by = c("Sitio", "Transecto", "Fecha"))
+
+trans_abundance_no_priach <- ranas_no_priach %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+
+### THIS MIGHT NOT WORK ###
+# add to above df to make downstream model creation easier
+trans_richness_local_no_priach <- left_join(trans_abundance_no_priach, 
+                                            trans_richness_local_no_priach,
+                                 by = c("Sitio", "Transecto", "Fecha")) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
 ```
 
 throw together some glms! starting point!
@@ -67,29 +108,783 @@ ggplot(trans_richness_local, aes(tran_mean_veg, num_species)) +
   geom_smooth()
 ```
 
+# Single glms for local var with species richness
 
-
-
-
-## THIS DOESNT WORK:
-
-# chat gpt says should use a GLMM - so can incorporate 
+# richness ~ veg
+- Poisson dist.
+- using code from CHAT GPT:
 ```{r}
-# library(lme4)
-# library(Matrix)
-# 
-# model_richness_trans <- glmer(num_species ~ 
-#                                 tran_mean_veg + 
-#                                 tran_mean_hoja + 
-#                                 tran_mean_CC + 
-#                                 (1 | Sitio), 
-#                               data = trans_richness_local, 
-#                               family = poisson()
-#                               )
-# 
-# 
-# summary(model_richness_trans)
-# ```
+# Fit the Poisson GLM
+poisson_rich_veg <- glm(num_species ~ tran_mean_veg, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_rich_veg)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_veg = seq(min(trans_richness_local$tran_mean_veg),
+                      max(trans_richness_local$tran_mean_veg), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_veg, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = tran_mean_veg, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Species vs. Mean Vegetation",
+       x = "Mean Vegetation Cover",
+       y = "Number of Species")
+```
+
+# richness ~ hoja
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_hoja <- glm(num_species ~ tran_mean_hoja, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_rich_hoja)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_hoja = seq(min(trans_richness_local$tran_mean_hoja),
+                      max(trans_richness_local$tran_mean_hoja), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_hoja, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = tran_mean_hoja, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Species vs. Mean Leaf Cover",
+       x = "Mean Leaf Cover",
+       y = "Number of Species")
+```
+
+# richness ~ CC
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_cc <- glm(num_species ~ tran_mean_CC, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_rich_cc)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_CC = seq(min(trans_richness_local$tran_mean_CC),
+                      max(trans_richness_local$tran_mean_CC), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_cc, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = tran_mean_CC, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Species vs. Mean Canopy Cover",
+       x = "Mean Canopy Cover Cover",
+       y = "Number of Species")
+```
+
+# richness ~ forest cover
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_forest <- glm(num_species ~ forest_cover_400, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_rich_forest)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  forest_cover_400 = seq(min(trans_richness_local$forest_cover_400),
+                      max(trans_richness_local$forest_cover_400), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_forest, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = forest_cover_400, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Species vs. Percent Surrounding Forest Cover",
+       x = "Percent Surrounding Forest Cover (400m)",
+       y = "Number of Species")
+```
+
+# richness ~ freshwater distance
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_water <- glm(num_species ~ water_dist, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_rich_water)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  water_dist = seq(min(trans_richness_local$water_dist),
+                      max(trans_richness_local$water_dist), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_water, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = water_dist, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Species vs. Distance to Freshwater",
+       x = "Distance to Freshwater (m)",
+       y = "Number of Species")
+```
+
+
+
+# Single glms for local var with abundance
+
+# abundance ~ veg
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_veg <- glm(num_ind ~ tran_mean_veg, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_abun_veg)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_veg = seq(min(trans_richness_local$tran_mean_veg),
+                      max(trans_richness_local$tran_mean_veg), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_abun <- predict(
+                                 poisson_abun_veg, 
+                                 newdata = new_data, 
+                                 type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = tran_mean_veg, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Individuals vs. Mean Vegetation",
+       x = "Mean Vegetation Cover",
+       y = "Number of Individuals")
+```
+
+# abundance ~ hoja
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_hoja <- glm(num_ind ~ tran_mean_hoja, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_abun_hoja)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_hoja = seq(min(trans_richness_local$tran_mean_hoja),
+                      max(trans_richness_local$tran_mean_hoja), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_abun <- predict(
+                                 poisson_abun_hoja, 
+                                 newdata = new_data, 
+                                 type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = tran_mean_hoja, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Individuals vs. Mean Leaf Coverage",
+       x = "Mean Leaf Cover",
+       y = "Number of Individuals")
+```
+
+# abundance ~ CC
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_CC <- glm(num_ind ~ tran_mean_CC, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_abun_CC)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_CC = seq(min(trans_richness_local$tran_mean_CC),
+                      max(trans_richness_local$tran_mean_CC), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_abun_CC, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = tran_mean_CC, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Individuals vs. Mean Canopy Coverage",
+       x = "Mean Canopy Cover",
+       y = "Number of Individuals")
+```
+
+
+# abundance ~ forest cover
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_forest <- glm(num_ind ~ forest_cover_400, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_abun_forest)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  forest_cover_400 = seq(min(trans_richness_local$forest_cover_400),
+                      max(trans_richness_local$forest_cover_400), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_abun_forest, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = forest_cover_400, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Individuals vs. Percent Forest Cover",
+       x = "Percent Forest Cover Within 400 m",
+       y = "Number of Individuals")
+```
+
+
+# abundance ~ freshwater distance
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_water <- glm(num_ind ~ water_dist, 
+                        data = trans_richness_local, 
+                        family = poisson())
+
+summary(poisson_abun_water)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  water_dist = seq(min(trans_richness_local$water_dist),
+                      max(trans_richness_local$water_dist), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_abun_water, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local, 
+       aes(x = water_dist, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Individuals vs. Proximity to Fresh Water",
+       x = "Distance to Fresh Water (m)",
+       y = "Number of Individuals")
+```
+
+
+
+
+
+# Single glms for local var with non_priach species richness
+
+# non_priach_richness ~ veg
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_veg_no_priach <- glm(num_species ~ tran_mean_veg, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_rich_veg_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_veg = seq(min(trans_richness_local_no_priach$tran_mean_veg),
+                      max(trans_richness_local_no_priach$tran_mean_veg), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_veg_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = tran_mean_veg, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus Species vs. Mean Vegetation",
+       x = "Mean Vegetation Cover",
+       y = "Number of Species")
+```
+
+# non_priach_richness ~ hoja
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_hoja_no_priach <- glm(num_species ~ tran_mean_hoja, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_rich_hoja_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_hoja = seq(min(trans_richness_local_no_priach$tran_mean_hoja),
+                      max(trans_richness_local_no_priach$tran_mean_hoja), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_hoja_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = tran_mean_hoja, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus species vs. Mean Leaf Cover",
+       x = "Mean Leaf Cover",
+       y = "Number of Species")
+```
+
+# non_priach_richness ~ CC
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_CC_no_priach <- glm(num_species ~ tran_mean_CC, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_rich_CC_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_CC = seq(min(trans_richness_local_no_priach$tran_mean_CC),
+                      max(trans_richness_local_no_priach$tran_mean_CC), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_CC_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = tran_mean_CC, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus species vs. Mean Canopy Cover",
+       x = "Mean Leaf Cover",
+       y = "Number of Species")
+```
+
+
+# non_priach_richness ~ forest cover
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_forest_no_priach <- glm(num_species ~ forest_cover_400, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_rich_forest_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  forest_cover_400 = seq(min(trans_richness_local_no_priach$forest_cover_400),
+                      max(trans_richness_local_no_priach$forest_cover_400), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_forest_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = forest_cover_400, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus species vs. Percent Forest Cover",
+       x = "Percent Forest Cover Within 400 m",
+       y = "Number of Species")
+```
+
+
+# non_priach_richness ~ freshwater distance
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_rich_water_no_priach <- glm(num_species ~ water_dist, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_rich_water_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  water_dist = seq(min(trans_richness_local_no_priach$water_dist),
+                      max(trans_richness_local_no_priach$water_dist), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_rich_water_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = water_dist, y = num_species)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus species vs. Proximity to Fresh Water",
+       x = "Proximity to Fresh Water (m)",
+       y = "Number of Species")
+```
+
+
+
+# Single glms for local var with non_priach abundance
+
+# non_priach_abundance ~ veg
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_veg_no_priach <- glm(num_ind ~ tran_mean_veg, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_abun_veg_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_veg = seq(min(trans_richness_local_no_priach$tran_mean_veg),
+                      max(trans_richness_local_no_priach$tran_mean_veg), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_abun <- predict(
+                                 poisson_abun_veg_no_priach, 
+                                 newdata = new_data, 
+                                 type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = tran_mean_veg, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus individuals vs. Mean Vegetation",
+       x = "Mean Vegetation Cover",
+       y = "Number of Individuals")
+```
+
+# non_priach_abundance ~ hoja
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_hoja_no_priach <- glm(num_ind ~ tran_mean_hoja, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_abun_hoja_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_hoja = seq(min(trans_richness_local_no_priach$tran_mean_hoja),
+                      max(trans_richness_local_no_priach$tran_mean_hoja), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_abun <- predict(
+                                 poisson_abun_hoja_no_priach, 
+                                 newdata = new_data, 
+                                 type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = tran_mean_hoja, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus individuals vs. Mean Leaf Coverage",
+       x = "Mean Leaf Cover",
+       y = "Number of Individuals")
+```
+
+# non_priach_abundance ~ CC
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_CC_no_priach <- glm(num_ind ~ tran_mean_CC, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_abun_CC_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  tran_mean_CC = seq(min(trans_richness_local_no_priach$tran_mean_CC),
+                      max(trans_richness_local_no_priach$tran_mean_CC), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_abun_CC_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = tran_mean_CC, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus individuals vs. Mean Canopy Coverage",
+       x = "Mean Canopy Cover",
+       y = "Number of Individuals")
+```
+
+
+# non_priach_abundance ~ forest cover
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_forest_no_priach <- glm(num_ind ~ forest_cover_400, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_abun_forest_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  forest_cover_400 = seq(min(trans_richness_local_no_priach$forest_cover_400),
+                      max(trans_richness_local_no_priach$forest_cover_400), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_abun_forest_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = forest_cover_400, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus individuals vs. Percent Forest Cover",
+       x = "Percent Forest Cover Within 400 m",
+       y = "Number of Individuals")
+```
+
+
+# non_priach_abundance ~ freshwater distance
+- Poisson dist.
+- using code from CHAT GPT:
+```{r}
+# Fit the Poisson GLM
+poisson_abun_water_no_priach <- glm(num_ind ~ water_dist, 
+                        data = trans_richness_local_no_priach, 
+                        family = poisson())
+
+summary(poisson_abun_water_no_priach)
+
+# Create a new data frame for predictions
+new_data <- data.frame(
+  water_dist = seq(min(trans_richness_local_no_priach$water_dist),
+                      max(trans_richness_local_no_priach$water_dist), 
+                      length.out = 100))
+
+# Add predicted values to the new data frame
+new_data$predicted_species <- predict(
+                                      poisson_abun_water_no_priach, 
+                                      newdata = new_data, 
+                                      type = "response")
+
+# Plot the data and the fitted model
+ggplot(trans_richness_local_no_priach, 
+       aes(x = water_dist, y = num_ind)) +
+  geom_jitter(width = 0, height = 0.1) + 
+  geom_smooth() +
+  labs(title = "Poisson Regression: Number of Non P. achatinus individuals vs. Proximity to Fresh Water",
+       x = "Proximity to Freshwater (m)",
+       y = "Number of Individuals")
+```
+
+
+
+
+
+
+
+#PALMER PENGUINS
+
+How to run a glmmer with random effects?
+## palmer penguins tutorial
+- https://www.youtube.com/watch?v=smYZdlbE9m8&t=92s
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(glmmTMB)
+library(DHARMa)
+library(ggplot2)
+library(scico)
+library(Matrix)
+```
+
+
+# Incorporating random effects
+- Really we are most interested in landscape level random effects, and veg.
+- Perhaps would use forest cover and water proximity as fixed effects, but these
+  are not things that would be manipulated as part of management regime (well, forest cover could)
+  so maybe best as random effects?
+  
+# 5 models for transect level species diversity with random effects
+```{r}
+# species against hoja with veg as random effect
+mod1 <- glmmTMB(num_species ~ tran_mean_hoja + (1|tran_mean_veg),
+                data = trans_richness_local, 
+                        family = poisson())
+
+summary(mod1)
+coef(mod1)
+# AIC 1143
+
+# species against hoja with canopy cover as random effect
+mod2 <- glmmTMB(num_species ~ tran_mean_hoja + (1|tran_mean_CC),
+                data = trans_richness_local, 
+                        family = poisson())
+
+summary(mod2)
+coef(mod2)
+# AIC 1143
+
+# species against hoja with no random effect
+mod3 <- glmmTMB(num_species ~ tran_mean_hoja,
+                data = trans_richness_local, 
+                        family = poisson())
+
+summary(mod3)
+coef(mod3)
+# AIC 1141
+
+# species against hoja with pair as random effect
+mod4 <- glmmTMB(num_species ~ tran_mean_hoja + (1|Pair),
+                data = trans_richness_local, 
+                        family = poisson())
+
+summary(mod4)
+coef(mod4)
+# AIC 1137
+
+# species against forest cover with pair as random effect
+mod5 <- glmmTMB(num_species ~ forest_cover_400 +(1|Pair),
+                data = trans_richness_local, 
+                        family = poisson())
+
+summary(mod5)
+coef(mod5)
+# AIC 1138
+
+
+# species against water_dist with pair as random effect
+mod6 <- glmmTMB(num_species ~ water_dist,
+                data = trans_richness_local, 
+                        family = poisson())
+
+summary(mod6)
+coef(mod6)
+# AIC 1143
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
