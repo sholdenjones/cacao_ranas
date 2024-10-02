@@ -1,5 +1,6 @@
 # my personal stuff to ignore
 .DS_Store
+/cacao_ranas_gis/
 
 # History files
 .Rhistory
