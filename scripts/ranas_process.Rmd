@@ -404,6 +404,30 @@ write_csv(local_by_trans, file = filepath)
 ```
 
 
+# trans_richness_local
+```{r}
+trans_richness <- ranas %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_species = n_distinct(Final_ID))
+
+trans_richness_local <- left_join(trans_richness, local_by_trans,
+                                 by = c("Sitio", "Transecto", "Fecha"))
+
+trans_abundance <- ranas %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+trans_richness_local <- left_join(trans_abundance, trans_richness_local,
+                                 by = c("Sitio", "Transecto", "Fecha")) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+
+filename <- "trans_richness_local_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(trans_richness_local, file = filepath)
+```
+
+
 # landscape_by_site
 
 For landscape - not at a transect level, but at a site level

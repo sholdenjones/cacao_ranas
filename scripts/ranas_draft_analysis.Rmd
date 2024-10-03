@@ -37,11 +37,11 @@ new_threatened <- read_csv("data/processed_data/new_threatened_processed.csv")
 new_threatened <- as_tibble(new_threatened)
 
 ### REVIEW THIS SECTION ###
-new_mat <- read_csv("data/processed_data/new_mat_processed.csv")
-new_mat <- as.matrix(new_mat)
+#new_mat <- read_csv("data/processed_data/new_mat_processed.csv")
+#new_mat <- as.matrix(new_mat)
 
-new_mat_test <- read_csv("data/processed_data/new_mat_test_processed.csv")
-new_mat_test <- as.matrix(new_mat_test)
+#new_mat_test <- read_csv("data/processed_data/new_mat_test_processed.csv")
+#new_mat_test <- as.matrix(new_mat_test)
 ### REVIEW THIS SECTION ###
 
 site_data <- read_csv("data/processed_data/site_data_processed.csv")
@@ -77,6 +77,10 @@ diversity_by_site <- as_tibble(diversity_by_site)
 diversity_by_site_no_priach <- read_csv(
   "data/processed_data/diversity_by_site_no_priach_processed.csv")
 diversity_by_site_no_priach <- as_tibble(diversity_by_site_no_priach)
+
+trans_richness_local <- read_csv(
+  "data/processed_data/trans_richness_local_processed.csv")
+trans_richness_local <- as_tibble(trans_richness_local)
 ```
 
 define a consistent palet, labels, and theme to be used in figures
@@ -346,9 +350,6 @@ To do this, need to use estimates of asymptotic species richness
 - then compare sampling coverage!
 - then graphically display this?
 
-
-
-
 ```{r}
 # library(iNEXT)
 # 
@@ -419,6 +420,60 @@ Why is this so hard? Isn't this the whole fucking point of the iNEXT package?
 # 
 # print(coverage_data)
 ```
+
+
+#5. Multivariate statistics for drivers of amphibian communities
+
+Have a series of local (collected at quad-level),landscape (at 
+site-level) variables - how do these explain the amphibian comm?
+
+# a. PCA
+- can only work for continuous variables!
+
+https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+```{r}
+pca_fit <- prcomp(x = trans_richness_local[, -c(1,3,6,14,15,16)], 
+                  scale. = TRUE)
+
+pca_summary <- summary(pca_fit)
+pca_summary
+
+ls(pca_summary) # Lists the objects produced by summary
+
+pca_summary$importance
+
+# biplot - kinda ugly!
+biplot(x = pca_fit)
+
+# just plot first two axes of PCA
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+
+# what if we included the plantation type for each transect here?
+cacao_type <- unique(trans_richness_local$Tipo)
+
+legend_cols <- c("#A6611A", "#DFC27D") 
+
+# assign colors to legend
+pt_cols <- rep(x = legend_cols[1], length = nrow(trans_richness_local))
+pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
+
+# plot just first two axes, include coloring of points for each cacao type
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2",
+     pch = 19,
+     col = pt_cols)
+legend("bottomleft", 
+       legend = cacao_type, 
+       pch = 19, 
+       col = legend_cols, 
+       cex = 0.8)
+```
+
 
 
 
