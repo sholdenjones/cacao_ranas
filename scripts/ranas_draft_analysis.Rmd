@@ -37,11 +37,11 @@ new_threatened <- read_csv("data/processed_data/new_threatened_processed.csv")
 new_threatened <- as_tibble(new_threatened)
 
 ### REVIEW THIS SECTION ###
-#new_mat <- read_csv("data/processed_data/new_mat_processed.csv")
-#new_mat <- as.matrix(new_mat)
+new_mat <- read_csv("data/processed_data/new_mat_processed.csv")
+new_mat <- as.matrix(new_mat)
 
-#new_mat_test <- read_csv("data/processed_data/new_mat_test_processed.csv")
-#new_mat_test <- as.matrix(new_mat_test)
+new_mat_test <- read_csv("data/processed_data/new_mat_test_processed.csv")
+new_mat_test <- as.matrix(new_mat_test)
 ### REVIEW THIS SECTION ###
 
 site_data <- read_csv("data/processed_data/site_data_processed.csv")
@@ -322,6 +322,7 @@ plot_shannon_by_site_inactive
 #ggsave("output/plot_shannon_by_site_inactive.png", width = 10, height = 10)
 ```
 
+
 #3. Arrange figures for publication
 arrange these four figures as panels in one window
 ```{r}
@@ -377,7 +378,7 @@ To do this, need to use estimates of asymptotic species richness
 
 
 
-Why is this so hard? Isn't this the whole fucking point of the iNEXT package?
+Why is this so hard? Isn't this the whole point of the iNEXT package?
 ```{r}
 # need to convert new_mat to a list I guess?
 # new_mat_list <- apply(new_mat_test, 1, as.numeric)
@@ -472,6 +473,181 @@ legend("bottomleft",
        pch = 19, 
        col = legend_cols, 
        cex = 0.8)
+```
+
+
+# b. glmer
+- use glmer package b/c allows for inclusion of both random and rixed effects 
+
+Okay, let's start with simpler models
+- need site veg as random effects.
+- start with just local variables?
+
+# weird - ran with + (1|veg_bins) and got following error:
+# boundary (singular) fit: see help('isSingular')
+
+# ran with + veg_bins instead and got following error:
+# Warning: Model failed to converge with max|grad| = 0.00276742 (tol = 0.002, component 1)
+
+```{r}
+# mod1 - species by hoja, CC, sitio as random effect
+mod1 <- glmer(num_species ~ hoja_bins + CC_bins +
+              (1|Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod1)
+# AIC 1158.2, BIC 1211.6
+#None of the fixed effects (hoja_bins and CC_bins) have p-values less than 0.05, indicating that there are no statistically significant predictors in your current model. This suggests that the variation in num_species might not be explained well by these predictors.
+coef(mod1)
+
+# try model with just landscape variables
+# first need to scale these two so on same scale
+trans_richness_local$forest_cover_400 <- scale(trans_richness_local$forest_cover_400)
+trans_richness_local$water_dist <- scale(trans_richness_local$water_dist)
+
+mod2 <- glmer(num_species ~ forest_cover_400 + water_dist +
+              (1|Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod2)
+# AIC 1143.2, BIC 1159.6
+# The intercept is significant, indicating a baseline number of species.Both predictor variables, forest_cover_400 and water_dist, do not appear to have a statistically significant impact on the number of species, as evidenced by their high p-values. This implies that variations in these predictors do not significantly change the expected count of species in this model.
+coef(mod2)
+
+# really just kinda trying different combinations now
+mod3 <- glmer(num_species ~ forest_cover_400 + 
+              (1|Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod3)
+# AIC 1141.2
+
+mod4 <- glmer(num_species ~ water_dist + 
+              (1|Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod4)
+# AIC 1141.7
+```
+
+
+
+
+
+```{r}
+# # seems like throwing way too much into one model here!
+# mod1 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist +
+#                 (1|veg_bins) + (1|Sitio),
+#               data = trans_richness_local,
+#               family = poisson())
+# #Warning: Some predictor variables are on very different scales: 
+# # consider rescalingboundary (singular) fit: see help('isSingular')
+# 
+# mod2 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist +
+#                (1|Sitio), 
+#              data = trans_richness_local, 
+#              family = poisson())
+# #Warning: Some predictor variables are on very different scales: consider rescalingWarning: Model failed to converge with max|grad| = 0.0250694 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
+# # Rescale variables?;Model is nearly unidentifiable: large eigenvalue ratio
+# # Rescale variables?
+# 
+# # can we rescale the continuous variables? try with CHATGPT
+# trans_richness_local$forest_cover_400 <- scale(trans_richness_local$forest_cover_400)
+# trans_richness_local$water_dist <- scale(trans_richness_local$water_dist)
+# 
+# # rerun previous model
+# mod2 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist +
+#                (1|Sitio), 
+#              data = trans_richness_local, 
+#              family = poisson())
+# # Warning: Model failed to converge with max|grad| = 0.00258301 (tol = 0.002, component 1)
+# 
+# # woohoo! now try relaxing the tolerance threshold? no clue what any of this means
+# mod2 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist + 
+#               (1|Sitio), 
+#               data = trans_richness_local, 
+#               family = poisson(), 
+#               control = glmerControl(optCtrl = list(maxfun = 100000), tolPwrss = 1e-4))
+```
+
+
+
+
+
+
+# from dancal!
+```{r}
+# # model germinants vs. site x planted
+# m.bgerm <- glmer(Ngerm ~ SITE * x_or_c + (1|quad_dir2), family = poisson, data = seeds_crunchfinal2)
+# overdisp_fun(m.bgerm) # sig. overdispersed based on chi-square test
+# dispersion_glmer(m.bgerm)
+# summary(m.bgerm)
+# 
+# # try negative binomial model
+# m.bgerm2 <- glmer.nb(Ngerm ~ SITE * x_or_c + (1|quad_dir2), data = seeds_crunchfinal2) # fit a negative binomial test
+# overdisp_fun(m.bgerm2) # still overdispersed, but a lot better...
+# dispersion_glmer(m.bgerm2)
+# summary(m.bgerm2)
+# 
+# # try including observation level random effect on poisson model
+# m.bgerm3 <- glmer(Ngerm ~ SITE * x_or_c + (1|quad_dir2) + (1|OLRE), family = poisson, data = seeds_crunchfinal2)
+# overdisp_fun(m.bgerm3) 
+# dispersion_glmer(m.bgerm3)
+# summary(m.bgerm3)
+```
+
+
+
+
+```{r}
+# # https://www.rdocumentation.org/packages/lme4/versions/1.1-35.5/topics/glmer
+# library(lattice)
+# 
+# xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
+#        layout=c(3,5), index.cond = function(x,y)max(y))
+# (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+#               data = cbpp, family = binomial))
+# 
+# ## using nAGQ=0 only gets close to the optimum
+# (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+#                cbpp, binomial, nAGQ = 0))
+# 
+# ## using  nAGQ = 9  provides a better evaluation of the deviance
+# ## Currently the internal calculations use the sum of deviance residuals,
+# ## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
+# ## 'verbose = 1' monitors iteratin a bit; (verbose = 2 does more):
+# (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+#                cbpp, binomial, verbose = 1, nAGQ = 9))
+# 
+# ## GLMM with individual-level variability (accounting for overdispersion)
+# ## For this data set the model is the same as one allowing for a period:herd
+# ## interaction, which the plot indicates could be needed.
+# cbpp$obs <- 1:nrow(cbpp)
+# (gm2 <- glmer(cbind(incidence, size - incidence) ~ period +
+#     (1 | herd) +  (1|obs),
+#               family = binomial, data = cbpp))
+# 
+# anova(gm1,gm2)
+# 
+# ## glmer and glm log-likelihoods are consistent
+# gm1Devfun <- update(gm1,devFunOnly=TRUE)
+# gm0 <- glm(cbind(incidence, size - incidence) ~ period,
+#            family = binomial, data = cbpp)
+# 
+# ## evaluate GLMM deviance at RE variance=theta=0, beta=(GLM coeffs)
+# gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
+# 
+# ## compare
+# stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
+# ## the toenail oncholysis data from Backer et al 1998
+# ## these data are notoriously difficult to fit
+# if (FALSE) {
+# if (require("HSAUR3")) {
+#     gm2 <- glmer(outcome~treatment*visit+(1|patientID),
+#                  data=toenail,
+#                  family=binomial,nAGQ=20)
+# }
+# }
 ```
 
 
