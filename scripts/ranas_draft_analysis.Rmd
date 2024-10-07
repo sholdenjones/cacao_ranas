@@ -489,6 +489,8 @@ Okay, let's start with simpler models
 # ran with + veg_bins instead and got following error:
 # Warning: Model failed to converge with max|grad| = 0.00276742 (tol = 0.002, component 1)
 
+# consider using drop one tehcnique - drop one covariate from full model and see how reacts
+
 ```{r}
 # mod1 - species by hoja, CC, sitio as random effect
 mod1 <- glmer(num_species ~ hoja_bins + CC_bins +
