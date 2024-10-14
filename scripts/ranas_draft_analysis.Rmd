@@ -618,8 +618,8 @@ coef(mod1)
 
 # try model with just landscape variables
 # first need to scale these two so on same scale
-trans_richness_local$forest_cover_400 <- scale(trans_richness_local$forest_cover_400)
-trans_richness_local$water_dist <- scale(trans_richness_local$water_dist)
+# trans_richness_local$forest_cover_400 <- scale(trans_richness_local$forest_cover_400)
+# trans_richness_local$water_dist <- scale(trans_richness_local$water_dist)
 
 mod2 <- glmer(num_species ~ forest_cover_400 + water_dist +
               (1|Sitio),

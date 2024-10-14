@@ -369,9 +369,9 @@ local_by_trans <- local_by_trans %>%
          forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
          water_dist_scaled = as.numeric(scale(water_dist)))
 
-filename <- "local_by_trans_processed.csv"
-filepath <- file.path(data_dir, filename)
-write_csv(local_by_trans, file = filepath)
+# filename <- "local_by_trans_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(local_by_trans, file = filepath)
 ```
 
 
