@@ -422,6 +422,32 @@ Why is this so hard? Isn't this the whole point of the iNEXT package?
 # print(coverage_data)
 ```
 
+code from Tamara
+```{r}
+
+# pull out specific columns, make a vectors
+
+# con<-as.numeric(und$control[1:143])
+# nuc<-as.numeric(und$nucleation[1:154])
+# pla<-as.numeric(und$plantation[1:162])
+# 
+# und2<-list(con,nuc,pla)
+# str(und2)
+# names(und2) <- c("control", "nucleation", "plantation")
+# str(und2)
+# 
+# out10 <- iNEXT(und2, q=0, datatype = "abundance",endpoint = 22000)
+# 
+# #plot sample-size-based curve
+# ggiNEXT(out10, type=1,grey=TRUE)+
+#   labs(y="Species richness", x="No. of individuals")+
+#   labs(tag = "b)") +
+#   theme(plot.tag.position = c(0.01, 1))
+```
+
+
+
+
 
 #5. Multivariate statistics for drivers of amphibian communities
 
@@ -476,6 +502,83 @@ legend("bottomleft",
 ```
 
 
+## NEED TO LOOK AT CORRELATION OF VARIABLES FIRST?
+http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
+```{r}
+library(ggpubr)
+
+# use mtcars to explore correlations
+my_data <- mtcars
+head(my_data, 6)
+
+# visualize potential correlations
+ggscatter(my_data, x = "mpg", y = "wt", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Miles/(US) gallon", ylab = "Weight (1000 lbs)")
+
+# Is the data normally distributed?
+
+# Shapiro-Wilk normality test for mpg
+shapiro.test(my_data$mpg) # => p = 0.1229
+# Shapiro-Wilk normality test for wt
+shapiro.test(my_data$wt) # => p = 0.09
+
+# Visual inspection of the qqplots
+
+# mpg
+ggqqplot(my_data$mpg, ylab = "MPG")
+# wt
+ggqqplot(my_data$wt, ylab = "WT")
+
+# Pearson correlation test
+res <- cor.test(my_data$wt, my_data$mpg, 
+                    method = "pearson")
+res
+# these variables are significantly correlated w/ correlation coefficient of -.87
+
+### MY DATA ####
+
+# Visualize potential correlations betwen two variables of interest
+
+ggscatter(trans_richness_local, x = "tran_mean_veg", y = "tran_mean_hoja", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "tran_mean_veg", ylab = "tran_mean_hoja")
+
+# Is the data normally distributed?
+
+# Shapiro-Wilk normality test for tran_mean_veg
+shapiro.test(trans_richness_local$tran_mean_veg) # => p < 2.2e-16 NOT NORMAL
+# Shapiro-Wilk normality test for tran_mean_hoja
+shapiro.test(trans_richness_local$tran_mean_hoja) # => p = 3.813e-11 NOT NORMAL
+
+# Visual inspection of the qqplots
+
+# tran_mean_veg
+ggqqplot(trans_richness_local$tran_mean_veg, ylab = "tran_mean_veg")
+# tran_mean_hoja
+ggqqplot(trans_richness_local$tran_mean_hoja, ylab = "tran_mean_hoja")
+
+#Note that, if the data are not normally distributed, it’s recommended to use the
+# non-parametric correlation, including Spearman and Kendall rank-based correlation tests
+
+
+# Pearson correlation test
+res <- cor.test(trans_richness_local$tran_mean_veg, trans_richness_local$tran_mean_hoja, 
+                    method = "pearson")
+res
+
+res
+# these variables are significantly correlated w/ correlation coefficient of -.28
+
+# THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
+```
+
+
+
+
+
 # b. glmer
 - use glmer package b/c allows for inclusion of both random and rixed effects 
 
@@ -492,6 +595,17 @@ Okay, let's start with simpler models
 # consider using drop one tehcnique - drop one covariate from full model and see how reacts
 
 ```{r}
+# full model - species by hoja, CC, forest_cover, water_dist
+modfull <- glmer(num_species ~ hoja_bins + CC_bins + 
+                   water_dist + forest_cover_400 +
+              (1|Sitio) + (1|veg_bins),
+              data = trans_richness_local,
+              family = poisson())
+# Warning: Some predictor variables are on very different scales: 
+# consider rescaling boundary (singular) fit: see help('isSingular')
+summary(modfull)
+
+
 # mod1 - species by hoja, CC, sitio as random effect
 mod1 <- glmer(num_species ~ hoja_bins + CC_bins +
               (1|Sitio),
