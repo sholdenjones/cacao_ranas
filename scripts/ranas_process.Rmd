@@ -364,106 +364,15 @@ local_by_trans$CC_bins <- cut(local_by_trans$tran_mean_CC,
 ```
 
 
-
-## WORKING HERE ##
-
-## NEED TO CONFIRM THAT IS ACTUALLY CALCULATING CORRECT VALUES FOR VEG< CC< HOJA
-## CREATING NA VALUES FOR WATER DIST AND FOREST COVER _ WHY?!?!?!?!
-
+# local_by_trans_scaled
 - standardize all data columns
-
 ```{r}
-# dat <- data.frame(x = rnorm(10, 30, .2), y = runif(10, 3, 5))
-# scaled.dat <- scale(dat)
-# 
-# # check that we get mean of 0 and sd of 1
-# colMeans(scaled.dat)  # faster version of apply(scaled.dat, 2, mean)
-# apply(scaled.dat, 2, sd)
-
-
-
-# local_by_trans_scaled <- scale(local_by_trans)
-
-
-
-# local_by_trans_scaled <- local_by_trans %>%
-#   mutate(tran_mean_veg_scaled = 
-#            (tran_mean_veg - mean(tran_mean_veg)) / sd(tran_mean_veg)
-#   )
-# 
-# 
-# 
-# dat <- data.frame(x = rnorm(10, 30, .2), y = runif(10, 3, 5))
-# scaled.dat <- scale(dat)
-
 local_by_trans_scaled <- local_by_trans %>%
-  mutate(tran_mean_veg_scaled = scale(tran_mean_veg),
-         tran_mean_hoja_scaled = scale(tran_mean_hoja),
-         tran_mean_CC_scaled = scale(tran_mean_CC),
-         forest_cover_400_scaled = scale(forest_cover_400),
-         water_dist_scaled = scale(water_dist)
-         )
+  ungroup() %>% # have to ungroup to scale variables
+  mutate(tran_mean_veg_scaled = scale(tran_mean_veg))
 
 
 
-
-
-## SEEMS TO SOLVE ISSUE WITH tran_mean_veg scaling - but need to check
-# still getting NAs from water_dist and forest_cover_400 columns
-
-
-## SAMPLE DATAFRAME HERE
-
-df <- data.frame(replicate(10,sample(0:100,100,rep=TRUE)))
-
-mean(df$X1) # 52.35
-sd(df$X1) # 30.61
-
-df_scaled <- df %>%
-  mutate(X1_scaled = scale(X1))
-
-
-
-# Example data
-data <- c(10, 20, 30, 40, 50)
-
-# Standardize the data (mean = 0, standard deviation = 1)
-scaled_data <- scale(data)
-
-# View result
-scaled_data
-
-mean(data) # 30
-sd(data) # 15.8
-
-
-
-
-# local_by_trans_scaled <- local_by_trans %>%
-#   mutate(tran_mean_veg_scaled = (
-#       tran_mean_veg - mean(tran_mean_veg))/sd(tran_mean_veg),
-#     tran_mean_hoja_scaled = (
-#       tran_mean_hoja - mean(tran_mean_hoja))/sd(tran_mean_hoja),
-#     tran_mean_CC_scaled = (
-#       tran_mean_CC - mean(tran_mean_CC))/sd(tran_mean_CC),
-#     forest_cover_400_scaled = (
-#       forest_cover_400 - mean(forest_cover_400))/sd(forest_cover_400),
-#     water_dist_scaled = (
-#       water_dist - mean(water_dist))/sd(water_dist)
-#   )
-#     
-   
-# 
-# local_by_trans_scaled_test <- local_by_trans %>%
-#   mutate(across(
-#     c(tran_mean_veg, tran_mean_hoja, tran_mean_CC, forest_cover_400, water_dist), 
-#                 ~ scale(.)[,1],
-#                 .names = "scaled_{.col}"))
-# 
-# mean(local_by_trans$tran_mean_veg)
-# sd(local_by_trans$tran_mean_veg)
-
-# mutate(var = (var - mean(var))/sd(var))
 
 ```
 
