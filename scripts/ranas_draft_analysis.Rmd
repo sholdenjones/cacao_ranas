@@ -594,6 +594,95 @@ Okay, let's start with simpler models
 
 # consider using drop one tehcnique - drop one covariate from full model and see how reacts
 
+
+
+## NEED TO REMOVE CORRELATED VARIABLES
+
+## CORRELATION MATRIX _ VFA FROM STATS CLASS
+
+```{r}
+cor(trans_richness_local[, c("tran_mean_hoja_scaled", 
+                             "tran_mean_CC_scaled", 
+                             "water_dist_scaled", 
+                             "forest_cover_400_scaled",
+                             "tran_mean_veg_scaled")])
+
+```
+
+## VIF - NOT AN ISSUE HERE
+
+
+```{r}
+# Install the car package if it's not already installed
+# install.packages("car")
+
+# Load the car package
+library(car)
+
+# Fit the model
+modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio) + 
+                   (1 | tran_mean_veg_scaled),
+              data = trans_richness_local,
+              family = poisson())
+
+# Calculate VIF
+vif(modfull)
+```
+
+
+## REMOVE VEG AS RANDOM EFFECT? SIMPLIFY RANDOM EFFECT STRUCTURE?
+```{r}
+# Fit the model
+modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+
+summary(modfull)
+
+
+# Calculate VIF
+vif(modfull)
+```
+
+
+
+
+
+
+
+
+
+# HERE WITH SCALED VARS
+```{r}
+# full model
+modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                (1|Sitio) + 
+                (1|tran_mean_veg_scaled),
+              data = trans_richness_local,
+              family = poisson())
+
+# Warning: Model failed to converge with max|grad| = 0.00501921 (tol = 0.002, component 1)
+
+summary(modfull)
+```
+
+
+
+
+
+
+
 ```{r}
 # full model - species by hoja, CC, forest_cover, water_dist
 modfull <- glmer(num_species ~ hoja_bins + CC_bins + 
