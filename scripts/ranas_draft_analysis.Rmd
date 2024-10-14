@@ -576,27 +576,49 @@ res
 ```
 
 
-
-
-
 # b. glmer
 - use glmer package b/c allows for inclusion of both random and rixed effects 
 
-Okay, let's start with simpler models
-- need site veg as random effects.
-- start with just local variables?
+assess potential correlation of variables in trans_richness_local
+- no variables appear to be highly correlated (r = 0.7 threshold)
+```{r}
+# would only expect local vars or landscape vars to be correlated with each other
+ggscatter(trans_richness_local, x = "tran_mean_hoja_scaled", 
+          y = "tran_mean_veg_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "tran_mean_hoja_scaled", ylab = "tran_mean_veg_scaled")
+# r = -.29
 
-# weird - ran with + (1|veg_bins) and got following error:
-# boundary (singular) fit: see help('isSingular')
+ggscatter(trans_richness_local, x = "tran_mean_hoja_scaled", 
+          y = "tran_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "tran_mean_hoja_scaled", ylab = "tran_mean_CC_scaled")
+# r = .57
 
-# ran with + veg_bins instead and got following error:
-# Warning: Model failed to converge with max|grad| = 0.00276742 (tol = 0.002, component 1)
+ggscatter(trans_richness_local, x = "tran_mean_veg_scaled", 
+          y = "tran_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "tran_mean_veg_scaled", ylab = "tran_mean_CC_scaled")
+# r = .01
 
-# consider using drop one tehcnique - drop one covariate from full model and see how reacts
+ggscatter(trans_richness_local, x = "water_dist_scaled", 
+          y = "forest_cover_400_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled")
+# r = -.42
+```
 
 
 
 ## NEED TO REMOVE CORRELATED VARIABLES
+
+
+
+
 
 ## CORRELATION MATRIX _ VFA FROM STATS CLASS
 
