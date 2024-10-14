@@ -454,8 +454,8 @@ code from Tamara
 Have a series of local (collected at quad-level),landscape (at 
 site-level) variables - how do these explain the amphibian comm?
 
-# a. PCA
-- can only work for continuous variables!
+## a. PCA
+- can only work for continuous variables
 
 https://jcoliver.github.io/learn-r/003-intro-multivariate.html
 ```{r}
@@ -502,85 +502,13 @@ legend("bottomleft",
 ```
 
 
-## NEED TO LOOK AT CORRELATION OF VARIABLES FIRST?
-http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
-```{r}
-library(ggpubr)
+## b. correlation
 
-# use mtcars to explore correlations
-my_data <- mtcars
-head(my_data, 6)
+need to address potential variable correlation before building multivariate models
 
-# visualize potential correlations
-ggscatter(my_data, x = "mpg", y = "wt", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "Miles/(US) gallon", ylab = "Weight (1000 lbs)")
-
-# Is the data normally distributed?
-
-# Shapiro-Wilk normality test for mpg
-shapiro.test(my_data$mpg) # => p = 0.1229
-# Shapiro-Wilk normality test for wt
-shapiro.test(my_data$wt) # => p = 0.09
-
-# Visual inspection of the qqplots
-
-# mpg
-ggqqplot(my_data$mpg, ylab = "MPG")
-# wt
-ggqqplot(my_data$wt, ylab = "WT")
-
-# Pearson correlation test
-res <- cor.test(my_data$wt, my_data$mpg, 
-                    method = "pearson")
-res
-# these variables are significantly correlated w/ correlation coefficient of -.87
-
-### MY DATA ####
-
-# Visualize potential correlations betwen two variables of interest
-
-ggscatter(trans_richness_local, x = "tran_mean_veg", y = "tran_mean_hoja", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "tran_mean_veg", ylab = "tran_mean_hoja")
-
-# Is the data normally distributed?
-
-# Shapiro-Wilk normality test for tran_mean_veg
-shapiro.test(trans_richness_local$tran_mean_veg) # => p < 2.2e-16 NOT NORMAL
-# Shapiro-Wilk normality test for tran_mean_hoja
-shapiro.test(trans_richness_local$tran_mean_hoja) # => p = 3.813e-11 NOT NORMAL
-
-# Visual inspection of the qqplots
-
-# tran_mean_veg
-ggqqplot(trans_richness_local$tran_mean_veg, ylab = "tran_mean_veg")
-# tran_mean_hoja
-ggqqplot(trans_richness_local$tran_mean_hoja, ylab = "tran_mean_hoja")
-
-#Note that, if the data are not normally distributed, it’s recommended to use the
-# non-parametric correlation, including Spearman and Kendall rank-based correlation tests
-
-
-# Pearson correlation test
-res <- cor.test(trans_richness_local$tran_mean_veg, trans_richness_local$tran_mean_hoja, 
-                    method = "pearson")
-res
-
-res
-# these variables are significantly correlated w/ correlation coefficient of -.28
-
-# THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
-```
-
-
-# b. glmer
-- use glmer package b/c allows for inclusion of both random and rixed effects 
-
-assess potential correlation of variables in trans_richness_local
+visually assess potential correlation of scaled variables in trans_richness_local
 - no variables appear to be highly correlated (r = 0.7 threshold)
+- appears that don't need to remove any!
 ```{r}
 # would only expect local vars or landscape vars to be correlated with each other
 ggscatter(trans_richness_local, x = "tran_mean_hoja_scaled", 
@@ -612,28 +540,54 @@ ggscatter(trans_richness_local, x = "water_dist_scaled",
 # r = -.42
 ```
 
-
-
-## NEED TO REMOVE CORRELATED VARIABLES
-
-
-
-
-
-## CORRELATION MATRIX _ VFA FROM STATS CLASS
-
+confirm this with correlation matrix
+- no variables correlated above r = 0.56
 ```{r}
 cor(trans_richness_local[, c("tran_mean_hoja_scaled", 
                              "tran_mean_CC_scaled", 
                              "water_dist_scaled", 
                              "forest_cover_400_scaled",
                              "tran_mean_veg_scaled")])
-
 ```
 
+assess distribution of variables
+http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
+## WHY DO WE NEED TO DO THIS?
+```{r}
+# Is the data normally distributed?
+
+# Shapiro-Wilk normality test for tran_mean_veg
+shapiro.test(trans_richness_local$tran_mean_veg) # => p < 2.2e-16 NOT NORMAL
+# Shapiro-Wilk normality test for tran_mean_hoja
+shapiro.test(trans_richness_local$tran_mean_hoja) # => p = 3.813e-11 NOT NORMAL
+
+# Visual inspection of the qqplots
+
+# tran_mean_veg
+ggqqplot(trans_richness_local$tran_mean_veg, ylab = "tran_mean_veg")
+# tran_mean_hoja
+ggqqplot(trans_richness_local$tran_mean_hoja, ylab = "tran_mean_hoja")
+
+#Note that, if the data are not normally distributed, it’s recommended to use the
+# non-parametric correlation, including Spearman and Kendall rank-based correlation tests
+
+
+# Pearson correlation test
+res <- cor.test(trans_richness_local$tran_mean_veg, trans_richness_local$tran_mean_hoja, 
+                    method = "pearson")
+res
+
+res
+# these variables are significantly correlated w/ correlation coefficient of -.28
+
+# THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
+```
+
+
+# c. glmer
+- use glmer package b/c allows for inclusion of both random and rixed effects 
+
 ## VIF - NOT AN ISSUE HERE
-
-
 ```{r}
 # Install the car package if it's not already installed
 # install.packages("car")
@@ -655,7 +609,6 @@ modfull <- glmer(num_species ~ tran_mean_hoja_scaled +
 vif(modfull)
 ```
 
-
 ## REMOVE VEG AS RANDOM EFFECT? SIMPLIFY RANDOM EFFECT STRUCTURE?
 ```{r}
 # Fit the model
@@ -674,14 +627,6 @@ summary(modfull)
 vif(modfull)
 ```
 
-
-
-
-
-
-
-
-
 # HERE WITH SCALED VARS
 ```{r}
 # full model
@@ -699,12 +644,7 @@ modfull <- glmer(num_species ~ tran_mean_hoja_scaled +
 summary(modfull)
 ```
 
-
-
-
-
-
-
+# HERE WITH BINS
 ```{r}
 # full model - species by hoja, CC, forest_cover, water_dist
 modfull <- glmer(num_species ~ hoja_bins + CC_bins + 
@@ -756,127 +696,3 @@ mod4 <- glmer(num_species ~ water_dist +
 summary(mod4)
 # AIC 1141.7
 ```
-
-
-
-
-
-```{r}
-# # seems like throwing way too much into one model here!
-# mod1 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist +
-#                 (1|veg_bins) + (1|Sitio),
-#               data = trans_richness_local,
-#               family = poisson())
-# #Warning: Some predictor variables are on very different scales: 
-# # consider rescalingboundary (singular) fit: see help('isSingular')
-# 
-# mod2 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist +
-#                (1|Sitio), 
-#              data = trans_richness_local, 
-#              family = poisson())
-# #Warning: Some predictor variables are on very different scales: consider rescalingWarning: Model failed to converge with max|grad| = 0.0250694 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
-# # Rescale variables?;Model is nearly unidentifiable: large eigenvalue ratio
-# # Rescale variables?
-# 
-# # can we rescale the continuous variables? try with CHATGPT
-# trans_richness_local$forest_cover_400 <- scale(trans_richness_local$forest_cover_400)
-# trans_richness_local$water_dist <- scale(trans_richness_local$water_dist)
-# 
-# # rerun previous model
-# mod2 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist +
-#                (1|Sitio), 
-#              data = trans_richness_local, 
-#              family = poisson())
-# # Warning: Model failed to converge with max|grad| = 0.00258301 (tol = 0.002, component 1)
-# 
-# # woohoo! now try relaxing the tolerance threshold? no clue what any of this means
-# mod2 <- glmer(num_species ~ hoja_bins + CC_bins + forest_cover_400 + water_dist + 
-#               (1|Sitio), 
-#               data = trans_richness_local, 
-#               family = poisson(), 
-#               control = glmerControl(optCtrl = list(maxfun = 100000), tolPwrss = 1e-4))
-```
-
-
-
-
-
-
-# from dancal!
-```{r}
-# # model germinants vs. site x planted
-# m.bgerm <- glmer(Ngerm ~ SITE * x_or_c + (1|quad_dir2), family = poisson, data = seeds_crunchfinal2)
-# overdisp_fun(m.bgerm) # sig. overdispersed based on chi-square test
-# dispersion_glmer(m.bgerm)
-# summary(m.bgerm)
-# 
-# # try negative binomial model
-# m.bgerm2 <- glmer.nb(Ngerm ~ SITE * x_or_c + (1|quad_dir2), data = seeds_crunchfinal2) # fit a negative binomial test
-# overdisp_fun(m.bgerm2) # still overdispersed, but a lot better...
-# dispersion_glmer(m.bgerm2)
-# summary(m.bgerm2)
-# 
-# # try including observation level random effect on poisson model
-# m.bgerm3 <- glmer(Ngerm ~ SITE * x_or_c + (1|quad_dir2) + (1|OLRE), family = poisson, data = seeds_crunchfinal2)
-# overdisp_fun(m.bgerm3) 
-# dispersion_glmer(m.bgerm3)
-# summary(m.bgerm3)
-```
-
-
-
-
-```{r}
-# # https://www.rdocumentation.org/packages/lme4/versions/1.1-35.5/topics/glmer
-# library(lattice)
-# 
-# xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
-#        layout=c(3,5), index.cond = function(x,y)max(y))
-# (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-#               data = cbpp, family = binomial))
-# 
-# ## using nAGQ=0 only gets close to the optimum
-# (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-#                cbpp, binomial, nAGQ = 0))
-# 
-# ## using  nAGQ = 9  provides a better evaluation of the deviance
-# ## Currently the internal calculations use the sum of deviance residuals,
-# ## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
-# ## 'verbose = 1' monitors iteratin a bit; (verbose = 2 does more):
-# (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-#                cbpp, binomial, verbose = 1, nAGQ = 9))
-# 
-# ## GLMM with individual-level variability (accounting for overdispersion)
-# ## For this data set the model is the same as one allowing for a period:herd
-# ## interaction, which the plot indicates could be needed.
-# cbpp$obs <- 1:nrow(cbpp)
-# (gm2 <- glmer(cbind(incidence, size - incidence) ~ period +
-#     (1 | herd) +  (1|obs),
-#               family = binomial, data = cbpp))
-# 
-# anova(gm1,gm2)
-# 
-# ## glmer and glm log-likelihoods are consistent
-# gm1Devfun <- update(gm1,devFunOnly=TRUE)
-# gm0 <- glm(cbind(incidence, size - incidence) ~ period,
-#            family = binomial, data = cbpp)
-# 
-# ## evaluate GLMM deviance at RE variance=theta=0, beta=(GLM coeffs)
-# gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
-# 
-# ## compare
-# stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
-# ## the toenail oncholysis data from Backer et al 1998
-# ## these data are notoriously difficult to fit
-# if (FALSE) {
-# if (require("HSAUR3")) {
-#     gm2 <- glmer(outcome~treatment*visit+(1|patientID),
-#                  data=toenail,
-#                  family=binomial,nAGQ=20)
-# }
-# }
-```
-
-
-
-
