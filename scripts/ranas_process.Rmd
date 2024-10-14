@@ -357,27 +357,22 @@ local_by_trans$CC_bins <- cut(local_by_trans$tran_mean_CC,
                                    labels = labels, 
                                    include.lowest = TRUE, 
                                    right = FALSE)
-
-# filename <- "local_by_trans_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(local_by_trans, file = filepath)
 ```
 
-
-# local_by_trans_scaled
-- standardize all data columns
+standardize all variables for local_by_trans for multivariate models
 ```{r}
-local_by_trans_scaled <- local_by_trans %>%
-  ungroup() %>% # have to ungroup to scale variables
-  mutate(tran_mean_veg_scaled = scale(tran_mean_veg))
+local_by_trans <- local_by_trans %>%
+  ungroup() %>% # Ungrouping to scale variables
+  mutate(tran_mean_veg_scaled = as.numeric(scale(tran_mean_veg)),
+         tran_mean_hoja_scaled = as.numeric(scale(tran_mean_hoja)),
+         tran_mean_CC_scaled = as.numeric(scale(tran_mean_CC)),
+         forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
+         water_dist_scaled = as.numeric(scale(water_dist)))
 
-
-
-
+filename <- "local_by_trans_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(local_by_trans, file = filepath)
 ```
-
-
-
 
 
 # trans_richness_local
