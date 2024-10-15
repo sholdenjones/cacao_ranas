@@ -752,12 +752,143 @@ http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
 # # THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
 ```
 
-
-# c. glmer
+# c. drivers of transect-level amphibian abundance
 use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects 
 
-## start with full model
+## full model
+```{r}
+# full model
+modfull <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + # veg as R.E. prevented model convergence
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+
+summary(modfull) # veg sig neg, hoja sig neg, CC sig pos - # AIC 1789.9
+vif(modfull) # vif not a concern
+check_overdispersion(modfull) # not overdispersed!
+```
+
+## LOO-CV for candidate models
+```{r}
+# model without hoja
+mod_no_hoja <- glmer(num_ind ~  tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_hoja) # veg sig neg - # AIC 1795.1
+vif(mod_no_hoja) # vif not a concern
+check_overdispersion(mod_no_hoja) # not overdispersed!
+
+# model without canopy cover
+mod_no_CC <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_CC) # hoja sig neg, veg sig neg - # AIC 1793.7
+vif(mod_no_CC) # vif not a concern
+check_overdispersion(mod_no_CC) # not overdispersed!
+
+# model without veg
+mod_no_veg <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_veg) # nothing significant (CC close) - # AIC 1869.3
+vif(mod_no_veg) # vif not a concern
+check_overdispersion(mod_no_veg) # not overdispersed!
+
+# model without water
+mod_no_water <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_water) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1787.9
+vif(mod_no_water) # vif not a concern
+check_overdispersion(mod_no_water) # not overdispersed!
+
+# model without forest
+mod_no_forest <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_forest) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1789.2
+vif(mod_no_forest) # vif not a concern
+check_overdispersion(mod_no_forest) # not overdispersed!
+```
+
+## continue without water
+```{r}
+# model without water AIC of 1787.9
+
+# model without water, hoja
+mod_no_water_hoja <- glmer(num_ind ~ tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_water_hoja) # veg sig neg - # AIC 1793.2
+vif(mod_no_water_hoja) # vif not a concern
+check_overdispersion(mod_no_water_hoja) # not overdispersed!
+
+# model without water, CC
+mod_no_water_CC <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_veg_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_water_CC) # hoja sig neg, veg sig neg - # AIC 1791.9
+vif(mod_no_water_CC) # vif not a concern
+check_overdispersion(mod_no_water_CC) # not overdispersed!
+
+# model without water, veg
+mod_no_water_veg <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_water_veg) # CC sig pos - # AIC 1867.4
+vif(mod_no_water_veg) # vif not a concern
+check_overdispersion(mod_no_water_veg) # not overdispersed!
+
+mod_no_water_forest <- glmer(num_ind ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_water_forest) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1787.4
+vif(mod_no_water_forest) # vif not a concern
+check_overdispersion(mod_no_water_forest) # not overdispersed!
+```
+
+# d. drivers of transect-level species richness
+use glmer package to build multiple regression models
+- allows for inclusion of both random and rixed effects 
+
+## full model
 ```{r}
 # full model
 modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
@@ -840,110 +971,21 @@ check_overdispersion(mod_no_forest) # not overdispersed!
 ```
 
 
-# would be nice to find a function that can do this!
-```{r}
-data <- trans_richness_local
-response_variable <- "num_species"
-fixed_effects_list <- c("tran_mean_hoja_scaled", 
-                        "tran_mean_CC_scaled", 
-                        "tran_mean_veg_scaled",
-                        "water_dist_scaled", 
-                        "forest_cover_400_scaled")
-random_effect <- "Sitio"
-
-# Assess models
-model_comparison <- assess_models_LOO(data, response_variable, fixed_effects_list, random_effect)
-print(model_comparison)
-```
 
 
 
 
 
-## REMOVE VEG AS RANDOM EFFECT? SIMPLIFY RANDOM EFFECT STRUCTURE?
-```{r}
-# Fit the model
-modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-
-summary(modfull)
 
 
-# Calculate VIF
-vif(modfull)
-```
-
-# HERE WITH SCALED VARS
-```{r}
-# full model
-modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                (1|Sitio) + 
-                (1|tran_mean_veg_scaled),
-              data = trans_richness_local,
-              family = poisson())
-
-# Warning: Model failed to converge with max|grad| = 0.00501921 (tol = 0.002, component 1)
-
-summary(modfull)
-```
-
-# HERE WITH BINS
-```{r}
-# full model - species by hoja, CC, forest_cover, water_dist
-modfull <- glmer(num_species ~ hoja_bins + CC_bins + 
-                   water_dist + forest_cover_400 +
-              (1|Sitio) + (1|veg_bins),
-              data = trans_richness_local,
-              family = poisson())
-# Warning: Some predictor variables are on very different scales: 
-# consider rescaling boundary (singular) fit: see help('isSingular')
-summary(modfull)
 
 
-# mod1 - species by hoja, CC, sitio as random effect
-mod1 <- glmer(num_species ~ hoja_bins + CC_bins +
-              (1|Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod1)
-# AIC 1158.2, BIC 1211.6
-#None of the fixed effects (hoja_bins and CC_bins) have p-values less than 0.05, indicating that there are no statistically significant predictors in your current model. This suggests that the variation in num_species might not be explained well by these predictors.
-coef(mod1)
 
-# try model with just landscape variables
-# first need to scale these two so on same scale
-# trans_richness_local$forest_cover_400 <- scale(trans_richness_local$forest_cover_400)
-# trans_richness_local$water_dist <- scale(trans_richness_local$water_dist)
 
-mod2 <- glmer(num_species ~ forest_cover_400 + water_dist +
-              (1|Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod2)
-# AIC 1143.2, BIC 1159.6
-# The intercept is significant, indicating a baseline number of species.Both predictor variables, forest_cover_400 and water_dist, do not appear to have a statistically significant impact on the number of species, as evidenced by their high p-values. This implies that variations in these predictors do not significantly change the expected count of species in this model.
-coef(mod2)
 
-# really just kinda trying different combinations now
-mod3 <- glmer(num_species ~ forest_cover_400 + 
-              (1|Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod3)
-# AIC 1141.2
 
-mod4 <- glmer(num_species ~ water_dist + 
-              (1|Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod4)
-# AIC 1141.7
-```
+
+
+
+
+
