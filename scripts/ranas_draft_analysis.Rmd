@@ -20,6 +20,8 @@ library(SuppDists) # needed for assessing additional dist fits
 library(lme4)
 library(ggpubr) # for arranging multi-panel figures
 library(iNEXT)
+library(car)
+library(loo)
 ```
 
 load data
@@ -100,6 +102,56 @@ my_theme <- function() {
         axis.title = element_text(size = 14, color = "gray25"),
         legend.text = element_text(size = 12))
 }
+```
+
+functions
+```{r}
+# function for checking model overdispersion
+check_overdispersion <- function(model) {
+  # Residual deviance and degrees of freedom
+  dev <- deviance(model)
+  df <- df.residual(model)
+  
+  # Overdispersion ratio
+  ratio <- dev / df
+  
+  # Test statistic (chi-square distribution)
+  p_value <- pchisq(dev, df, lower.tail = FALSE)
+  
+  # Display the results
+  c(Overdispersion = ratio, p_value = p_value)
+}
+
+## THIS SEEMS TO BE FOR BAYESIAN FRAMEWORK ##
+
+# function to assess model performance using LOO-CV
+# assess_models_LOO <- function(data, response, fixed_effects_list, random_effect) {
+#   results <- data.frame(Model = character(),
+#                         LOO_CV = numeric(),
+#                         stringsAsFactors = FALSE)
+# 
+#   for (fixed_effects in fixed_effects_list) {
+#     # Construct the model formula
+#     formula_str <- paste(response, "~", fixed_effects, "+ (1 |", random_effect, ")")
+#     model_formula <- as.formula(formula_str)
+#     
+#     # Fit the model
+#     model <- glmer(model_formula, data = data, family = poisson()) # note dist here
+#     
+#     # Extract the log-likelihood for LOO-CV
+#     log_lik <- logLik(model)
+#     
+#     # Calculate LOO
+#     loo_result <- loo(model)
+#     
+#     # Store the results
+#     results <- rbind(results, data.frame(Model = fixed_effects, 
+#                                           LOO_CV = loo_result$estimates["looic"],
+#                                           stringsAsFactors = FALSE))
+#   }
+# 
+#   return(results)
+# }
 ```
 
 
@@ -552,62 +604,89 @@ cor(trans_richness_local[, c("tran_mean_hoja_scaled",
 
 assess distribution of variables
 http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
-## WHY DO WE NEED TO DO THIS?
+## DO I NEED TO DO THIS?
 ```{r}
-# Is the data normally distributed?
-
-# Shapiro-Wilk normality test for tran_mean_veg
-shapiro.test(trans_richness_local$tran_mean_veg) # => p < 2.2e-16 NOT NORMAL
-# Shapiro-Wilk normality test for tran_mean_hoja
-shapiro.test(trans_richness_local$tran_mean_hoja) # => p = 3.813e-11 NOT NORMAL
-
-# Visual inspection of the qqplots
-
-# tran_mean_veg
-ggqqplot(trans_richness_local$tran_mean_veg, ylab = "tran_mean_veg")
-# tran_mean_hoja
-ggqqplot(trans_richness_local$tran_mean_hoja, ylab = "tran_mean_hoja")
-
-#Note that, if the data are not normally distributed, it’s recommended to use the
-# non-parametric correlation, including Spearman and Kendall rank-based correlation tests
-
-
-# Pearson correlation test
-res <- cor.test(trans_richness_local$tran_mean_veg, trans_richness_local$tran_mean_hoja, 
-                    method = "pearson")
-res
-
-res
-# these variables are significantly correlated w/ correlation coefficient of -.28
-
-# THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
+# # Is the data normally distributed?
+# 
+# # Shapiro-Wilk normality test for tran_mean_veg
+# shapiro.test(trans_richness_local$tran_mean_veg) # => p < 2.2e-16 NOT NORMAL
+# # Shapiro-Wilk normality test for tran_mean_hoja
+# shapiro.test(trans_richness_local$tran_mean_hoja) # => p = 3.813e-11 NOT NORMAL
+# 
+# # Visual inspection of the qqplots
+# 
+# # tran_mean_veg
+# ggqqplot(trans_richness_local$tran_mean_veg, ylab = "tran_mean_veg")
+# # tran_mean_hoja
+# ggqqplot(trans_richness_local$tran_mean_hoja, ylab = "tran_mean_hoja")
+# 
+# #Note that, if the data are not normally distributed, it’s recommended to use the
+# # non-parametric correlation, including Spearman and Kendall rank-based correlation tests
+# 
+# 
+# # Pearson correlation test
+# res <- cor.test(trans_richness_local$tran_mean_veg, trans_richness_local$tran_mean_hoja, 
+#                     method = "pearson")
+# res
+# 
+# res
+# # these variables are significantly correlated w/ correlation coefficient of -.28
+# 
+# # THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
 ```
 
 
 # c. glmer
-- use glmer package b/c allows for inclusion of both random and rixed effects 
+use glmer package to build multivariate models
+- allows for inclusion of both random and rixed effects 
 
-## VIF - NOT AN ISSUE HERE
+## start with full model
 ```{r}
-# Install the car package if it's not already installed
-# install.packages("car")
-
-# Load the car package
-library(car)
-
-# Fit the model
+# Fit the full model
 modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
                    tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + # veg as re prevented model convergence
                    water_dist_scaled + 
                    forest_cover_400_scaled +
-                   (1 | Sitio) + 
-                   (1 | tran_mean_veg_scaled),
+                   (1 | Sitio),
               data = trans_richness_local,
               family = poisson())
 
+summary(modfull)
+
 # Calculate VIF
-vif(modfull)
+vif(modfull) # vif not a concern
+
+# Check overdispersion of model
+check_overdispersion(modfull) # not overdispersed!
 ```
+
+
+
+
+## LOO-CV for candidate models
+
+
+
+# would be nice to find a function that can do this!
+```{r}
+data <- trans_richness_local
+response_variable <- "num_species"
+fixed_effects_list <- c("tran_mean_hoja_scaled", 
+                        "tran_mean_CC_scaled", 
+                        "tran_mean_veg_scaled",
+                        "water_dist_scaled", 
+                        "forest_cover_400_scaled")
+random_effect <- "Sitio"
+
+# Assess models
+model_comparison <- assess_models_LOO(data, response_variable, fixed_effects_list, random_effect)
+print(model_comparison)
+```
+
+
+
+
 
 ## REMOVE VEG AS RANDOM EFFECT? SIMPLIFY RANDOM EFFECT STRUCTURE?
 ```{r}
