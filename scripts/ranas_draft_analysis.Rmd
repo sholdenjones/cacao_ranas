@@ -155,9 +155,9 @@ check_overdispersion <- function(model) {
 ```
 
 
-#1. Compare richness and Shannon diversity of CCN-51 and Nacional
+#1. Compare abundance, richness and Shannon diversity of CCN-51 and Nacional
 
-##a. Richness
+##a. richness
 - Use two-sample t-test b/c not perfectly paired in landscape and dif number of sites
 - If remove VC-N (weird site turned out to be N, not paired), then can run paired t-test
 ```{r}
@@ -286,9 +286,71 @@ plot_shannon_by_site_cacao
 ```
 
 
-#2.Compare richness and Shannon diversity of forest and abandoned plantations
+##c. abundance
+Same process as above - use abundance_by_site for two sample t-test
+```{r}
+# create species abundance vector for each cacao type
+abun_ccn <- abundance_by_site %>%
+  filter(Tipo == 'C') %>%
+  pull(n)
+  
+abun_n <- abundance_by_site %>%
+  filter(Tipo == 'N') %>%
+  pull(n)
 
-##a. Richness
+# run two-sample t-test for species richness
+t.test(abun_ccn, abun_n, paired = FALSE)
+```
+
+paired t-test
+```{r}
+# drop VC-N from df, this site messes up pairing for t-test
+pair_abundance_by_site <- abundance_by_site %>%
+  filter(Sitio != 'VC-N') %>%
+  arrange(Pair) # sort by Pair so vectors pulled align with pairs
+
+# create abundance vector for each cacao type
+pair_abun_ccn <- pair_abundance_by_site %>%
+  filter(Tipo == 'C') %>%
+  pull(n)
+  
+pair_abun_n <- pair_abundance_by_site %>%
+  filter(Tipo == 'N') %>%
+  pull(n)
+
+t.test(pair_abun_ccn, pair_abun_n, paired = TRUE)
+```
+
+Boxplot figure for CCN vs. Nacional abundance
+```{r}
+# site labels for 2 site comparison
+site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)")
+
+# reorder factor levels
+abundance_by_site$Tipo <- factor(abundance_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+abundance_by_site_cacao <- abundance_by_site %>%
+  filter(Tipo == "C" | Tipo == 'N')
+
+# plot species richness across landuse types using palet, my_theme
+plot_abundance_by_site_cacao <- ggplot(abundance_by_site_cacao, 
+                                     aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Cacao type",
+       y = "Amphibian abundance")
+
+plot_abundance_by_site_cacao
+#ggsave("output/plot_abundance_by_site_cacao.png", width = 10, height = 10)
+```
+
+
+#2.Compare abundance, richness and Shannon diversity of forest and abandoned plantations
+
+##a. richness
 - Use two-sample t-test b/c not paired and dif number of sites
 ```{r}
 # create species richness vector for each cacao type
@@ -374,10 +436,51 @@ plot_shannon_by_site_inactive
 #ggsave("output/plot_shannon_by_site_inactive.png", width = 10, height = 10)
 ```
 
+##c. abundance
+Same process as above - use abundance_by_site for two sample t-test
+```{r}
+# create species abundance vector for each cacao type
+abun_abandon <- abundance_by_site %>%
+  filter(Tipo == 'V') %>%
+  pull(n)
+  
+abun_forest <- abundance_by_site %>%
+  filter(Tipo == 'B') %>%
+  pull(n)
+
+# run two-sample t-test for species richness
+t.test(abun_abandon, abun_forest, paired = FALSE)
+```
+
+Boxplot figure for forest vs. abandoned abundance
+```{r}
+# reorder factor levels
+abundance_by_site$Tipo <- factor(abundance_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+abundance_by_site_inactive <- abundance_by_site %>%
+  filter(Tipo == "V" | Tipo == 'B')
+
+# plot Shannon diversity across landuse types using palet, my_theme
+plot_abundance_by_site_inactive <- ggplot(abundance_by_site_inactive, 
+                                     aes(x = Tipo, y = n, 
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#80CDC1", "#018571")) +
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Reference type",
+       y = "Amphibian abundance")
+
+plot_abundance_by_site_inactive
+#ggsave("output/plot_abundance_by_site_inactive.png", width = 10, height = 10)
+```
+
 
 #3. Arrange figures for publication
-arrange these four figures as panels in one window
+arrange these four or six figures as panels in one window
 ```{r}
+# richness and shannon diversity
 compare_rich_shannon <- ggarrange(
   plot_richness_by_site_cacao + rremove("xlab"), 
   plot_richness_by_site_inactive + rremove("xlab") + rremove("ylab"),
@@ -391,6 +494,23 @@ compare_rich_shannon <- ggarrange(
 
 compare_rich_shannon
 #ggsave("output/compare_rich_shannon.png", width = 10, height = 10)
+
+# abundance, richness and shannon diversity
+compare_abun_rich_shannon <- ggarrange(
+  plot_abundance_by_site_cacao + rremove("xlab"), 
+  plot_abundance_by_site_inactive + rremove("xlab") + rremove("ylab"),
+  plot_richness_by_site_cacao + rremove("xlab"), 
+  plot_richness_by_site_inactive + rremove("xlab") + rremove("ylab"),
+  plot_shannon_by_site_cacao,
+  plot_shannon_by_site_inactive + rremove("ylab"),
+  labels = c("A", "B", "C", "D", "E", "F"),
+  ncol = 2, nrow = 3,
+  label.x = 0.01, 
+  label.y = 0.13 
+)
+
+compare_abun_rich_shannon
+#ggsave("output/compare_abun_rich_shannon.png", width = 10, height = 10)
 ```
 
 
@@ -498,10 +618,7 @@ code from Tamara
 ```
 
 
-
-
-
-#5. Multivariate statistics for drivers of amphibian communities
+#5. Mulitple regression for drivers of amphibian communities
 
 Have a series of local (collected at quad-level),landscape (at 
 site-level) variables - how do these explain the amphibian comm?
@@ -556,7 +673,7 @@ legend("bottomleft",
 
 ## b. correlation
 
-need to address potential variable correlation before building multivariate models
+need to address potential variable correlation before building regression models
 
 visually assess potential correlation of scaled variables in trans_richness_local
 - no variables appear to be highly correlated (r = 0.7 threshold)
@@ -637,35 +754,90 @@ http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
 
 
 # c. glmer
-use glmer package to build multivariate models
+use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects 
 
 ## start with full model
 ```{r}
-# Fit the full model
+# full model
 modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
                    tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + # veg as re prevented model convergence
+                   tran_mean_veg_scaled + # veg as R.E. prevented model convergence
                    water_dist_scaled + 
                    forest_cover_400_scaled +
                    (1 | Sitio),
               data = trans_richness_local,
               family = poisson())
 
-summary(modfull)
+summary(modfull) # nothing significant - # AIC 1148.1
 
-# Calculate VIF
 vif(modfull) # vif not a concern
 
-# Check overdispersion of model
 check_overdispersion(modfull) # not overdispersed!
 ```
 
-
-
-
 ## LOO-CV for candidate models
+```{r}
+# model without hoja
+mod_no_hoja <- glmer(num_species ~  tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_hoja) # nothing significant - # AIC 1147.1
+vif(mod_no_hoja) # vif not a concern
+check_overdispersion(mod_no_hoja) # not overdispersed!
 
+# model without canopy cover
+mod_no_CC <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_CC) # nothing significant - # AIC 1146.1
+vif(mod_no_CC) # vif not a concern
+check_overdispersion(mod_no_CC) # not overdispersed!
+
+# model without veg
+mod_no_veg <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_veg) # nothing significant - # AIC 1146.2
+vif(mod_no_veg) # vif not a concern
+check_overdispersion(mod_no_veg) # not overdispersed!
+
+# model without water
+mod_no_water <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_water) # nothing significant - # AIC 1146.1
+vif(mod_no_water) # vif not a concern
+check_overdispersion(mod_no_water) # not overdispersed!
+
+# model without forest
+mod_no_forest <- glmer(num_species ~ tran_mean_hoja_scaled + 
+                   tran_mean_CC_scaled + 
+                   tran_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+summary(mod_no_forest) # nothing significant - # AIC 1146.3
+vif(mod_no_forest) # vif not a concern
+check_overdispersion(mod_no_forest) # not overdispersed!
+```
 
 
 # would be nice to find a function that can do this!
