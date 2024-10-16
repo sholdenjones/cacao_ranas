@@ -121,37 +121,6 @@ check_overdispersion <- function(model) {
   # Display the results
   c(Overdispersion = ratio, p_value = p_value)
 }
-
-## THIS SEEMS TO BE FOR BAYESIAN FRAMEWORK ##
-
-# function to assess model performance using LOO-CV
-# assess_models_LOO <- function(data, response, fixed_effects_list, random_effect) {
-#   results <- data.frame(Model = character(),
-#                         LOO_CV = numeric(),
-#                         stringsAsFactors = FALSE)
-# 
-#   for (fixed_effects in fixed_effects_list) {
-#     # Construct the model formula
-#     formula_str <- paste(response, "~", fixed_effects, "+ (1 |", random_effect, ")")
-#     model_formula <- as.formula(formula_str)
-#     
-#     # Fit the model
-#     model <- glmer(model_formula, data = data, family = poisson()) # note dist here
-#     
-#     # Extract the log-likelihood for LOO-CV
-#     log_lik <- logLik(model)
-#     
-#     # Calculate LOO
-#     loo_result <- loo(model)
-#     
-#     # Store the results
-#     results <- rbind(results, data.frame(Model = fixed_effects, 
-#                                           LOO_CV = loo_result$estimates["looic"],
-#                                           stringsAsFactors = FALSE))
-#   }
-# 
-#   return(results)
-# }
 ```
 
 
@@ -519,102 +488,39 @@ compare_abun_rich_shannon
 To do this, need to use estimates of asymptotic species richness 
 - b/c these sites did not have even sample coverage
 
-# GOAL - use iNEXT to show what the sampling coverage is for each site
+## iNEXT to show what the sampling coverage is for each site
 - then compare sampling coverage!
-- then graphically display this?
+- then graphically display this
 
-```{r}
-# library(iNEXT)
-# 
-# # Convert the flipped_df (where each column is a site) into a list of vectors
-# site_list <- as.list(as.data.frame(t(new_mat_test[,-1])))  # Transpose and remove Final_ID column
-# 
-# # Names of each site (columns in the original data)
-# names(site_list) <- colnames(new_mat_test)[-1]
-# 
-# # Calculate sampling coverage for each site using iNEXT
-# # The first argument is the list of abundance vectors for each site
-# iNEXT_out <- iNEXT(site_list, q = 0, datatype = "abundance")
-# 
-# # View the results
-# iNEXT_out
-# 
-# # You can also visualize the sampling coverage curves
-# library(ggplot2)
-# ggiNEXT(iNEXT_out, type = 2)  # type=2 plots sampling coverage curve
-
-```
-
-
-
-
-
-
-Why is this so hard? Isn't this the whole point of the iNEXT package?
-```{r}
-# need to convert new_mat to a list I guess?
-# new_mat_list <- apply(new_mat_test, 1, as.numeric)
-# new_mat_list <- split(new_mat_list, seq(nrow(new_mat_test)))
-# 
-# out <- iNEXT(new_mat_list, q=c(0, 1, 2), datatype="abundance", endpoint=500)
-# 
-# #ggiNEXT(out, type=3)  # type=3 produces sample coverage-based rarefaction/extrapolation curves
-# 
-# # Define a custom shape palette (e.g., 32 different shapes, some repeating)
-# shape_palette <- rep(1:6, length.out=32)  # Only 6 shapes available, so repeating them
-# 
-# # Plot using ggiNEXT with custom shapes
-# ggiNEXT(out, type=3) +
-#   scale_shape_manual(values = shape_palette)
-# 
-# 
-# ## not sure how to interact with this data
-# 
-# # Check the structure of the iNEXT result
-# str(out$iNextEst)
-# 
-# # Extract the sample coverage data
-# coverage_data <- out$iNextEst %>% filter(method == "observed")
-# 
-# 
-# # Convert your matrix to a list and assign site names
-# site_names <- rownames(new_mat)  # Extract site names
-# coverage_data$site <- site_names
-# 
-# library(ggplot2)
-# 
-# # Create a bar plot comparing sample coverage across sites
-# ggplot(coverage_data, aes(x = site, y = SC, fill = site)) +
-#   geom_bar(stat = "identity") +
-#   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-#   labs(title = "Sample Coverage Across Sites", x = "Site", y = "Sample Coverage")
-# 
-# 
-# 
-# print(coverage_data)
-```
+## ALSO CAN LOOK AT q=1
 
 code from Tamara
 ```{r}
+# make vectors for each of the four site types from new_mat
+shade <- as.numeric(new_mat[1:12,]) # row numbers for 
+sun <- as.numeric(new_mat[13:23,])
+abandoned <- as.numeric(new_mat[24:27,])
+forest <- as.numeric(new_mat[28:32,])
 
-# pull out specific columns, make a vectors
+type_list <- list(shade,sun,abandoned,forest)
+names(type_list) <- c("shade", "sun", "abandoned", "forest")
+str(type_list)
 
-# con<-as.numeric(und$control[1:143])
-# nuc<-as.numeric(und$nucleation[1:154])
-# pla<-as.numeric(und$plantation[1:162])
-# 
-# und2<-list(con,nuc,pla)
-# str(und2)
-# names(und2) <- c("control", "nucleation", "plantation")
-# str(und2)
-# 
-# out10 <- iNEXT(und2, q=0, datatype = "abundance",endpoint = 22000)
-# 
-# #plot sample-size-based curve
-# ggiNEXT(out10, type=1,grey=TRUE)+
-#   labs(y="Species richness", x="No. of individuals")+
-#   labs(tag = "b)") +
-#   theme(plot.tag.position = c(0.01, 1))
+out10 <- iNEXT(type_list, q = 0, datatype = "abundance", endpoint = 22000)
+
+#plot sample-size-based rarefaction/extrapolation curve
+ggiNEXT(out10, type = 1, grey = FALSE) +
+  labs(y = "Species richness", x = "Number of individuals") +
+  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+
+#plot sample-coverage-based rarefaction/extrapolation curve
+ggiNEXT(out10, type = 2, grey = FALSE) +
+  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+
+#plot sample completeness curve
+ggiNEXT(out10, type = 3, grey = FALSE) +
+  labs(y = "Species richness", x = "Sample coverage") +
+  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
 ```
 
 
@@ -669,7 +575,6 @@ legend("bottomleft",
        col = legend_cols, 
        cex = 0.8)
 ```
-
 
 ## b. correlation
 
@@ -969,23 +874,5 @@ summary(mod_no_forest) # nothing significant - # AIC 1146.3
 vif(mod_no_forest) # vif not a concern
 check_overdispersion(mod_no_forest) # not overdispersed!
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

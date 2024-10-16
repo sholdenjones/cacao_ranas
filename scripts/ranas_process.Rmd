@@ -161,9 +161,9 @@ three_column_type <- data.frame(three_column_type)
 new_mat_type <- matrify(three_column_type)
 
 # output
-filename <- "new_mat_type_processed.csv"
-filepath <- file.path(data_dir, filename)
-write.csv(new_mat_type, file = filepath, row.names = TRUE)
+# filename <- "new_mat_type_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_type, file = filepath, row.names = TRUE)
 ```
 
 
@@ -181,9 +181,9 @@ three_column_forest <- data.frame(three_column_forest)
 
 new_mat_forest <- matrify(three_column_forest)
 
-filename <- "new_mat_forest_processed.csv"
-filepath <- file.path(data_dir, filename)
-write.csv(new_mat_forest, file = filepath, row.names = TRUE)
+# filename <- "new_mat_forest_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_forest, file = filepath, row.names = TRUE)
 
 # abandoned
 three_column_abandon <- new %>%
@@ -195,9 +195,9 @@ three_column_abandon <- data.frame(three_column_abandon)
 
 new_mat_abandon <- matrify(three_column_abandon)
 
-filename <- "new_mat_abandon_processed.csv"
-filepath <- file.path(data_dir, filename)
-write.csv(new_mat_abandon, file = filepath, row.names = TRUE)
+# filename <- "new_mat_abandon_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_abandon, file = filepath, row.names = TRUE)
 
 # shade
 three_column_shade <- new %>%
@@ -209,9 +209,9 @@ three_column_shade <- data.frame(three_column_shade)
 
 new_mat_shade <- matrify(three_column_shade)
 
-filename <- "new_mat_shade_processed.csv"
-filepath <- file.path(data_dir, filename)
-write.csv(new_mat_shade, file = filepath, row.names = TRUE)
+# filename <- "new_mat_shade_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_shade, file = filepath, row.names = TRUE)
 
 # sun
 three_column_sun <- new %>%
@@ -223,9 +223,9 @@ three_column_sun <- data.frame(three_column_sun)
 
 new_mat_sun <- matrify(three_column_sun)
 
-filename <- "new_mat_sun_processed.csv"
-filepath <- file.path(data_dir, filename)
-write.csv(new_mat_sun, file = filepath, row.names = TRUE)
+# filename <- "new_mat_sun_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_sun, file = filepath, row.names = TRUE)
 ```
 
 
