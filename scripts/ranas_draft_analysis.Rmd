@@ -494,6 +494,8 @@ To do this, need to use estimates of asymptotic species richness
 
 ## ALSO CAN LOOK AT q=1
 
+
+## THIS CODE DOES NOT WORK ###
 code from Tamara
 ```{r}
 # make vectors for each of the four site types from new_mat
@@ -525,6 +527,9 @@ ggiNEXT(out10, type = 3, grey = FALSE) +
 
 
 #5. Mulitple regression for drivers of amphibian communities
+
+
+## WHAT IF WORKED AT SITE-LEVEL?
 
 Have a series of local (collected at quad-level),landscape (at 
 site-level) variables - how do these explain the amphibian comm?
