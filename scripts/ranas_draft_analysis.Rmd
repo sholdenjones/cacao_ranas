@@ -532,7 +532,70 @@ ggiNEXT(out10, type = 3, grey = FALSE) +
 #5. Mulitple regression for drivers of amphibian communities
 
 
-## WHAT IF WORKED AT SITE-LEVEL?
+## COME THROUGH AND re analyze this section
+
+## SITE LEVEL
+
+## a. PCA - wary of this, too pretty!
+
+- can only work for continuous variables
+
+https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+```{r}
+# remove non-numerical columns, previously scaled columns
+pca_fit <- prcomp(
+  x = site_richness_local[, -c(1,5,9,10,14,15,16)], scale. = TRUE)
+                        
+pca_summary <- summary(pca_fit)
+pca_summary
+
+ls(pca_summary) # Lists the objects produced by summary
+
+pca_summary$importance
+
+# biplot - kinda ugly!
+biplot(x = pca_fit)
+
+# just plot first two axes of PCA
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+
+# what if we included the plantation type for each transect here?
+cacao_type <- unique(site_richness_local$Tipo)
+
+legend_cols <- c("#A6611A", "#DFC27D")
+
+# assign colors to legend
+pt_cols <- rep(x = legend_cols[1], length = nrow(site_richness_local))
+pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
+
+# plot just first two axes, include coloring of points for each cacao type
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2",
+     pch = 19,
+     col = pt_cols)
+legend("bottomleft",
+       legend = cacao_type,
+       pch = 19,
+       col = legend_cols,
+       cex = 0.8)
+```
+
+
+
+
+
+
+
+
+
+
+
+## TRANSECT LEVEL
 
 Have a series of local (collected at quad-level),landscape (at 
 site-level) variables - how do these explain the amphibian comm?
@@ -542,7 +605,8 @@ site-level) variables - how do these explain the amphibian comm?
 
 https://jcoliver.github.io/learn-r/003-intro-multivariate.html
 ```{r}
-pca_fit <- prcomp(x = trans_richness_local[, -c(1,3,6,14,15,16)], 
+pca_fit <- prcomp(
+  x = trans_richness_local[, -c(1,3,6,14,15,16)], # remove these columns
                   scale. = TRUE)
 
 pca_summary <- summary(pca_fit)

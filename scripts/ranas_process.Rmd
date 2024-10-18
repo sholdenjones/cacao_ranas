@@ -430,6 +430,13 @@ site_richness_local <- left_join(site_abundance, site_richness_local,
                                  by = c("Sitio", "year")) %>%
                        filter(Tipo %in% c("N", "C"))
 
+# remove columns that are not necessary with this df
+site_richness_local <- site_richness_local %>%
+  select(-c("species", "Transecto", "Fecha", "tran_mean_veg", "tran_mean_hoja",
+            "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
+            "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
+            "veg_bins", "hoja_bins", "CC_bins"))
+
 # filename <- "site_richness_local_processed.csv"
 # filepath <- file.path(data_dir, filename)
 # write_csv(site_richness_local, file = filepath)
