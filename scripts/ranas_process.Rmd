@@ -414,16 +414,25 @@ richness_by_site_year <- new %>%
 # site_richnes_local
 - left_join richness_by_site_year and local_by_site
 ```{r}
-# as currently constructed, this sums richness for each transect on each date 
 site_richness_local <- left_join(richness_by_site_year, local_by_site,
                                  by = c("Sitio", "year")) %>%
                        filter(Tipo %in% c("N", "C")) %>% # only N,C
                        group_by(Sitio, year) %>% 
                        slice(1) # just take one row per site
 
-filename <- "site_richness_local_processed.csv"
-filepath <- file.path(data_dir, filename)
-write_csv(site_richness_local, file = filepath)
+# incorporate abundance at site level here
+site_abundance <- ranas %>%
+  group_by(Sitio, year) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+site_richness_local <- left_join(site_abundance, site_richness_local,
+                                 by = c("Sitio", "year")) %>%
+                       filter(Tipo %in% c("N", "C"))
+
+# filename <- "site_richness_local_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_richness_local, file = filepath)
 ```
 
 # trans_richness_local
