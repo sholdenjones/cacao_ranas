@@ -21,6 +21,7 @@ library(lme4)
 library(ggpubr) # for arranging multi-panel figures
 library(car)
 #library(loo)
+library(glmmTMB)
 ```
 
 load data
@@ -585,10 +586,96 @@ legend("bottomleft",
        cex = 0.8)
 ```
 
+## b. correlation
+
+need to address potential variable correlation before building regression models
+
+visually assess potential correlation of scaled variables in trans_richness_local
+- no variables appear to be highly correlated (r = 0.7 threshold)
+- appears that don't need to remove any!
+```{r}
+# would only expect local vars or landscape vars to be correlated with each other
+ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
+          y = "site_mean_veg_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_hoja_scaled", ylab = "site_mean_veg_scaled")
+# r = -.3
+
+ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
+          y = "site_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_hoja_scaled", ylab = "site_mean_CC_scaled")
+# r = .68  PRETTY CLOSE TO 0.7 threshold
+
+ggscatter(site_richness_local, x = "site_mean_veg_scaled", 
+          y = "site_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_veg_scaled", ylab = "site_mean_CC_scaled")
+# r = -.04
+
+ggscatter(site_richness_local, x = "water_dist_scaled", 
+          y = "forest_cover_400_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled")
+# r = -.41
+```
+
+confirm this with correlation matrix
+- no variables correlated above r = 0.68
+```{r}
+cor(site_richness_local[, c("site_mean_hoja_scaled", 
+                             "site_mean_CC_scaled", 
+                             "water_dist_scaled", 
+                             "forest_cover_400_scaled",
+                             "site_mean_veg_scaled")])
+```
+
+# c. drivers of site-level amphibian abundance
+use glmer package to build multiple regression models
+- allows for inclusion of both random and rixed effects 
+
+## full model
+```{r}
+# full model
+modfull <- glmer(no_species ~ site_mean_hoja_scaled + 
+                   site_mean_CC_scaled + 
+                   site_mean_veg_scaled + # veg as R.E. prevented model convergence
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   year + # include year here?
+                   (1 | Sitio),
+              data = site_richness_local,
+              family = poisson())
+
+summary(modfull) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
+vif(modfull) # vif not a concern
+check_overdispersion(modfull) # OVERDISPERSED
+```
 
 
+# POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL?
 
+# CANNOT ASSESS VIF FOR NEGATIVE BINOMIAL MODELS AT SITE LEVEL - WHY?
+```{r}
+modfull_nb <- glmmTMB(no_species ~ site_mean_hoja_scaled + 
+                      site_mean_CC_scaled + 
+                      site_mean_veg_scaled + 
+                      water_dist_scaled + 
+                      forest_cover_400_scaled + 
+                      year + 
+                      (1 | Sitio),
+                  data = site_richness_local,
+                  family = nbinom2())
 
+summary(modfull_nb) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
+vif(modfull_nb) # vif not a concern
+check_overdispersion(modfull_nb) # not overdispersed
+
+```
 
 
 
