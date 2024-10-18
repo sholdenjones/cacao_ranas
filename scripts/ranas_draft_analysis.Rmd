@@ -15,13 +15,12 @@ library(vegan)
 library(iNEXT)
 library(sjmisc)
 library(RColorBrewer) # for assigning plot colors
-library(DHARMa) # for assessing model fit
-library(SuppDists) # needed for assessing additional dist fits
+#library(DHARMa) # for assessing model fit
+#library(SuppDists) # needed for assessing additional dist fits
 library(lme4)
 library(ggpubr) # for arranging multi-panel figures
-library(iNEXT)
 library(car)
-library(loo)
+#library(loo)
 ```
 
 load data
@@ -499,7 +498,7 @@ To do this, need to use estimates of asymptotic species richness
 code from Tamara
 ```{r}
 # make vectors for each of the four site types from new_mat
-shade <- as.numeric(new_mat[1:12,]) # row numbers for 
+shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
 sun <- as.numeric(new_mat[13:23,])
 abandoned <- as.numeric(new_mat[24:27,])
 forest <- as.numeric(new_mat[28:32,])

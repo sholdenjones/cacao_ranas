@@ -34,9 +34,9 @@ ranas <- ranas %>%
   mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"),
          year = substr(sample_date, 1, 4))
 
-# remove '..20' column - not sure why these are being added
+# remove '...20', '...21' column - not sure why these are being added
 ranas <- ranas %>%
-  select(-...20)
+  select(-c("...20", "...21"))
 
 ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
 
@@ -374,25 +374,57 @@ local_by_trans <- local_by_trans %>%
 # write_csv(local_by_trans, file = filepath)
 ```
 
+# local_by_site
+easier to work at site level - removes lots of strange use cases
+- use local_by_trans df from above to calculate site-level local variables 
+- for each season!
+```{r}
+# format dates, create year column
+local_by_trans$sample_date <- as.Date(local_by_trans$Fecha, format = "%d/%m/%y")
+local_by_trans <- local_by_trans %>%
+  mutate(year = substr(sample_date, 1, 4))
 
-## HOLY SHIT _ MAYBE HUGE ERROR HERE?
-# NEED TO USE COUNT NOT N_Distinct??!?!
+# calculate year, site-level averages for local vars
+local_by_site <- local_by_trans %>%
+  group_by(Sitio, year) %>%
+  mutate(site_mean_veg = mean(tran_mean_veg),
+         site_mean_hoja = mean(tran_mean_hoja),
+         site_mean_CC = mean(tran_mean_CC)
+  )
 
-## TEST:
-# ```{r}
-# # First, create the richness summary
-# trans_richness <- ranas %>%
-#   group_by(Sitio, Transecto, Fecha) %>%
-#   summarize(num_species = n_distinct(Final_ID), .groups = 'drop')
-# 
-# # Then, ensure all combinations of Sitio, Transecto, and Fecha are represented
-# trans_richness <- trans_richness %>%
-#   complete(Sitio, Transecto, Fecha, fill = list(num_species = 0))
-# 
-# ```
+# scale all vars
+local_by_site <- local_by_site %>%
+  ungroup() %>% # Ungrouping to scale variables
+  mutate(site_mean_veg_scaled = as.numeric(scale(site_mean_veg)),
+         site_mean_hoja_scaled = as.numeric(scale(site_mean_hoja)),
+         site_mean_CC_scaled = as.numeric(scale(site_mean_CC)),
+         forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
+         water_dist_scaled = as.numeric(scale(water_dist)))
+```
 
+# richness_by_site_year
+- different than richness by site b/c calculates by year too
+```{r}
+richness_by_site_year <- new %>%
+  group_by(Sitio, year) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+```
 
+# site_richnes_local
+- left_join richness_by_site_year and local_by_site
+```{r}
+# as currently constructed, this sums richness for each transect on each date 
+site_richness_local <- left_join(richness_by_site_year, local_by_site,
+                                 by = c("Sitio", "year")) %>%
+                       filter(Tipo %in% c("N", "C")) %>% # only N,C
+                       group_by(Sitio, year) %>% 
+                       slice(1) # just take one row per site
 
+filename <- "site_richness_local_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(site_richness_local, file = filepath)
+```
 
 # trans_richness_local
 ```{r}
@@ -400,6 +432,7 @@ trans_richness <- ranas %>%
   group_by(Sitio, Transecto, Fecha) %>%
   summarize(num_species = n_distinct(Final_ID))
 
+# as currently constructed, this sums richness for each transect on each date 
 trans_richness_local <- left_join(trans_richness, local_by_trans,
                                  by = c("Sitio", "Transecto", "Fecha"))
 
