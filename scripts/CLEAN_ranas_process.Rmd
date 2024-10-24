@@ -66,9 +66,9 @@ new <- ranas %>%
   filter(Recap == "N")
 
 # # output
-# filename <- "new_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(new, file = filepath)
+filename <- "new_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(new, file = filepath)
 ```
 
 
@@ -81,18 +81,18 @@ new_no_priach <- new %>%
   filter(Final_ID != "priach")
 
 # # output
-# filename <- "new_no_priach_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(new_no_priach, file = filepath)
+filename <- "new_no_priach_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(new_no_priach, file = filepath)
 
 # og ranas with only non-priach ind
 ranas_no_priach <- ranas %>%
   filter(Final_ID != "priach")
 
-# # output
-# filename <- "ranas_no_priach_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(ranas_no_priach, file = filepath)
+# output
+filename <- "ranas_no_priach_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(ranas_no_priach, file = filepath)
 ```
 
 
@@ -109,10 +109,10 @@ new_threatened <- new %>%
          Final_ID == 'prilatic'
            )
 
-# # output
-# filename <- "new_threatened_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(new_threatened, file = filepath)
+# output
+filename <- "new_threatened_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(new_threatened, file = filepath)
 ```
 
 
@@ -140,10 +140,10 @@ new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
 # Reorder rows
 new_mat <- new_mat[new_order, ]
 
-# # output
-# filename <- "new_mat_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(new_mat, file = filepath)
+# output
+filename <- "new_mat_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(new_mat, file = filepath)
 ```
 
 
@@ -161,15 +161,17 @@ three_column_type <- data.frame(three_column_type)
 new_mat_type <- matrify(three_column_type)
 
 # output
-# filename <- "new_mat_type_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write.csv(new_mat_type, file = filepath, row.names = TRUE)
+filename <- "new_mat_type_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(new_mat_type, file = filepath, row.names = TRUE)
 ```
 
 
 # four new_mat matrices for each site type
 - talking with Francisco, seems will need one for each type of site
 - independently create sampling coverage curves for each of these
+
+## RESUME HERE
 ```{r}
 # forest
 three_column_forest <- new %>%
@@ -181,9 +183,9 @@ three_column_forest <- data.frame(three_column_forest)
 
 new_mat_forest <- matrify(three_column_forest)
 
-# filename <- "new_mat_forest_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write.csv(new_mat_forest, file = filepath, row.names = TRUE)
+filename <- "new_mat_forest_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(new_mat_forest, file = filepath, row.names = TRUE)
 
 # abandoned
 three_column_abandon <- new %>%
@@ -195,9 +197,9 @@ three_column_abandon <- data.frame(three_column_abandon)
 
 new_mat_abandon <- matrify(three_column_abandon)
 
-# filename <- "new_mat_abandon_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write.csv(new_mat_abandon, file = filepath, row.names = TRUE)
+filename <- "new_mat_abandon_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(new_mat_abandon, file = filepath, row.names = TRUE)
 
 # shade
 three_column_shade <- new %>%
@@ -209,9 +211,9 @@ three_column_shade <- data.frame(three_column_shade)
 
 new_mat_shade <- matrify(three_column_shade)
 
-# filename <- "new_mat_shade_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write.csv(new_mat_shade, file = filepath, row.names = TRUE)
+filename <- "new_mat_shade_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(new_mat_shade, file = filepath, row.names = TRUE)
 
 # sun
 three_column_sun <- new %>%
@@ -223,9 +225,9 @@ three_column_sun <- data.frame(three_column_sun)
 
 new_mat_sun <- matrify(three_column_sun)
 
-# filename <- "new_mat_sun_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write.csv(new_mat_sun, file = filepath, row.names = TRUE)
+filename <- "new_mat_sun_processed.csv"
+filepath <- file.path(data_dir, filename)
+write.csv(new_mat_sun, file = filepath, row.names = TRUE)
 ```
 
 
@@ -244,10 +246,10 @@ environmental <- environmental %>%
 
 environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
 
-# # output
-# filename <- "environmental_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(environmental, file = filepath)
+# output
+filename <- "environmental_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(environmental, file = filepath)
 ```
 
 
@@ -264,10 +266,10 @@ site_data <- site_data %>%
 
 site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
 
-# # output
-# filename <- "site_data_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(site_data, file = filepath)
+# output
+filename <- "site_data_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(site_data, file = filepath)
 ```
 
 # local_by_trans
@@ -369,9 +371,9 @@ local_by_trans <- local_by_trans %>%
          forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
          water_dist_scaled = as.numeric(scale(water_dist)))
 
-# filename <- "local_by_trans_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(local_by_trans, file = filepath)
+filename <- "local_by_trans_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(local_by_trans, file = filepath)
 ```
 
 # local_by_site
@@ -437,9 +439,9 @@ site_richness_local <- site_richness_local %>%
             "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
             "veg_bins", "hoja_bins", "CC_bins"))
 
-# filename <- "site_richness_local_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(site_richness_local, file = filepath)
+filename <- "site_richness_local_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(site_richness_local, file = filepath)
 ```
 
 # trans_richness_local
@@ -461,9 +463,9 @@ trans_richness_local <- left_join(trans_abundance, trans_richness_local,
                                  by = c("Sitio", "Transecto", "Fecha")) %>%
   filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
 
-# filename <- "trans_richness_local_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(trans_richness_local, file = filepath)
+filename <- "trans_richness_local_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(trans_richness_local, file = filepath)
 ```
 
 
@@ -502,10 +504,10 @@ site_type <- site_type %>%
     Tipo == "V" ~ "No")
     )
 
-# # output
-# filename <- "site_type_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(site_type, file = filepath)
+# output
+filename <- "site_type_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(site_type, file = filepath)
 ```
 
 
@@ -531,10 +533,10 @@ richness_summary <- richness_by_site %>%
             min_species_richness = min(no_species),
             max_species_richness = max(no_species))
 
-# # output
-# filename <- "richness_by_site_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(richness_by_site, file = filepath)
+# output
+filename <- "richness_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(richness_by_site, file = filepath)
 ```
 
 
@@ -560,10 +562,10 @@ richness_summary_no_priach <- richness_by_site_no_priach %>%
             min_species_richness = min(no_species),
             max_species_richness = max(no_species))
 
-# # output
-# filename <- "richness_by_site_no_priach_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(richness_by_site_no_priach, file = filepath)
+# output
+filename <- "richness_by_site_no_priach_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(richness_by_site_no_priach, file = filepath)
 ```
 
 
@@ -598,10 +600,10 @@ threatened_richness_summary <- threatened_richness_by_site %>%
             min_species_richness = min(no_species),
             max_species_richness = max(no_species))
 
-# # output
-# filename <- "threatened_richness_by_site_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(threatened_richness_by_site, file = filepath)
+# output
+filename <- "threatened_richness_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(threatened_richness_by_site, file = filepath)
 ```
 
 
@@ -620,10 +622,10 @@ abundance_by_site <- abundance_by_site %>%
 
 abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
 
-# # output
-# filename <- "abundance_by_site_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(abundance_by_site, file = filepath)
+# output
+filename <- "abundance_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(abundance_by_site, file = filepath)
 ```
 
 
@@ -643,10 +645,10 @@ abundance_by_site_no_priach <- abundance_by_site_no_priach %>%
 abundance_by_site_no_priach$Tipo <- factor(abundance_by_site_no_priach$Tipo, 
                                            c("N", "C", "V", "B"))
 
-# # output
-# filename <- "abundance_by_site_no_priach_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(abundance_by_site_no_priach, file = filepath)
+# output
+filename <- "abundance_by_site_no_priach_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(abundance_by_site_no_priach, file = filepath)
 ```
 
 
@@ -684,10 +686,10 @@ diversity_by_site <- site_type %>%
     mutate(Simpson_Index = diversity(new_mat, index = "simpson")) %>%
     mutate(Inv_Simpson_Index = diversity(new_mat, index = "invsimpson"))
 
-# # output
-# filename <- "diversity_by_site_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(diversity_by_site, file = filepath)
+# output
+filename <- "diversity_by_site_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(diversity_by_site, file = filepath)
 ```
 
 
@@ -723,10 +725,10 @@ diversity_by_site_no_priach <- site_type %>%
     mutate(Simpson_Index = diversity(new_mat_no_priach, index = "simpson")) %>%
     mutate(Inv_Simpson_Index = diversity(new_mat_no_priach, index = "invsimpson"))
 
-# # output
-# filename <- "diversity_by_site_no_priach_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(diversity_by_site_no_priach, file = filepath)
+# output
+filename <- "diversity_by_site_no_priach_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(diversity_by_site_no_priach, file = filepath)
 ```
 
 

@@ -1,0 +1,797 @@
+
+# PROCESSING DATA
+
+Use this script to perform small tasks on raw data to make it tidier, 
+easier to work with. Output is processed data to be used in analysis scripts.
+
+# load packages
+```{r}
+library(tidyverse)
+library(vegan)
+library(labdsv)
+```
+
+define file path for processed outputs
+```{r}
+# this will be consistent for each output in this script
+data_dir <- file.path(".", "data/processed_data")
+```
+
+# ranas
+
+ranas - individual occurrence data across all sites
+```{r}
+# read raw ranas data
+ranas <- read_csv("data/raw_data/ranas_04_05_24.csv")
+
+# format dates
+ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
+
+# need to change VC-V to VC-N, turns out this site was not actually abandoned!
+ranas <- ranas %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"),
+         year = substr(sample_date, 1, 4))
+
+# remove '...20', '...21' column - not sure why these are being added
+ranas <- ranas %>%
+  select(-c("...20", "...21"))
+
+ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
+
+# remove any Final_ID with sequence - these are awaiting sequencing results
+ranas <- ranas %>% 
+  filter(Final_ID != "sequence")
+
+# change all epibou to epiesp 
+# Lopez-Hervas et al. 2024 show that epibou in this area is actually epiesp
+ranas$Final_ID[ranas$Final_ID == "epibou"] <- "epiesp"
+
+# make processed csv output and write df to csv
+# filename <- "ranas_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(ranas, file = filepath)
+```
+
+# new
+new - only new individuals from ranas dataset
+```{r}
+# make new with only new ind
+new <- ranas %>%
+  filter(Recap == "N")
+
+# # output
+# filename <- "new_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(new, file = filepath)
+```
+
+# new_no_priach & ranas_no_priach
+
+new_no_priach - remove all priach to look at underlying diversity + abundance
+```{r}
+# make new with only non-priach ind
+new_no_priach <- new %>%
+  filter(Final_ID != "priach")
+
+# # output
+# filename <- "new_no_priach_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(new_no_priach, file = filepath)
+
+# og ranas with only non-priach ind
+ranas_no_priach <- ranas %>%
+  filter(Final_ID != "priach")
+
+# # output
+# filename <- "ranas_no_priach_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(ranas_no_priach, file = filepath)
+```
+
+# new_threatened
+new_threatened - only new individuals from sp of conservation concern - 
+- listed as DD or higher
+```{r}
+new_threatened <- new %>%
+  filter(Final_ID == 'epiesp' |
+         Final_ID == 'lepper' |
+         Final_ID == 'oopsyl' |
+         Final_ID == 'leubil' |
+         Final_ID == 'prilatic'
+           )
+
+# # output
+# filename <- "new_threatened_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(new_threatened, file = filepath)
+```
+
+# new_mat 
+matrix for iNEXT package 
+- to extrapolate and control for uneven sampling coverage across site types
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+
+# # output
+# filename <- "new_mat_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(new_mat, file = filepath)
+```
+
+# new_mat_type
+
+this matrix will be at type-level, not site-level, allow for comparisons across
+bosque, abandoned, ccn, nacional
+```{r}
+three_column_type <- new %>%
+  group_by(Tipo) %>%
+  count(`Final_ID`)
+
+three_column_type <- data.frame(three_column_type)
+
+new_mat_type <- matrify(three_column_type)
+
+# output
+# filename <- "new_mat_type_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_type, file = filepath, row.names = TRUE)
+```
+
+# four new_mat matrices for each site type
+- talking with Francisco, seems will need one for each type of site
+- independently create sampling coverage curves for each of these
+```{r}
+# forest
+three_column_forest <- new %>%
+  filter(Tipo == 'B') %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+three_column_forest <- data.frame(three_column_forest)
+
+new_mat_forest <- matrify(three_column_forest)
+
+# filename <- "new_mat_forest_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_forest, file = filepath, row.names = TRUE)
+
+# abandoned
+three_column_abandon <- new %>%
+  filter(Tipo == 'V') %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+three_column_abandon <- data.frame(three_column_abandon)
+
+new_mat_abandon <- matrify(three_column_abandon)
+
+# filename <- "new_mat_abandon_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_abandon, file = filepath, row.names = TRUE)
+
+# shade
+three_column_shade <- new %>%
+  filter(Tipo == 'N') %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+three_column_shade <- data.frame(three_column_shade)
+
+new_mat_shade <- matrify(three_column_shade)
+
+# filename <- "new_mat_shade_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_shade, file = filepath, row.names = TRUE)
+
+# sun
+three_column_sun <- new %>%
+  filter(Tipo == 'C') %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+three_column_sun <- data.frame(three_column_sun)
+
+new_mat_sun <- matrify(three_column_sun)
+
+# filename <- "new_mat_sun_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write.csv(new_mat_sun, file = filepath, row.names = TRUE)
+```
+
+# environmental
+
+environmental - environmental data for each sampling event
+```{r}
+# environmental data - change VC-V to VC-N
+environmental <- read_csv("data/raw_data/environment_07_12_24.csv")
+
+environmental$sample_date <- as.Date(environmental$Fecha, format = "%d/%m/%y")
+
+# update VC-N
+environmental <- environmental %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"))
+
+environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
+
+# # output
+# filename <- "environmental_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(environmental, file = filepath)
+```
+
+# site_data
+
+site_data - location, canopy cover, and miscellaneous data for each site
+```{r}
+# site_data - change VC-V to VC-N
+site_data <- read_csv("data/raw_data/site_data_08_19_24.csv")
+
+# update VC-N
+site_data <- site_data %>%
+  mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N"))
+
+site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
+
+# # output
+# filename <- "site_data_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_data, file = filepath)
+```
+
+# local_by_trans
+
+For local - not at a quadrant level, but at a transect level
+- Lots of local variables were measured at the quadrant level for practicality
+
+So, here summarize (using mean, coefficient of variation)
+- canopy cover
+- leaf litter coverage
+- vegetation
+at a transect level:
+```{r}
+local_by_trans <- site_data %>%
+  rowwise() %>%
+  mutate(
+    tran_mean_CC = mean(c_across(`CC A`:`CC D`), na.rm = TRUE),
+    tran_coef_var_CC = sd(c_across(`CC A`:`CC D`), na.rm = TRUE) / tran_mean_CC
+  )
+```
+
+Need to fill in vegetation and hojarasca values
+- measured during first site visit, if site did not change between subs. visits 
+  wrote 'same' - this was the case vast majority of time!
+  
+So now need to fill these columns based on the values of previous visits:
+```{r}
+environment_fill <- environmental %>%
+  group_by(Sitio, Fecha, Transecto, Bloque) %>%
+  mutate(Veg_fill = if_else(Veg == 'same', NA_character_, Veg),
+         Hoja_fill = if_else(Hoja =='same', NA_character_, Hoja))
+
+environment_fill <- environment_fill %>%
+  group_by(Sitio, Transecto, Bloque) %>%
+  fill(Veg_fill, .direction = "down") %>%
+  fill(Hoja_fill, .direction = "down") %>%
+  ungroup()
+
+print(environment_fill)
+```
+
+now can calculate transect visit averages for vegetation and hojarasca
+```{r}
+environment_fill$Veg_fill <- as.numeric(environment_fill$Veg_fill)
+environment_fill$Hoja_fill <- as.numeric(environment_fill$Hoja_fill)
+
+environment_fill_by_trans <- environment_fill %>%
+  group_by(Sitio, Fecha, Transecto) %>%
+  summarize(tran_mean_veg = mean(Veg_fill, na.rm = TRUE),
+            tran_mean_hoja = mean(Hoja_fill, na.rm = TRUE)
+            )
+```
+
+now join this dataframe with local_by_trans
+- ONLY INCLUDING PLANTATIONS HERE! SO ONLY N, C
+```{r}
+local_by_trans <- left_join(environment_fill_by_trans, local_by_trans,
+                                 by = c("Sitio", "Transecto"))
+
+local_by_trans <- local_by_trans %>%
+  select(Sitio, Tipo, Fecha, Transecto, 
+         tran_mean_veg, tran_mean_hoja, Pair,
+         tran_mean_CC, tran_coef_var_CC,
+         forest_cover_400, water_dist) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+
+# bin all transect measurements to categories used in Islas studies
+
+# Define the breaks (bins) and labels
+breaks <- c(0, 1, 5, 10, 25, 50, 75, 95, 100)
+labels <- c("0", "1-5", "5-10", "10-25", "25-50", "50-75", "75-95", "95-100")
+
+local_by_trans$veg_bins <- cut(local_by_trans$tran_mean_veg, 
+                                   breaks = breaks, 
+                                   labels = labels, 
+                                   include.lowest = TRUE, 
+                                   right = FALSE)
+
+local_by_trans$hoja_bins <- cut(local_by_trans$tran_mean_hoja, 
+                                   breaks = breaks, 
+                                   labels = labels, 
+                                   include.lowest = TRUE, 
+                                   right = FALSE)
+
+local_by_trans$CC_bins <- cut(local_by_trans$tran_mean_CC, 
+                                   breaks = breaks, 
+                                   labels = labels, 
+                                   include.lowest = TRUE, 
+                                   right = FALSE)
+```
+
+standardize all variables for local_by_trans for multivariate models
+```{r}
+local_by_trans <- local_by_trans %>%
+  ungroup() %>% # Ungrouping to scale variables
+  mutate(tran_mean_veg_scaled = as.numeric(scale(tran_mean_veg)),
+         tran_mean_hoja_scaled = as.numeric(scale(tran_mean_hoja)),
+         tran_mean_CC_scaled = as.numeric(scale(tran_mean_CC)),
+         forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
+         water_dist_scaled = as.numeric(scale(water_dist)))
+
+# filename <- "local_by_trans_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(local_by_trans, file = filepath)
+```
+
+# local_by_site
+easier to work at site level - removes lots of strange use cases
+- use local_by_trans df from above to calculate site-level local variables 
+```{r}
+# format dates, create year column
+local_by_trans$sample_date <- as.Date(local_by_trans$Fecha, format = "%d/%m/%y")
+local_by_trans <- local_by_trans %>%
+  mutate(year = substr(sample_date, 1, 4))
+
+# calculate year, site-level averages for local vars
+local_by_site <- local_by_trans %>%
+  group_by(Sitio) %>%
+  mutate(site_mean_veg = mean(tran_mean_veg),
+         site_mean_hoja = mean(tran_mean_hoja),
+         site_mean_CC = mean(tran_mean_CC)
+  )
+
+# scale all vars
+local_by_site <- local_by_site %>%
+  ungroup() %>% # Ungrouping to scale variables
+  mutate(site_mean_veg_scaled = as.numeric(scale(site_mean_veg)),
+         site_mean_hoja_scaled = as.numeric(scale(site_mean_hoja)),
+         site_mean_CC_scaled = as.numeric(scale(site_mean_CC)),
+         forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
+         water_dist_scaled = as.numeric(scale(water_dist)))
+```
+
+# richness_by_site
+- summarize richness at each site (across both seasons)
+```{r}
+richness_by_site <- new %>%
+  group_by(Sitio) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+```
+
+# site_richness_local
+- calculate richness at each site across both seasons
+- include local and landscape variables for model creation
+```{r}
+site_richness_local <- left_join(richness_by_site, local_by_site,
+                                 by = c("Sitio")) %>%
+                       filter(Tipo %in% c("N", "C")) %>% # only N,C
+                       group_by(Sitio) %>% 
+                       slice(1) # just take one row per site
+
+# incorporate abundance at site level here
+site_abundance <- ranas %>%
+  group_by(Sitio) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+site_richness_local <- left_join(site_abundance, site_richness_local,
+                                 by = c("Sitio")) %>%
+                       filter(Tipo %in% c("N", "C"))
+
+# remove columns that are not necessary with this df
+site_richness_local <- site_richness_local %>%
+  select(-c("species", "Transecto", "Fecha", "tran_mean_veg", "tran_mean_hoja",
+            "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
+            "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
+            "veg_bins", "hoja_bins", "CC_bins", "year"))
+
+# also add the elevation to this df - if working at site level, elevation as R.E.?
+site_richness_local <- merge(site_richness_local, 
+                                  site_data[, c("Sitio", "Elevation")],
+                                  by = "Sitio",
+                                  all.x = TRUE
+                                  )
+
+site_richness_local <- site_richness_local %>%
+  group_by(Sitio) %>%
+  slice(1) %>% # just need one row for each site
+  ungroup() %>%
+  mutate(elevation_scaled = as.numeric(scale(Elevation)))
+
+# filename <- "site_richness_local_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_richness_local, file = filepath)
+```
+
+# richness_by_site_year
+- different than richness by site b/c calculates by year too
+- unsure if want to calculate across different seasons (year)
+```{r}
+richness_by_site_year <- new %>%
+  group_by(Sitio, year) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+```
+
+# local_by_site_year
+- calculate site-level averages for local vars for each season (year)
+```{r}
+# calculate year, site-level averages for local vars
+local_by_site_year <- local_by_trans %>%
+  group_by(Sitio, year) %>%
+  mutate(site_mean_veg = mean(tran_mean_veg),
+         site_mean_hoja = mean(tran_mean_hoja),
+         site_mean_CC = mean(tran_mean_CC)
+  )
+
+# scale all vars
+local_by_site_year <- local_by_site_year %>%
+  ungroup() %>% # Ungrouping to scale variables
+  mutate(site_mean_veg_scaled = as.numeric(scale(site_mean_veg)),
+         site_mean_hoja_scaled = as.numeric(scale(site_mean_hoja)),
+         site_mean_CC_scaled = as.numeric(scale(site_mean_CC)),
+         forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
+         water_dist_scaled = as.numeric(scale(water_dist)))
+```
+
+# site_richness_year_local
+- left_join richness_by_site_year and local_by_site_year
+```{r}
+site_richness_year_local <- left_join(richness_by_site_year, local_by_site,
+                                 by = c("Sitio", "year")) %>%
+                       filter(Tipo %in% c("N", "C")) %>% # only N,C
+                       group_by(Sitio, year) %>% 
+                       slice(1) # just take one row per site
+
+# incorporate abundance at site level here
+site_abundance_year <- ranas %>%
+  group_by(Sitio, year) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+site_richness_year_local <- left_join(site_abundance_year, site_richness_year_local,
+                                 by = c("Sitio", "year")) %>%
+                       filter(Tipo %in% c("N", "C"))
+
+# remove columns that are not necessary with this df
+site_richness_year_local <- site_richness_year_local %>%
+  select(-c("species", "Transecto", "Fecha", "tran_mean_veg", "tran_mean_hoja",
+            "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
+            "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
+            "veg_bins", "hoja_bins", "CC_bins"))
+
+# filename <- "site_richness_year_local_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_richness_year_local, file = filepath)
+```
+
+# trans_richness_local
+```{r}
+trans_richness <- ranas %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_species = n_distinct(Final_ID))
+
+# as currently constructed, this sums richness for each transect on each date 
+trans_richness_local <- left_join(trans_richness, local_by_trans,
+                                 by = c("Sitio", "Transecto", "Fecha"))
+
+trans_abundance <- ranas %>%
+  group_by(Sitio, Transecto, Fecha) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+trans_richness_local <- left_join(trans_abundance, trans_richness_local,
+                                 by = c("Sitio", "Transecto", "Fecha")) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+
+# filename <- "trans_richness_local_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(trans_richness_local, file = filepath)
+```
+
+# landscape_by_site
+
+For landscape - not at a transect level, but at a site level
+- Landscape variables were measured at site level for practicality
+
+So, here summarize
+- percent surrounding forest cover
+- proximity to water
+- elevation
+at a site level:
+
+# site_type
+
+site_type - retains elevation, tipo data
+```{r}
+site_type <- site_data %>% # create site_type df - include name, elevation
+  filter(Transecto == 1) %>% # so just one row per site
+  select(Sitio, Tipo, Elevation, Pair)
+
+# reorder factor levels now for downstream plotting
+site_type$Tipo <- factor(site_type$Tipo, c("N", "C", "V", "B"))
+
+# make Pair a factor for glms
+# MAY NEED TO SET PAIR AS FACTOR
+#site_type$Pair <- factor(site_type$Pair)
+
+# here add harvested column for later analyses
+site_type <- site_type %>%
+  mutate(harvested = case_when(
+    Tipo == "N" ~ "Yes",
+    Tipo == "C" ~ "Yes",
+    Tipo == "B" ~ "No",
+    Tipo == "V" ~ "No")
+    )
+
+# # output
+# filename <- "site_type_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_type, file = filepath)
+```
+
+# richness_by_site
+
+richness by site - just number of species
+```{r}
+# group by site
+richness_by_site <- new %>%
+  group_by(Sitio) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+# join with site_type to carry over tipo, elevation, harvested info
+richness_by_site <- richness_by_site %>%
+  left_join(site_type, by = "Sitio")
+
+# Group by land_use and calculate species richness
+richness_summary <- richness_by_site %>%
+  group_by(Tipo) %>%
+  summarize(mean_species_richness = mean(no_species),
+            median_species_richness = median(no_species),
+            min_species_richness = min(no_species),
+            max_species_richness = max(no_species))
+
+# # output
+# filename <- "richness_by_site_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(richness_by_site, file = filepath)
+```
+
+# richness_by_site_no_priach
+
+richness_by_site_no_priach - just number of species w/out priach
+```{r}
+# group by site
+richness_by_site_no_priach <- new_no_priach %>%
+  group_by(Sitio) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+# join with site_type to carry over tipo, elevation, harvested info
+richness_by_site_no_priach <- richness_by_site_no_priach %>%
+  left_join(site_type, by = "Sitio")
+
+# Group by land_use and calculate species richness
+richness_summary_no_priach <- richness_by_site_no_priach %>%
+  group_by(Tipo) %>%
+  summarize(mean_species_richness = mean(no_species),
+            median_species_richness = median(no_species),
+            min_species_richness = min(no_species),
+            max_species_richness = max(no_species))
+
+# # output
+# filename <- "richness_by_site_no_priach_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(richness_by_site_no_priach, file = filepath)
+```
+
+
+
+
+
+
+
+# FIX WHY IS THIS NOT WORKING? NAS REMAIN WHEN I NEED THEM TO BE ZEROS
+
+# threatened_richness_by_site
+number of threatened species
+```{r}
+# group by site
+threatened_richness_by_site <- new_threatened %>%
+  group_by(Sitio) %>%
+  summarize(species = list(sort(unique(`Final_ID`))),
+            no_species = n_distinct(`Final_ID`))
+
+# left_join with site_type to get type, elevation data
+threatened_richness_by_site <- site_type %>%
+  left_join(threatened_richness_by_site, by = "Sitio")
+
+# change NAs to 0 for plotting
+threatened_richness_by_site[is.na(threatened_richness_by_site)] <- 0
+
+# Group by land_use and calculate species richness
+threatened_richness_summary <- threatened_richness_by_site %>%
+  group_by(Tipo) %>%
+  summarize(mean_species_richness = mean(no_species),
+            median_species_richness = median(no_species),
+            min_species_richness = min(no_species),
+            max_species_richness = max(no_species))
+
+# # output
+# filename <- "threatened_richness_by_site_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(threatened_richness_by_site, file = filepath)
+```
+
+
+# abundance_by_site
+
+just number of ind
+```{r}
+# note this is same as site_abundance above
+abundance_by_site <- new %>%
+  group_by(Sitio) %>%
+  count()
+
+# join with site_type to carry over tipo, elevation, harvested info
+abundance_by_site <- abundance_by_site %>%
+  left_join(site_type, by = "Sitio")
+
+abundance_by_site$Tipo <- factor(abundance_by_site$Tipo, c("N", "C", "V", "B"))
+
+# # output
+# filename <- "abundance_by_site_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(abundance_by_site, file = filepath)
+```
+
+
+# abundance_by_site_no_priach
+
+just number of non priach ind
+```{r}
+# note this is same as site_abundance above
+abundance_by_site_no_priach <- new_no_priach %>%
+  group_by(Sitio) %>%
+  count()
+
+# join with site_type to carry over tipo, elevation, harvested info
+abundance_by_site_no_priach <- abundance_by_site_no_priach %>%
+  left_join(site_type, by = "Sitio")
+
+abundance_by_site_no_priach$Tipo <- factor(abundance_by_site_no_priach$Tipo, 
+                                           c("N", "C", "V", "B"))
+
+# # output
+# filename <- "abundance_by_site_no_priach_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(abundance_by_site_no_priach, file = filepath)
+```
+
+
+# diversity_by_site
+
+use 3 column format to get diversity indices for each site using vegan package
+
+make new_mat - intermediate step for diversity indices from vegan
+```{r}
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+```
+
+diversity_by_site - each major diversity metric
+```{r}
+# use diversity function from vegan package
+diversity_by_site <- site_type %>%
+    mutate(Shannon_Index = diversity(new_mat, index = "shannon")) %>%
+    mutate(Simpson_Index = diversity(new_mat, index = "simpson")) %>%
+    mutate(Inv_Simpson_Index = diversity(new_mat, index = "invsimpson"))
+
+# # output
+# filename <- "diversity_by_site_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(diversity_by_site, file = filepath)
+```
+
+
+# diversity_by_site_no_priach
+
+same as above except using new_no_priach
+```{r}
+three_column_no_priach <- new_no_priach %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column_no_priach <- data.frame(three_column_no_priach)
+
+new_mat_no_priach <- matrify(three_column_no_priach)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat_no_priach <- new_mat_no_priach[new_order, ]
+```
+
+diversity_by_site_no_priach - each major diversity metric
+```{r}
+# use diversity function from vegan package
+diversity_by_site_no_priach <- site_type %>%
+    mutate(Shannon_Index = diversity(new_mat_no_priach, index = "shannon")) %>%
+    mutate(Simpson_Index = diversity(new_mat_no_priach, index = "simpson")) %>%
+    mutate(Inv_Simpson_Index = diversity(new_mat_no_priach, index = "invsimpson"))
+
+# # output
+# filename <- "diversity_by_site_no_priach_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(diversity_by_site_no_priach, file = filepath)
+```
+
+
+
+
+
+
+
+
+
+

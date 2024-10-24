@@ -489,7 +489,10 @@ compare_abun_rich_shannon
 
 
 
-## TRANSECT LEVEL
+## TRANSECT LEVEL - NEED TO INCLUDE TRANSECT VISITS WHEN NO IND FOUND  
+
+
+## CRITICAL ISSUE ###
 
 Have a series of local (collected at quad-level),landscape (at 
 site-level) variables - how do these explain the amphibian comm?
@@ -1018,6 +1021,34 @@ cor(site_richness_local[, c("site_mean_hoja_scaled",
                              "forest_cover_400_scaled",
                              "site_mean_veg_scaled")])
 ```
+
+
+## TRY RUNNING FULL MODEL BUT WITHOUT RANDOM EFFECT _ NOT SURE WHY RE NOT WORKING
+
+## COULD ALSO TRY RUNNING MODEL WITH SCALED ELEVATION AS RE??????
+
+```{r}
+modfull_hoja <- glmer(no_species ~ site_mean_hoja_scaled +
+                   site_mean_veg_scaled + 
+                   water_dist_scaled + 
+                   forest_cover_400_scaled,
+              data = site_richness_local,
+              family = poisson())
+
+summary(modfull_hoja) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
+vif(modfull_hoja) # vif not a concern
+check_overdispersion(modfull_hoja) # not overdispersed
+```
+
+
+
+
+
+
+
+
+
+
 
 ## CONSIDER REDUCING COLLINEARITY BY REMOVING ONE OF CORRELATED TERMS
 

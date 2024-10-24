@@ -1,9 +1,10 @@
 ---
-title: "ranas_draft_analysis"
-author: "S. Holden Jones"
-date: "2024-09-26"
+title: "ranas_analysis"
+author: "Holden Jones"
+date: "2024-10-23"
 output: html_document
 ---
+
 
 Use this document for analyses and figures to be used in paper
 
@@ -15,12 +16,9 @@ library(vegan)
 library(iNEXT)
 library(sjmisc)
 library(RColorBrewer) # for assigning plot colors
-#library(DHARMa) # for assessing model fit
-#library(SuppDists) # needed for assessing additional dist fits
 library(lme4)
 library(ggpubr) # for arranging multi-panel figures
 library(car)
-#library(loo)
 library(glmmTMB)
 ```
 
@@ -487,6 +485,223 @@ compare_abun_rich_shannon
 ```
 
 
+#4. Contextualize cacao sites against reference sites
+
+To do this, need to use estimates of asymptotic species richness 
+- b/c these sites did not have even sample coverage
+
+## iNEXT to show what the sampling coverage is for each site
+- then compare sampling coverage!
+- then graphically display this
+
+## ALSO CAN LOOK AT q=1
+
+
+## THIS CODE DOES NOT WORK ###
+code from Tamara
+```{r}
+# make vectors for each of the four site types from new_mat
+shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
+sun <- as.numeric(new_mat[13:23,])
+abandoned <- as.numeric(new_mat[24:27,])
+forest <- as.numeric(new_mat[28:32,])
+
+type_list <- list(shade,sun,abandoned,forest)
+names(type_list) <- c("shade", "sun", "abandoned", "forest")
+str(type_list)
+
+out10 <- iNEXT(type_list, q = 0, datatype = "abundance", endpoint = 22000)
+
+#plot sample-size-based rarefaction/extrapolation curve
+ggiNEXT(out10, type = 1, grey = FALSE) +
+  labs(y = "Species richness", x = "Number of individuals") +
+  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+
+#plot sample-coverage-based rarefaction/extrapolation curve
+ggiNEXT(out10, type = 2, grey = FALSE) +
+  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+
+#plot sample completeness curve
+ggiNEXT(out10, type = 3, grey = FALSE) +
+  labs(y = "Species richness", x = "Sample coverage") +
+  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+```
+
+
+#5. Mulitple regression for drivers of amphibian communities
+
+
+## COME THROUGH AND re analyze this section
+
+## SITE LEVEL
+
+## a. PCA - wary of this, too pretty!
+
+- can only work for continuous variables
+
+https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+```{r}
+# remove non-numerical columns, previously scaled columns
+# pca_fit <- prcomp(
+  # x = site_richness_local[, -c(1,5,9,10,14,15,16)], scale. = TRUE)
+
+# actually appears that pca sensitive to scale, so use scaled vars
+pca_fit <- prcomp(
+  x = site_richness_local[, -c(1,4,6,7,10,11,12)], scale. = TRUE)
+                        
+pca_summary <- summary(pca_fit)
+pca_summary
+
+ls(pca_summary) # Lists the objects produced by summary
+
+pca_summary$importance
+
+# biplot - kinda ugly!
+biplot(x = pca_fit)
+
+# just plot first two axes of PCA
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+
+# I don't believe this code is actually filling site colors appropriately
+
+# # what if we included the plantation type for each transect here?
+# cacao_type <- unique(site_richness_local$Tipo)
+# 
+# legend_cols <- c("#A6611A", "#DFC27D")
+# 
+# # assign colors to legend
+# pt_cols <- rep(x = legend_cols[1], length = nrow(site_richness_local))
+# pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
+# 
+# # plot just first two axes, include coloring of points for each cacao type
+# plot(x = pca_fit$x[, 1],
+#      y = pca_fit$x[, 2],
+#      xlab = "PC 1",
+#      ylab = "PC 2",
+#      pch = 19,
+#      col = pt_cols)
+# legend("bottomleft",
+#        legend = cacao_type,
+#        pch = 19,
+#        col = legend_cols,
+#        cex = 0.8)
+```
+
+## b. correlation
+
+need to address potential variable correlation before building regression models
+
+visually assess potential correlation of scaled variables in trans_richness_local
+- no variables appear to be highly correlated (r = 0.7 threshold)
+- appears that don't need to remove any!
+```{r}
+# would only expect local vars or landscape vars to be correlated with each other
+ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
+          y = "site_mean_veg_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_hoja_scaled", ylab = "site_mean_veg_scaled")
+# r = -.17
+
+ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
+          y = "site_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_hoja_scaled", ylab = "site_mean_CC_scaled")
+# r = .79  HIGHLY CORRELATED
+
+ggscatter(site_richness_local, x = "site_mean_veg_scaled", 
+          y = "site_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_veg_scaled", ylab = "site_mean_CC_scaled")
+# r = -.09
+
+ggscatter(site_richness_local, x = "water_dist_scaled", 
+          y = "forest_cover_400_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled")
+# r = -.41
+```
+
+confirm this with correlation matrix
+- hoja and CC are strongly correlated at site level - need to address this
+```{r}
+cor(site_richness_local[, c("site_mean_hoja_scaled", 
+                             "site_mean_CC_scaled", 
+                             "water_dist_scaled", 
+                             "forest_cover_400_scaled",
+                             "site_mean_veg_scaled")])
+```
+
+create pca variable based off CC and hoja b/c highly correlated
+```{r}
+pca_CC_hoja <- prcomp(site_richness_local
+              [, c("site_mean_hoja_scaled", "site_mean_CC_scaled")], scale. = TRUE)
+site_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
+```
+
+
+# c. drivers of site-level amphibian abundance
+use glmer package to build multiple regression models
+- allows for inclusion of both random and rixed effects
+- include pca variable of CC and hoja
+
+## SINGULAR FIT BOUNDARY
+
+## full model for species richness
+```{r}
+# full model singular fit
+modfull <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
+                   site_mean_veg_scaled + # veg as R.E. prevented model convergence
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Elevation), 
+              data = site_richness_local,
+              family = poisson())
+# BOUNDARY (singular) fit
+
+summary(modfull) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
+vif(modfull) # vif not a concern
+check_overdispersion(modfull) # OVERDISPERSED
+```
+
+
+# POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL?
+
+# CANNOT ASSESS VIF FOR NEGATIVE BINOMIAL MODELS AT SITE LEVEL - WHY?
+```{r}
+modfull_nb <- glmmTMB(no_species ~ site_mean_hoja_scaled + 
+                      site_mean_CC_scaled + 
+                      site_mean_veg_scaled + 
+                      water_dist_scaled + 
+                      forest_cover_400_scaled + 
+                      year + 
+                      (1 | Sitio),
+                  data = site_richness_local,
+                  family = nbinom2())
+
+summary(modfull_nb) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
+vif(modfull_nb) # vif not a concern
+check_overdispersion(modfull_nb) # not overdispersed
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## TRANSECT LEVEL
@@ -840,267 +1055,6 @@ summary(mod_no_forest) # nothing significant - # AIC 1146.3
 vif(mod_no_forest) # vif not a concern
 check_overdispersion(mod_no_forest) # not overdispersed!
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## ...
-
-## CODE BELOW HERE DOES NOT WORK
-
-## ....
-
-
-
-
-#4. Contextualize cacao sites against reference sites
-
-To do this, need to use estimates of asymptotic species richness 
-- b/c these sites did not have even sample coverage
-
-## iNEXT to show what the sampling coverage is for each site
-- then compare sampling coverage!
-- then graphically display this
-
-## ALSO CAN LOOK AT q=1
-
-
-## THIS CODE DOES NOT WORK ###
-code from Tamara
-```{r}
-# make vectors for each of the four site types from new_mat
-# shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
-# sun <- as.numeric(new_mat[13:23,])
-# abandoned <- as.numeric(new_mat[24:27,])
-# forest <- as.numeric(new_mat[28:32,])
-# 
-# type_list <- list(shade,sun,abandoned,forest)
-# names(type_list) <- c("shade", "sun", "abandoned", "forest")
-# str(type_list)
-# 
-# out10 <- iNEXT(type_list, q = 0, datatype = "abundance", endpoint = 22000)
-# 
-# #plot sample-size-based rarefaction/extrapolation curve
-# ggiNEXT(out10, type = 1, grey = FALSE) +
-#   labs(y = "Species richness", x = "Number of individuals") +
-#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-# 
-# #plot sample-coverage-based rarefaction/extrapolation curve
-# ggiNEXT(out10, type = 2, grey = FALSE) +
-#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-# 
-# #plot sample completeness curve
-# ggiNEXT(out10, type = 3, grey = FALSE) +
-#   labs(y = "Species richness", x = "Sample coverage") +
-#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-```
-
-
-#5. Mulitple regression for drivers of amphibian communities
-
-# MODELS ARE NOT CONVERGING FOR SITE LEVEL _ ISSUES WITH YEAR AS EITHER FIXED OR RANDOM EFFECT
-
-
-## COME THROUGH AND re analyze this section
-
-## SITE LEVEL IS NOT WORKING
-
-## a. PCA - wary of this, too pretty!
-
-- can only work for continuous variables
-
-https://jcoliver.github.io/learn-r/003-intro-multivariate.html
-```{r}
-# # remove non-numerical columns, previously scaled columns
-# pca_fit <- prcomp(
-#   x = site_richness_local[, -c(1,5,9,10,14,15,16)], scale. = TRUE)
-#                         
-# pca_summary <- summary(pca_fit)
-# pca_summary
-# 
-# ls(pca_summary) # Lists the objects produced by summary
-# 
-# pca_summary$importance
-# 
-# # biplot - kinda ugly!
-# biplot(x = pca_fit)
-# 
-# # just plot first two axes of PCA
-# plot(x = pca_fit$x[, 1],
-#      y = pca_fit$x[, 2],
-#      xlab = "PC 1",
-#      ylab = "PC 2")
-# 
-# # what if we included the plantation type for each transect here?
-# cacao_type <- unique(site_richness_local$Tipo)
-# 
-# legend_cols <- c("#A6611A", "#DFC27D")
-# 
-# # assign colors to legend
-# pt_cols <- rep(x = legend_cols[1], length = nrow(site_richness_local))
-# pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
-# 
-# # plot just first two axes, include coloring of points for each cacao type
-# plot(x = pca_fit$x[, 1],
-#      y = pca_fit$x[, 2],
-#      xlab = "PC 1",
-#      ylab = "PC 2",
-#      pch = 19,
-#      col = pt_cols)
-# legend("bottomleft",
-#        legend = cacao_type,
-#        pch = 19,
-#        col = legend_cols,
-#        cex = 0.8)
-```
-
-## b. correlation
-
-need to address potential variable correlation before building regression models
-
-visually assess potential correlation of scaled variables in trans_richness_local
-- no variables appear to be highly correlated (r = 0.7 threshold)
-- appears that don't need to remove any!
-
-## AT SITE LEVEL SITE_MEAN_CC_SCALED AND SITE_MEAN_HOJA_SCALED ARE CORRELATED
-```{r}
-# would only expect local vars or landscape vars to be correlated with each other
-ggscatter(site_richness_local, x = "site_mean_hoja_scaled",
-          y = "site_mean_veg_scaled",
-          add = "reg.line", conf.int = TRUE,
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "site_mean_hoja_scaled", ylab = "site_mean_veg_scaled")
-# r = -.17
-
-ggscatter(site_richness_local, x = "site_mean_hoja_scaled",
-          y = "site_mean_CC_scaled",
-          add = "reg.line", conf.int = TRUE,
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "site_mean_hoja_scaled", ylab = "site_mean_CC_scaled")
-# r = .79  ABOVE .7 THRESHOLD
-
-ggscatter(site_richness_local, x = "site_mean_veg_scaled",
-          y = "site_mean_CC_scaled",
-          add = "reg.line", conf.int = TRUE,
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "site_mean_veg_scaled", ylab = "site_mean_CC_scaled")
-# r = -.09
-
-ggscatter(site_richness_local, x = "water_dist_scaled",
-          y = "forest_cover_400_scaled",
-          add = "reg.line", conf.int = TRUE,
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled")
-# r = -.41
-```
-
-confirm this with correlation matrix
-- no variables correlated above r = 0.68
-```{r}
-cor(site_richness_local[, c("site_mean_hoja_scaled",
-                             "site_mean_CC_scaled",
-                             "water_dist_scaled",
-                             "forest_cover_400_scaled",
-                             "site_mean_veg_scaled")])
-```
-
-## CONSIDER REDUCING COLLINEARITY BY REMOVING ONE OF CORRELATED TERMS
-
-
-# c. drivers of site-level amphibian abundance
-use glmer package to build multiple regression models
-- allows for inclusion of both random and rixed effects 
-
-## full model for species richness
-```{r}
-# full model with hoja
-modfull_hoja <- glmer(no_species ~ site_mean_hoja_scaled +
-                   site_mean_veg_scaled + # veg as R.E. prevented model convergence
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = site_richness_local,
-              family = poisson())
-
-summary(modfull_hoja) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
-vif(modfull_hoja) # vif not a concern
-check_overdispersion(modfull_hoja) # not overdispersed
-
-# full model with CC
-modfull_CC <- glmer(no_species ~ site_mean_hoja_scaled +
-                   site_mean_CC_scaled +
-                   site_mean_veg_scaled + # veg as R.E. prevented model convergence
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Pair),
-              data = site_richness_local,
-              family = poisson())
-
-summary(modfull_CC) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
-vif(modfull_CC) # vif not a concern
-check_overdispersion(modfull_CC) # not overdispersed
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL?
-
-# CANNOT ASSESS VIF FOR NEGATIVE BINOMIAL MODELS AT SITE LEVEL - WHY?
-```{r}
-# modfull_nb <- glmmTMB(no_species ~ site_mean_hoja_scaled + 
-#                       site_mean_CC_scaled + 
-#                       site_mean_veg_scaled + 
-#                       water_dist_scaled + 
-#                       forest_cover_400_scaled + 
-#                       year + 
-#                       (1 | Sitio),
-#                   data = site_richness_local,
-#                   family = nbinom2())
-# 
-# summary(modfull_nb) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
-# vif(modfull_nb) # vif not a concern
-# check_overdispersion(modfull_nb) # not overdispersed
-
-```
-
-
-
-
-
 
 
 
