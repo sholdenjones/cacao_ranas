@@ -255,6 +255,23 @@ site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
 # write_csv(site_data, file = filepath)
 ```
 
+# site_data_map
+- simplified version of site_data just for making map for publication
+```{r}
+site_data_map <- site_data %>%
+  group_by(Sitio) %>%
+  filter(Transecto == 3) %>% # use 3rd transects, less like to have entry errors
+  slice(1) %>%
+  select(c("Sitio", "Tipo", "Owner", "Start UTM 1", "Start UTM 2", 
+           "Start Latitude", "Start Longitude", "Notas", "Pair")) 
+
+# output
+filename <- "site_data_map_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(site_data_map, file = filepath)
+```
+
+
 # local_by_trans
 
 For local - not at a quadrant level, but at a transect level
