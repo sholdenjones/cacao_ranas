@@ -594,7 +594,7 @@ plot(x = pca_fit$x[, 1],
 
 need to address potential variable correlation before building regression models
 
-visually assess potential correlation of scaled variables in trans_richness_local
+visually assess potential correlation of scaled variables in site_richness_local
 - no variables appear to be highly correlated (r = 0.7 threshold)
 - appears that don't need to remove any!
 ```{r}

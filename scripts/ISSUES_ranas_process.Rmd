@@ -330,7 +330,7 @@ local_by_trans <- left_join(environment_fill_by_trans, local_by_trans,
                                  by = c("Sitio", "Transecto"))
 
 local_by_trans <- local_by_trans %>%
-  select(Sitio, Tipo, Fecha, Transecto, 
+  select(Sitio, Tipo, Transecto, 
          tran_mean_veg, tran_mean_hoja, Pair,
          tran_mean_CC, tran_coef_var_CC,
          forest_cover_400, water_dist) %>%
@@ -380,12 +380,12 @@ local_by_trans <- local_by_trans %>%
 easier to work at site level - removes lots of strange use cases
 - use local_by_trans df from above to calculate site-level local variables 
 ```{r}
-# format dates, create year column
-local_by_trans$sample_date <- as.Date(local_by_trans$Fecha, format = "%d/%m/%y")
-local_by_trans <- local_by_trans %>%
-  mutate(year = substr(sample_date, 1, 4))
+# # format dates, create year column
+# local_by_trans$sample_date <- as.Date(local_by_trans$Fecha, format = "%d/%m/%y")
+# local_by_trans <- local_by_trans %>%
+#   mutate(year = substr(sample_date, 1, 4))
 
-# calculate year, site-level averages for local vars
+# calculate site-level averages for local vars
 local_by_site <- local_by_trans %>%
   group_by(Sitio) %>%
   mutate(site_mean_veg = mean(tran_mean_veg),
@@ -434,10 +434,10 @@ site_richness_local <- left_join(site_abundance, site_richness_local,
 
 # remove columns that are not necessary with this df
 site_richness_local <- site_richness_local %>%
-  select(-c("species", "Transecto", "Fecha", "tran_mean_veg", "tran_mean_hoja",
+  select(-c("species", "Transecto", "tran_mean_veg", "tran_mean_hoja",
             "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
-            "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
-            "veg_bins", "hoja_bins", "CC_bins", "year"))
+            "tran_mean_CC_scaled", "tran_mean_hoja_scaled",
+            "veg_bins", "hoja_bins", "CC_bins"))
 
 # also add the elevation to this df - if working at site level, elevation as R.E.?
 site_richness_local <- merge(site_richness_local, 
@@ -470,54 +470,61 @@ richness_by_site_year <- new %>%
 # local_by_site_year
 - calculate site-level averages for local vars for each season (year)
 ```{r}
-# calculate year, site-level averages for local vars
-local_by_site_year <- local_by_trans %>%
-  group_by(Sitio, year) %>%
-  mutate(site_mean_veg = mean(tran_mean_veg),
-         site_mean_hoja = mean(tran_mean_hoja),
-         site_mean_CC = mean(tran_mean_CC)
-  )
+# Don't worry about this now (10/25/24) - summing across seasons
+# lost year from local_by_trans, messing up all year calcs
 
-# scale all vars
-local_by_site_year <- local_by_site_year %>%
-  ungroup() %>% # Ungrouping to scale variables
-  mutate(site_mean_veg_scaled = as.numeric(scale(site_mean_veg)),
-         site_mean_hoja_scaled = as.numeric(scale(site_mean_hoja)),
-         site_mean_CC_scaled = as.numeric(scale(site_mean_CC)),
-         forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
-         water_dist_scaled = as.numeric(scale(water_dist)))
+# # calculate year, site-level averages for local vars
+# local_by_site_year <- local_by_trans %>%
+#   group_by(Sitio, year) %>%
+#   mutate(site_mean_veg = mean(tran_mean_veg),
+#          site_mean_hoja = mean(tran_mean_hoja),
+#          site_mean_CC = mean(tran_mean_CC)
+#   )
+# 
+# # scale all vars
+# local_by_site_year <- local_by_site_year %>%
+#   ungroup() %>% # Ungrouping to scale variables
+#   mutate(site_mean_veg_scaled = as.numeric(scale(site_mean_veg)),
+#          site_mean_hoja_scaled = as.numeric(scale(site_mean_hoja)),
+#          site_mean_CC_scaled = as.numeric(scale(site_mean_CC)),
+#          forest_cover_400_scaled = as.numeric(scale(forest_cover_400)),
+#          water_dist_scaled = as.numeric(scale(water_dist)))
 ```
 
 # site_richness_year_local
 - left_join richness_by_site_year and local_by_site_year
 ```{r}
-site_richness_year_local <- left_join(richness_by_site_year, local_by_site,
-                                 by = c("Sitio", "year")) %>%
-                       filter(Tipo %in% c("N", "C")) %>% # only N,C
-                       group_by(Sitio, year) %>% 
-                       slice(1) # just take one row per site
+# see above - don't worry about this now - 10/25/24
 
-# incorporate abundance at site level here
-site_abundance_year <- ranas %>%
-  group_by(Sitio, year) %>%
-  summarize(num_ind = n_distinct(Numero))
-
-# add to above df to make downstream model creation easier
-site_richness_year_local <- left_join(site_abundance_year, site_richness_year_local,
-                                 by = c("Sitio", "year")) %>%
-                       filter(Tipo %in% c("N", "C"))
-
-# remove columns that are not necessary with this df
-site_richness_year_local <- site_richness_year_local %>%
-  select(-c("species", "Transecto", "Fecha", "tran_mean_veg", "tran_mean_hoja",
-            "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
-            "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
-            "veg_bins", "hoja_bins", "CC_bins"))
+# site_richness_year_local <- left_join(richness_by_site_year, local_by_site,
+#                                  by = c("Sitio", "year")) %>%
+#                        filter(Tipo %in% c("N", "C")) %>% # only N,C
+#                        group_by(Sitio, year) %>% 
+#                        slice(1) # just take one row per site
+# 
+# # incorporate abundance at site level here
+# site_abundance_year <- ranas %>%
+#   group_by(Sitio, year) %>%
+#   summarize(num_ind = n_distinct(Numero))
+# 
+# # add to above df to make downstream model creation easier
+# site_richness_year_local <- left_join(site_abundance_year, site_richness_year_local,
+#                                  by = c("Sitio", "year")) %>%
+#                        filter(Tipo %in% c("N", "C"))
+# 
+# # remove columns that are not necessary with this df
+# site_richness_year_local <- site_richness_year_local %>%
+#   select(-c("species", "Transecto", "Fecha", "tran_mean_veg", "tran_mean_hoja",
+#             "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
+#             "tran_mean_CC_scaled", "tran_mean_hoja_scaled", "sample_date",
+#             "veg_bins", "hoja_bins", "CC_bins"))
 
 # filename <- "site_richness_year_local_processed.csv"
 # filepath <- file.path(data_dir, filename)
 # write_csv(site_richness_year_local, file = filepath)
 ```
+
+# THIS IS THE IMPORTANT ONE:
 
 # trans_richness_local
 ```{r}
@@ -545,9 +552,11 @@ trans_richness_local %>%
   summarize()
 # everybody accounted for!
 
-# filename <- "trans_richness_local_processed.csv"
-# filepath <- file.path(data_dir, filename)
-# write_csv(trans_richness_local, file = filepath)
+# remove unnecessary columns, make sure variables are scaled properly
+
+filename <- "trans_richness_local_processed.csv"
+filepath <- file.path(data_dir, filename)
+write_csv(trans_richness_local, file = filepath)
 ```
 
 # landscape_by_site
