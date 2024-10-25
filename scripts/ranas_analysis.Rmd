@@ -679,8 +679,7 @@ modfull_nb <- glmmTMB(no_species ~ site_mean_hoja_scaled +
                       site_mean_CC_scaled + 
                       site_mean_veg_scaled + 
                       water_dist_scaled + 
-                      forest_cover_400_scaled + 
-                      year + 
+                      forest_cover_400_scaled +
                       (1 | Sitio),
                   data = site_richness_local,
                   family = nbinom2())
@@ -715,7 +714,7 @@ site-level) variables - how do these explain the amphibian comm?
 https://jcoliver.github.io/learn-r/003-intro-multivariate.html
 ```{r}
 pca_fit <- prcomp(
-  x = trans_richness_local[, -c(1,3,6,14,15,16)], # remove these columns
+  x = trans_richness_local[, -c(1,2,5,6,7,9,10,11,12,13,14,15)], # remove these columns
                   scale. = TRUE)
 
 pca_summary <- summary(pca_fit)
@@ -734,27 +733,29 @@ plot(x = pca_fit$x[, 1],
      xlab = "PC 1",
      ylab = "PC 2")
 
-# what if we included the plantation type for each transect here?
-cacao_type <- unique(trans_richness_local$Tipo)
+# I don't trust that the below code is actually filling transect points correctly
 
-legend_cols <- c("#A6611A", "#DFC27D") 
-
-# assign colors to legend
-pt_cols <- rep(x = legend_cols[1], length = nrow(trans_richness_local))
-pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
-
-# plot just first two axes, include coloring of points for each cacao type
-plot(x = pca_fit$x[, 1],
-     y = pca_fit$x[, 2],
-     xlab = "PC 1",
-     ylab = "PC 2",
-     pch = 19,
-     col = pt_cols)
-legend("bottomleft", 
-       legend = cacao_type, 
-       pch = 19, 
-       col = legend_cols, 
-       cex = 0.8)
+# # what if we included the plantation type for each transect here?
+# cacao_type <- unique(trans_richness_local$Tipo)
+# 
+# legend_cols <- c("#A6611A", "#DFC27D") 
+# 
+# # assign colors to legend
+# pt_cols <- rep(x = legend_cols[1], length = nrow(trans_richness_local))
+# pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
+# 
+# # plot just first two axes, include coloring of points for each cacao type
+# plot(x = pca_fit$x[, 1],
+#      y = pca_fit$x[, 2],
+#      xlab = "PC 1",
+#      ylab = "PC 2",
+#      pch = 19,
+#      col = pt_cols)
+# legend("bottomleft", 
+#        legend = cacao_type, 
+#        pch = 19, 
+#        col = legend_cols, 
+#        cex = 0.8)
 ```
 
 ## b. correlation
@@ -771,21 +772,21 @@ ggscatter(trans_richness_local, x = "tran_mean_hoja_scaled",
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
           xlab = "tran_mean_hoja_scaled", ylab = "tran_mean_veg_scaled")
-# r = -.29
+# r = -.21
 
 ggscatter(trans_richness_local, x = "tran_mean_hoja_scaled", 
           y = "tran_mean_CC_scaled", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
           xlab = "tran_mean_hoja_scaled", ylab = "tran_mean_CC_scaled")
-# r = .57
+# r = .7 HIGHLY SCALED
 
 ggscatter(trans_richness_local, x = "tran_mean_veg_scaled", 
           y = "tran_mean_CC_scaled", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
           xlab = "tran_mean_veg_scaled", ylab = "tran_mean_CC_scaled")
-# r = .01
+# r = .0001
 
 ggscatter(trans_richness_local, x = "water_dist_scaled", 
           y = "forest_cover_400_scaled", 
@@ -803,6 +804,13 @@ cor(trans_richness_local[, c("tran_mean_hoja_scaled",
                              "water_dist_scaled", 
                              "forest_cover_400_scaled",
                              "tran_mean_veg_scaled")])
+```
+
+create pca variable based off CC and hoja b/c highly correlated
+```{r}
+pca_CC_hoja <- prcomp(trans_richness_local
+              [, c("tran_mean_hoja_scaled", "tran_mean_CC_scaled")], scale. = TRUE)
+trans_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 ```
 
 assess distribution of variables
@@ -842,21 +850,38 @@ http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
 use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects 
 
-## full model
+## FULL MODEL POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL
+## NEGATIVE BINOMIAL NOT RUNNING EITHER - NEED HELP
 ```{r}
-# full model
-modfull <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + # veg as R.E. prevented model convergence
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
+#### POISSON OVERDISPERSED ####
 
-summary(modfull) # veg sig neg, hoja sig neg, CC sig pos - # AIC 1789.9
-vif(modfull) # vif not a concern
-check_overdispersion(modfull) # not overdispersed!
+# # full model
+# modfull <- glmer(num_ind ~ pca_CC_hoja + # use pca
+#                    tran_mean_veg_scaled + # veg as R.E. prevented model convergence
+#                    water_dist_scaled + 
+#                    forest_cover_400_scaled +
+#                    (1 | Sitio),
+#               data = trans_richness_local,
+#               family = poisson())
+# 
+# summary(modfull) 
+# vif(modfull) # vif not a concern
+# check_overdispersion(modfull) # POISSON IS OVERDISPERSED
+
+#### NEGATIVE BINOMIAL WITH glmmTMB DOESNT WORK EITHER
+# 
+# modfull <- glmmTMB(num_ind ~ pca_CC_hoja + 
+#                     tran_mean_veg_scaled + 
+#                     water_dist_scaled + 
+#                     forest_cover_400_scaled + 
+#                     (1 | Sitio),
+#                   data = trans_richness_local,
+#                   family = nbinom2)
+# ### ERROR IN COV2VAR: V IS NOT A SQUARE NUMERIC MATRIX - WHAT DOES THIS MEAN?
+# summary(modfull)
+# vif(modfull) # vif not a concern
+# #### ERRRRRRRORS
+# check_overdispersion(modfull)
 ```
 
 ## LOO-CV for candidate models
