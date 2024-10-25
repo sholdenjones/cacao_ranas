@@ -317,7 +317,7 @@ environment_fill$Veg_fill <- as.numeric(environment_fill$Veg_fill)
 environment_fill$Hoja_fill <- as.numeric(environment_fill$Hoja_fill)
 
 environment_fill_by_trans <- environment_fill %>%
-  group_by(Sitio, Fecha, Transecto) %>%
+  group_by(Sitio, Transecto) %>% # add Fecha if want each transect visit
   summarize(tran_mean_veg = mean(Veg_fill, na.rm = TRUE),
             tran_mean_hoja = mean(Hoja_fill, na.rm = TRUE)
             )
@@ -422,7 +422,7 @@ site_richness_local <- left_join(richness_by_site, local_by_site,
                        group_by(Sitio) %>% 
                        slice(1) # just take one row per site
 
-# incorporate abundance at site level here
+# incorporate abundance at site level too here
 site_abundance <- ranas %>%
   group_by(Sitio) %>%
   summarize(num_ind = n_distinct(Numero))
@@ -521,22 +521,29 @@ site_richness_year_local <- site_richness_year_local %>%
 
 # trans_richness_local
 ```{r}
+# use ranas instead of new b/c ind may move between transects
 trans_richness <- ranas %>%
-  group_by(Sitio, Transecto, Fecha) %>%
+  group_by(Sitio, Transecto) %>% # add Fecha for each transect visit 
   summarize(num_species = n_distinct(Final_ID))
 
 # as currently constructed, this sums richness for each transect on each date 
 trans_richness_local <- left_join(trans_richness, local_by_trans,
-                                 by = c("Sitio", "Transecto", "Fecha"))
+                                 by = c("Sitio", "Transecto"))
 
 trans_abundance <- ranas %>%
-  group_by(Sitio, Transecto, Fecha) %>%
+  group_by(Sitio, Transecto) %>% # add Fecha for each transect visit 
   summarize(num_ind = n_distinct(Numero))
 
 # add to above df to make downstream model creation easier
 trans_richness_local <- left_join(trans_abundance, trans_richness_local,
-                                 by = c("Sitio", "Transecto", "Fecha")) %>%
+                                 by = c("Sitio", "Transecto")) %>%
   filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+
+# check to make sure that each transect is represented in this df
+trans_richness_local %>%
+  group_by(Sitio, Transecto) %>%
+  summarize()
+# everybody accounted for!
 
 # filename <- "trans_richness_local_processed.csv"
 # filepath <- file.path(data_dir, filename)
