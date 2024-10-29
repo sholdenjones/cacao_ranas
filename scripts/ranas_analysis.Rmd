@@ -85,6 +85,10 @@ trans_richness_local <- as_tibble(trans_richness_local)
 site_richness_local <- read_csv(
   "data/processed_data/site_richness_local_processed.csv")
 site_richness_local <- as_tibble(site_richness_local)
+
+priach_by_site <- read_csv(
+  "data/processed_data/priach_by_site_processed.csv")
+priach_by_site <- as_tibble(priach_by_site)
 ```
 
 define a consistent palet, labels, and theme to be used in figures
@@ -1079,6 +1083,25 @@ mod_no_forest <- glmer(num_species ~ tran_mean_hoja_scaled +
 summary(mod_no_forest) # nothing significant - # AIC 1146.3
 vif(mod_no_forest) # vif not a concern
 check_overdispersion(mod_no_forest) # not overdispersed!
+```
+
+
+# P. achatinus exclusive analysis
+- How does abundance, percentage vary across habitat types?
+```{r}
+# plot P. achatinus percentage across landuse types using palet, my_theme
+plot_priach_by_site <- ggplot(priach_by_site, 
+                                     aes(x = Tipo, y = priach_percentage, 
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  #scale_fill_manual(values = c("#80CDC1", "#018571")) +
+  #scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Site type",
+       y = "P. achatinus percentage of total captures")
+
+plot_priach_by_site
+#ggsave("output/plot_abundance_by_site_inactive.png", width = 10, height = 10)
 ```
 
 

@@ -819,7 +819,29 @@ diversity_by_site_no_priach <- site_type %>%
 # write_csv(diversity_by_site_no_priach, file = filepath)
 ```
 
+# priach_by_site
+- could count number of priach and divide by total number of ind at each site
+```{r}
+# confirmed this works
+priach_by_site <- ranas %>%
+  group_by(Sitio) %>%
+  summarize(
+    total_individuals = n_distinct(Numero),
+    priach_individuals = n_distinct(Numero[Final_ID == "priach"])
+  ) %>%
+  mutate(priach_percentage = (priach_individuals / total_individuals) * 100)
 
+# join with site_type to carry over tipo, elevation, harvested info
+priach_by_site <- priach_by_site %>%
+  left_join(site_type, by = "Sitio")
+
+priach_by_site$Tipo <- factor(priach_by_site$Tipo, c("N", "C", "V", "B"))
+
+# # output
+# filename <- "priach_by_site_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(priach_by_site, file = filepath)
+```
 
 
 
