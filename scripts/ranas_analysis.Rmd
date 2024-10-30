@@ -1089,19 +1089,30 @@ check_overdispersion(mod_no_forest) # not overdispersed!
 # P. achatinus exclusive analysis
 - How does abundance, percentage vary across habitat types?
 ```{r}
-# plot P. achatinus percentage across landuse types using palet, my_theme
+# site_labels here includes all 4 site types b/c comparing percentages
+site_labels <-  c("Shade Cacao \n (n = 12)", 
+                  "Sun Cacao \n (n = 11)", 
+                  "Abandoned Plantation \n (n = 4)",
+                  "Remnant Forest \n (n = 5)")
+
+# reorder factor levels
+priach_by_site$Tipo <- factor(priach_by_site$Tipo,
+                         c("N", "C", "V", "B"))
+
+# plot P. achatinus across landuse types using palet, my_theme
 plot_priach_by_site <- ggplot(priach_by_site, 
                                      aes(x = Tipo, y = priach_percentage, 
                                          fill = Tipo)) +
   geom_boxplot() +
-  #scale_fill_manual(values = c("#80CDC1", "#018571")) +
-  #scale_x_discrete(labels = c(site_labels)) +
+  scale_fill_manual(values = pal) + # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
-  labs(x = "Site type",
+  labs(x = "Land use type",
        y = "P. achatinus percentage of total captures")
 
 plot_priach_by_site
-#ggsave("output/plot_abundance_by_site_inactive.png", width = 10, height = 10)
+
+ggsave("output/plot_priach_by_site.png", width = 10, height = 10)
 ```
 
 
