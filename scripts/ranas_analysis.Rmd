@@ -1087,6 +1087,8 @@ check_overdispersion(mod_no_forest) # not overdispersed!
 
 
 # P. achatinus exclusive analysis
+
+## Priach percentage visualization
 - How does abundance, percentage vary across habitat types?
 ```{r}
 # site_labels here includes all 4 site types b/c comparing percentages
@@ -1114,6 +1116,38 @@ plot_priach_by_site
 
 ggsave("output/plot_priach_by_site.png", width = 10, height = 10)
 ```
+
+## Priach percentage Kruskal-Wallis across landuse types
+- use Kruskal-Wallis b/c ANOVA residuals not normally distributed
+- there is no statistically sig difference in priach % between landuse types
+```{r}
+# ANOVA residuals are not normally distributed
+######################################################
+# create ANOVA
+priach_percentage_aov <- aov(priach_percentage ~ Tipo,
+  data = priach_by_site
+)
+# visually check ANOVA assumption of normality of residuals
+par(mfrow = c(1, 2)) # combine plots
+# histogram
+hist(priach_percentage_aov$residuals)
+# QQ-plot
+qqPlot(priach_percentage_aov$residuals,
+  id = FALSE # id = FALSE to remove point identification
+)
+# shapiro test for normality - ANOVA is NOT NORMALLY DISTRIBUTED
+shapiro.test(priach_percentage_aov$residuals)
+######################################################
+
+# so instead use Kruskal-Wallis test b/c doesn't require normality assumptions
+priach_percentage_kruskal <- kruskal.test(priach_percentage ~ Tipo, 
+                                          data = priach_by_site)
+priach_percentage_kruskal
+# No significant difference in priach percentage between landuse types
+```
+
+
+
 
 
 
