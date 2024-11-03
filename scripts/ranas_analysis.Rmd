@@ -531,6 +531,16 @@ ggiNEXT(out10, type = 3, grey = FALSE) +
   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
 ```
 
+## endangered species
+```{r}
+threatened_abundance_by_site <- new_threatened %>%
+  group_by(Tipo, Final_ID) %>%
+  summarize(num_ind = n_distinct(Numero))
+
+threatened_abundance_by_site
+```
+
+
 
 #5. Mulitple regression for drivers of amphibian communities
 
@@ -650,7 +660,7 @@ site_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 ```
 
 
-# c. drivers of site-level amphibian abundance
+# c. drivers of site-level amphibian richness
 use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects
 - include pca variable of CC and hoja
@@ -664,14 +674,28 @@ modfull <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
                    site_mean_veg_scaled + # veg as R.E. prevented model convergence
                    water_dist_scaled + 
                    forest_cover_400_scaled +
-                   (1 | Elevation), 
+                   (1 | Sitio), 
               data = site_richness_local,
               family = poisson())
 # BOUNDARY (singular) fit
 
-summary(modfull) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
-vif(modfull) # vif not a concern
-check_overdispersion(modfull) # OVERDISPERSED
+summary(modfull) 
+vif(modfull)
+check_overdispersion(modfull)
+
+
+modfull_2 <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio) +
+                   (1 | site_mean_veg_scaled), 
+              data = site_richness_local,
+              family = poisson())
+# BOUNDARY (singular) fit
+
+summary(modfull_2) 
+vif(modfull_2)
+check_overdispersion(modfull_2)
 ```
 
 
@@ -679,23 +703,67 @@ check_overdispersion(modfull) # OVERDISPERSED
 
 # CANNOT ASSESS VIF FOR NEGATIVE BINOMIAL MODELS AT SITE LEVEL - WHY?
 ```{r}
-modfull_nb <- glmmTMB(no_species ~ site_mean_hoja_scaled + 
-                      site_mean_CC_scaled + 
-                      site_mean_veg_scaled + 
+modfull_nb <- glmmTMB(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
                       water_dist_scaled + 
                       forest_cover_400_scaled +
-                      (1 | Sitio),
+                      (1 | Sitio) +
+                      (1 | site_mean_veg_scaled),
                   data = site_richness_local,
-                  family = nbinom2())
+                  family = nbinom2()
+                  )
 
-summary(modfull_nb) # veg sig neg, hoja sig neg, CC sig pos, year sig - # AIC 418.7
-vif(modfull_nb) # vif not a concern
+summary(modfull_nb)
+vif(modfull_nb) # Error in cov2cor(v) : 'V' is not a square numeric matrix
 check_overdispersion(modfull_nb) # not overdispersed
 
 ```
 
 
+## d. drivers of site-level amphibian abundance
+```{r}
+# full model using glmer, pca, veg RE, poisson
+modfull <- glmer(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio) +
+                   (1 | site_mean_veg_scaled), 
+              data = site_richness_local,
+              family = poisson())
+# BOUNDARY (singular) fit
 
+summary(modfull) 
+vif(modfull)
+check_overdispersion(modfull)
+
+# full model using glmmTMB, pca, veg RE, nbinom2
+modfull_nb <- glmmTMB(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja
+                      water_dist_scaled + 
+                      forest_cover_400_scaled +
+                      (1 | Sitio) +
+                      (1 | site_mean_veg_scaled),
+                  data = site_richness_local,
+                  family = nbinom2()
+                  )
+# Warning: Model convergence problem; non-positive-definite Hessian matrix. See vignette('troubleshooting')
+
+summary(modfull_nb)
+vif(modfull_nb)
+check_overdispersion(modfull_nb)
+
+# full model using glmmTMB, pca, veg FE, nbinom2
+modfull_nb_2 <- glmmTMB(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja
+                      site_mean_veg_scaled + # veg as FE
+                      water_dist_scaled + 
+                      forest_cover_400_scaled +
+                      (1 | Sitio),
+                  data = site_richness_local,
+                  family = nbinom2()
+                  )
+
+summary(modfull_nb_2)
+vif(modfull_nb_2) # Error in cov2cor(v) : 'V' is not a square numeric matrix
+check_overdispersion(modfull_nb_2)
+```
 
 
 
@@ -801,7 +869,7 @@ ggscatter(trans_richness_local, x = "water_dist_scaled",
 ```
 
 confirm this with correlation matrix
-- no variables correlated above r = 0.56
+- tran_mean_CC_scaled and tran_mean_hoja_scaled highly correlated (.7)
 ```{r}
 cor(trans_richness_local[, c("tran_mean_hoja_scaled", 
                              "tran_mean_CC_scaled", 
@@ -856,159 +924,188 @@ use glmer package to build multiple regression models
 
 ## FULL MODEL POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL
 ## NEGATIVE BINOMIAL NOT RUNNING EITHER - NEED HELP
+
+## FULL MODEL_2 APPEARS TO WORK?!??!?!
 ```{r}
 #### POISSON OVERDISPERSED ####
 
-# # full model
-# modfull <- glmer(num_ind ~ pca_CC_hoja + # use pca
-#                    tran_mean_veg_scaled + # veg as R.E. prevented model convergence
-#                    water_dist_scaled + 
-#                    forest_cover_400_scaled +
-#                    (1 | Sitio),
-#               data = trans_richness_local,
-#               family = poisson())
-# 
-# summary(modfull) 
-# vif(modfull) # vif not a concern
-# check_overdispersion(modfull) # POISSON IS OVERDISPERSED
+# full model with glmer, pca_CC_hoja, veg as F.E., poisson
+modfull <- glmer(num_ind ~ pca_CC_hoja + # use pca
+                   tran_mean_veg_scaled +
+                   water_dist_scaled +
+                   forest_cover_400_scaled +
+                   (1 | Sitio),
+              data = trans_richness_local,
+              family = poisson())
+
+summary(modfull)
+vif(modfull) # vif not a concern
+check_overdispersion(modfull) # POISSON IS OVERDISPERSED
+
+
+############# THIS ONE WORKSSSSSSSSSSSS ############
+# full model with glmer, pca_CC_hoja, veg as R.E., poisson
+modfull_2 <- glmer(num_ind ~ pca_CC_hoja + # use pca
+                   water_dist_scaled +
+                   forest_cover_400_scaled +
+                   (1 | Sitio) +
+                   (1 | tran_mean_veg_scaled),
+              data = trans_richness_local,
+              family = poisson())
+
+summary(modfull_2) # pca_CC_hoja sig
+vif(modfull_2) # vif not a concern
+check_overdispersion(modfull_2) # HERE NOT OVERDISPERSED
+########### THIS MIGHT BE THE ONE #############
+
 
 #### NEGATIVE BINOMIAL WITH glmmTMB DOESNT WORK EITHER
-# 
-# modfull <- glmmTMB(num_ind ~ pca_CC_hoja + 
-#                     tran_mean_veg_scaled + 
-#                     water_dist_scaled + 
-#                     forest_cover_400_scaled + 
-#                     (1 | Sitio),
-#                   data = trans_richness_local,
-#                   family = nbinom2)
-# ### ERROR IN COV2VAR: V IS NOT A SQUARE NUMERIC MATRIX - WHAT DOES THIS MEAN?
-# summary(modfull)
-# vif(modfull) # vif not a concern
-# #### ERRRRRRRORS
-# check_overdispersion(modfull)
+
+modfull_nb <- glmmTMB(num_ind ~ pca_CC_hoja +
+                    tran_mean_veg_scaled +
+                    water_dist_scaled +
+                    forest_cover_400_scaled +
+                    (1 | Sitio),
+                  data = trans_richness_local,
+                  family = nbinom2)
+### ERROR IN COV2VAR: V IS NOT A SQUARE NUMERIC MATRIX - WHAT DOES THIS MEAN?
+summary(modfull_nb)
+vif(modfull_nb)
+#### ERRRRRRRORS
+check_overdispersion(modfull_nb)
 ```
 
-## LOO-CV for candidate models
-```{r}
-# model without hoja
-mod_no_hoja <- glmer(num_ind ~  tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_hoja) # veg sig neg - # AIC 1795.1
-vif(mod_no_hoja) # vif not a concern
-check_overdispersion(mod_no_hoja) # not overdispersed!
 
-# model without canopy cover
-mod_no_CC <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_veg_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_CC) # hoja sig neg, veg sig neg - # AIC 1793.7
-vif(mod_no_CC) # vif not a concern
-check_overdispersion(mod_no_CC) # not overdispersed!
 
-# model without veg
-mod_no_veg <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_veg) # nothing significant (CC close) - # AIC 1869.3
-vif(mod_no_veg) # vif not a concern
-check_overdispersion(mod_no_veg) # not overdispersed!
 
-# model without water
-mod_no_water <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_water) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1787.9
-vif(mod_no_water) # vif not a concern
-check_overdispersion(mod_no_water) # not overdispersed!
 
-# model without forest
-mod_no_forest <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   water_dist_scaled + 
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_forest) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1789.2
-vif(mod_no_forest) # vif not a concern
-check_overdispersion(mod_no_forest) # not overdispersed!
-```
+<!-- ## LOO-CV for candidate models -->
+<!-- ```{r} -->
+<!-- # model without hoja -->
+<!-- mod_no_hoja <- glmer(num_ind ~  tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_hoja) # veg sig neg - # AIC 1795.1 -->
+<!-- vif(mod_no_hoja) # vif not a concern -->
+<!-- check_overdispersion(mod_no_hoja) # not overdispersed! -->
 
-## continue without water
-```{r}
-# model without water AIC of 1787.9
+<!-- # model without canopy cover -->
+<!-- mod_no_CC <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_CC) # hoja sig neg, veg sig neg - # AIC 1793.7 -->
+<!-- vif(mod_no_CC) # vif not a concern -->
+<!-- check_overdispersion(mod_no_CC) # not overdispersed! -->
 
-# model without water, hoja
-mod_no_water_hoja <- glmer(num_ind ~ tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_water_hoja) # veg sig neg - # AIC 1793.2
-vif(mod_no_water_hoja) # vif not a concern
-check_overdispersion(mod_no_water_hoja) # not overdispersed!
+<!-- # model without veg -->
+<!-- mod_no_veg <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_veg) # nothing significant (CC close) - # AIC 1869.3 -->
+<!-- vif(mod_no_veg) # vif not a concern -->
+<!-- check_overdispersion(mod_no_veg) # not overdispersed! -->
 
-# model without water, CC
-mod_no_water_CC <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_veg_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_water_CC) # hoja sig neg, veg sig neg - # AIC 1791.9
-vif(mod_no_water_CC) # vif not a concern
-check_overdispersion(mod_no_water_CC) # not overdispersed!
+<!-- # model without water -->
+<!-- mod_no_water <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_water) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1787.9 -->
+<!-- vif(mod_no_water) # vif not a concern -->
+<!-- check_overdispersion(mod_no_water) # not overdispersed! -->
 
-# model without water, veg
-mod_no_water_veg <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_water_veg) # CC sig pos - # AIC 1867.4
-vif(mod_no_water_veg) # vif not a concern
-check_overdispersion(mod_no_water_veg) # not overdispersed!
+<!-- # model without forest -->
+<!-- mod_no_forest <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_forest) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1789.2 -->
+<!-- vif(mod_no_forest) # vif not a concern -->
+<!-- check_overdispersion(mod_no_forest) # not overdispersed! -->
+<!-- ``` -->
 
-mod_no_water_forest <- glmer(num_ind ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_water_forest) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1787.4
-vif(mod_no_water_forest) # vif not a concern
-check_overdispersion(mod_no_water_forest) # not overdispersed!
-```
+<!-- ## continue without water -->
+<!-- ```{r} -->
+<!-- # model without water AIC of 1787.9 -->
+
+<!-- # model without water, hoja -->
+<!-- mod_no_water_hoja <- glmer(num_ind ~ tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_water_hoja) # veg sig neg - # AIC 1793.2 -->
+<!-- vif(mod_no_water_hoja) # vif not a concern -->
+<!-- check_overdispersion(mod_no_water_hoja) # not overdispersed! -->
+
+<!-- # model without water, CC -->
+<!-- mod_no_water_CC <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_water_CC) # hoja sig neg, veg sig neg - # AIC 1791.9 -->
+<!-- vif(mod_no_water_CC) # vif not a concern -->
+<!-- check_overdispersion(mod_no_water_CC) # not overdispersed! -->
+
+<!-- # model without water, veg -->
+<!-- mod_no_water_veg <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_water_veg) # CC sig pos - # AIC 1867.4 -->
+<!-- vif(mod_no_water_veg) # vif not a concern -->
+<!-- check_overdispersion(mod_no_water_veg) # not overdispersed! -->
+
+<!-- mod_no_water_forest <- glmer(num_ind ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_water_forest) # hoja sig neg, CC sig pos, veg sig neg - # AIC 1787.4 -->
+<!-- vif(mod_no_water_forest) # vif not a concern -->
+<!-- check_overdispersion(mod_no_water_forest) # not overdispersed! -->
+<!-- ``` -->
+
+
 
 # d. drivers of transect-level species richness
 use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects 
 
+
+## FULL MODEL_3 APPEARS TO WORK
+
+
 ## full model
 ```{r}
-# full model
-modfull <- glmer(num_species ~ tran_mean_hoja_scaled + 
+# full model with glmer, no pca, veg as F.E., poisson
+modfull <- glmer(num_species ~ tran_mean_hoja_scaled + # no pca - ISSUE
                    tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + # veg as R.E. prevented model convergence
+                   tran_mean_veg_scaled + 
                    water_dist_scaled + 
                    forest_cover_400_scaled +
                    (1 | Sitio),
@@ -1016,74 +1113,124 @@ modfull <- glmer(num_species ~ tran_mean_hoja_scaled +
               family = poisson())
 
 summary(modfull) # nothing significant - # AIC 1148.1
-
 vif(modfull) # vif not a concern
-
 check_overdispersion(modfull) # not overdispersed!
+
+# full model with glmer, pca_CC_hoja, veg as R.E., poisson
+modfull_2 <- glmer(num_species ~ pca_CC_hoja + # use pca
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio) +
+                   (1 | tran_mean_veg_scaled), # veg as R.E.
+              data = trans_richness_local,
+              family = poisson())
+# SINGULAR - boundary(singular) fit
+
+summary(modfull_2)
+vif(modfull_2)
+check_overdispersion(modfull_2)
+
+####### THIS IS THE ONE ##########
+# full model with glmer, pca_CC_hoja, veg as F.E., poisson
+modfull_3 <- glmer(num_species ~ pca_CC_hoja + # pca of correlated CC, hoja
+                   tran_mean_veg_scaled +
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio), 
+              data = trans_richness_local,
+              family = poisson())
+
+summary(modfull_3) # nothing sig
+vif(modfull_3) # vif not concern
+check_overdispersion(modfull_3) # not overdispersed
+########## USE THIS ONE ##############
 ```
 
-## LOO-CV for candidate models
-```{r}
-# model without hoja
-mod_no_hoja <- glmer(num_species ~  tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_hoja) # nothing significant - # AIC 1147.1
-vif(mod_no_hoja) # vif not a concern
-check_overdispersion(mod_no_hoja) # not overdispersed!
 
-# model without canopy cover
-mod_no_CC <- glmer(num_species ~ tran_mean_hoja_scaled + 
-                   tran_mean_veg_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_CC) # nothing significant - # AIC 1146.1
-vif(mod_no_CC) # vif not a concern
-check_overdispersion(mod_no_CC) # not overdispersed!
 
-# model without veg
-mod_no_veg <- glmer(num_species ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_veg) # nothing significant - # AIC 1146.2
-vif(mod_no_veg) # vif not a concern
-check_overdispersion(mod_no_veg) # not overdispersed!
 
-# model without water
-mod_no_water <- glmer(num_species ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_water) # nothing significant - # AIC 1146.1
-vif(mod_no_water) # vif not a concern
-check_overdispersion(mod_no_water) # not overdispersed!
 
-# model without forest
-mod_no_forest <- glmer(num_species ~ tran_mean_hoja_scaled + 
-                   tran_mean_CC_scaled + 
-                   tran_mean_veg_scaled + 
-                   water_dist_scaled + 
-                   (1 | Sitio),
-              data = trans_richness_local,
-              family = poisson())
-summary(mod_no_forest) # nothing significant - # AIC 1146.3
-vif(mod_no_forest) # vif not a concern
-check_overdispersion(mod_no_forest) # not overdispersed!
-```
+
+
+
+<!-- ## LOO-CV for candidate models -->
+<!-- ```{r} -->
+<!-- # model without hoja -->
+<!-- mod_no_hoja <- glmer(num_species ~  tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_hoja) # nothing significant - # AIC 1147.1 -->
+<!-- vif(mod_no_hoja) # vif not a concern -->
+<!-- check_overdispersion(mod_no_hoja) # not overdispersed! -->
+
+<!-- # model without canopy cover -->
+<!-- mod_no_CC <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_CC) # nothing significant - # AIC 1146.1 -->
+<!-- vif(mod_no_CC) # vif not a concern -->
+<!-- check_overdispersion(mod_no_CC) # not overdispersed! -->
+
+<!-- # model without veg -->
+<!-- mod_no_veg <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_veg) # nothing significant - # AIC 1146.2 -->
+<!-- vif(mod_no_veg) # vif not a concern -->
+<!-- check_overdispersion(mod_no_veg) # not overdispersed! -->
+
+<!-- # model without water -->
+<!-- mod_no_water <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_water) # nothing significant - # AIC 1146.1 -->
+<!-- vif(mod_no_water) # vif not a concern -->
+<!-- check_overdispersion(mod_no_water) # not overdispersed! -->
+
+<!-- # model without forest -->
+<!-- mod_no_forest <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
+<!--                    tran_mean_CC_scaled +  -->
+<!--                    tran_mean_veg_scaled +  -->
+<!--                    water_dist_scaled +  -->
+<!--                    (1 | Sitio), -->
+<!--               data = trans_richness_local, -->
+<!--               family = poisson()) -->
+<!-- summary(mod_no_forest) # nothing significant - # AIC 1146.3 -->
+<!-- vif(mod_no_forest) # vif not a concern -->
+<!-- check_overdispersion(mod_no_forest) # not overdispersed! -->
+<!-- ``` -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # P. achatinus exclusive analysis

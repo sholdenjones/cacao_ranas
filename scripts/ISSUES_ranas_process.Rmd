@@ -89,11 +89,10 @@ ranas_no_priach <- ranas %>%
 ```
 
 # new_threatened
-new_threatened - only new individuals from sp of conservation concern - 
-- listed as DD or higher
+new_threatened - only new individuals from sp of conservation concern - DD >
 ```{r}
 new_threatened <- new %>%
-  filter(Final_ID == 'epiesp' |
+  filter(Final_ID == 'epiesp' | # could remove epiesp b/c only DD
          Final_ID == 'lepper' |
          Final_ID == 'oopsyl' |
          Final_ID == 'leubil' |
