@@ -20,6 +20,7 @@ library(lme4)
 library(ggpubr) # for arranging multi-panel figures
 library(car)
 library(glmmTMB)
+library(httr)
 ```
 
 load data
@@ -89,6 +90,12 @@ site_richness_local <- as_tibble(site_richness_local)
 priach_by_site <- read_csv(
   "data/processed_data/priach_by_site_processed.csv")
 priach_by_site <- as_tibble(priach_by_site)
+
+# matrix files from FVE
+data.shade=read.table("data/processed_data/SHADE.txt", head= T)
+data.sun=read.table("data/processed_data/SUN.txt", head= T)
+data.for=read.table("data/processed_data/FOREST.txt", head= T)
+data.aba=read.table("data/processed_data/ABANDON.txt", head= T)
 ```
 
 define a consistent palet, labels, and theme to be used in figures
@@ -502,7 +509,9 @@ To do this, need to use estimates of asymptotic species richness
 
 
 ## THIS CODE DOES NOT WORK ###
-code from Tamara
+## ILLOGICAL OUTPUT ##
+
+# code from Tamara
 ```{r}
 # make vectors for each of the four site types from new_mat
 shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
@@ -530,6 +539,296 @@ ggiNEXT(out10, type = 3, grey = FALSE) +
   labs(y = "Species richness", x = "Sample coverage") +
   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
 ```
+
+
+# iNEXT code from Francisco
+
+## none of this makes any sense
+```{r}
+#####List with matrices all#####
+# library(iNEXT)
+# library(ggplot2)
+# library(devtools)
+# library(httr)
+# library(grid)
+
+####SHADE
+
+head(data.shade)
+
+#Convert the data frame into a list matrix for inext 
+SH <- as.matrix(apply(data.shade[,-1],2, as.integer))
+
+#Name as row names
+row.names(SH) <- data.shade[,1]
+
+####SUNNY
+
+head(data.sun)
+
+#Convert the data frame into a list matrix for inext 
+SU <- as.matrix(apply(data.sun[,-1],2, as.integer))
+
+#Name as row names
+row.names(SU) <- data.sun[,1]
+
+
+####ABANDON
+
+head(data.aba)
+
+#Convert the data frame into a list matrix for inext 
+AB <- as.matrix(apply(data.aba[,-1],2, as.integer))
+
+#Name as row names
+row.names(AB) <- data.aba[,1]
+
+
+####FOREST
+
+head(data.for)
+
+#Convert the data frame into a list matrix for inext 
+FO <- as.matrix(apply(data.for[,-1],2, as.integer))
+
+#Name as row names
+row.names(FO) <- data.for[,1]
+
+
+####List of matrices 
+
+# holden.diver = list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
+# 
+# m <- c(10, 20, 30, 40, 50, 60, 100)
+# 
+# out1 <- iNEXT(holden.diver, datatype = "abundance") 
+# 
+# fig.alpha1 = ggiNEXT(out1, type =1)+ 
+# 
+# #Figures 
+# 
+# #FigDivAlpha = ggiNEXT(out.inc, type = 1, color.var <- "Order.q", z <- fortify(out.inc), 
+# # z$col <- z$shape <- factor(z$Order.q)) Revisar 
+# par(mfrow=c(2,3))
+# 
+# #figures species diversity 
+# fig1 <- plot(out.incranas, col= "Blue")
+# fig1
+# #figures sample coverage  
+# fig2 <-plot(out.incranas, type = 2, col= "Blue")
+# fig2
+# #figures species diversity against sample coverage   
+# fig3 <-plot(out.incranas, type = 3, col= "Blue")
+# fig3
+
+
+
+
+# Load necessary libraries
+# library(iNEXT)
+# library(ggplot2)
+
+# # SHADE data
+# data.shade <- (SHADE)
+# SH <- as.matrix(apply(data.shade[,-1], 2, as.integer))
+# row.names(SH) <- data.shade[,1]
+# 
+# # SUN data
+# data.sun <- (SUN)
+# SU <- as.matrix(apply(data.sun[,-1], 2, as.integer))
+# row.names(SU) <- data.sun[,1]
+# 
+# # ABANDON data
+# data.aba <- (ABANDON)
+# AB <- as.matrix(apply(data.aba[,-1], 2, as.integer))
+# row.names(AB) <- data.aba[,1]
+
+# FOREST data - use existing data if file is not available
+# (assuming you've already created the data frame `FOREST`)
+# data.for <- FOREST 
+# FO <- as.matrix(apply(data.for[,-1], 2, as.integer))
+# row.names(FO) <- data.for[,1]
+
+# List of matrices
+holden.diver <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
+
+
+
+### lots of issues below here - illogical output from iNEXT ###
+
+
+# Perform iNEXT analysis (correct the spelling of "abundance_raw")
+
+# out3 <- iNEXT(holden.diver, q=0, datatype = "abundance")
+# ggiNEXT(out3)
+# par(mfrow=c(2,3))
+# 
+# #figures species diversity 
+# fig1 <- plot(out3)
+# fig1
+# #figures sample coverage  
+# fig2 <-plot(out3, type = 2)
+# fig2
+# #figures species diversity against sample coverage   
+# fig3 <-plot(out3, type = 3)
+# fig3
+# 
+# iNEXT(holden.diver)
+# 
+# holden.divers <- iNEXT(list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO), datatype = "abundance")
+# outfinal <- holden.divers
+
+# # Data information (basic data info)
+# data_info <- holden.divers$DataInfo
+# print(data_info)
+# 
+# # Diversity estimates
+# diversity_estimates <- holden.divers$iNextEst$size_based
+# print(diversity_estimates)
+# 
+# ggiNEXT(outfinal)
+# 
+# par(mfrow=c(2,3))
+# 
+# 
+# fig1 <- plot(outfinal)
+# fig1
+# #figures sample coverage  
+# fig2 <-plot(outfinal, type = 2)
+# fig2
+# #figures species diversity against sample coverage   
+# fig3 <-plot(outfinal, type = 3)
+# fig3
+
+#########
+
+# data_info <- holden.diver$DataInfo
+# print(data_info)
+# 
+# str(holden.diver)
+
+
+# 
+# # Calculate the number of non-zero species in each assemblage
+# shade_obs <- sum(colSums(SH) > 0)
+# sun_obs <- sum(colSums(SU) > 0)
+# abandon_obs <- sum(colSums(AB) > 0)
+# forest_obs <- sum(colSums(FO) > 0)
+# 
+# print(paste("SHADE observed species:", shade_obs))
+# print(paste("SUN observed species:", sun_obs))
+# print(paste("ABANDON observed species:", abandon_obs))
+# print(paste("FOREST observed species:", forest_obs))
+# 
+# 
+# # Run iNEXT with q=1 or q=2 to reduce bias from rare species
+# outfinal_q1 <- iNEXT(list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO), q=1, datatype="abundance")
+# outfinal_q2 <- iNEXT(list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO), q=2, datatype="abundance")
+# 
+# # Inspect the results
+# print(outfinal_q1)
+# print(outfinal_q2)
+# 
+# 
+# 
+# 
+# # Plotting Shannon diversity (q=1)
+# 
+# p1 <- ggiNEXT(outfinal_q1, type=1) + 
+#   ggtitle("Shannon Diversity (q = 1)") +
+#   theme_minimal()
+# 
+# # Plotting Simpson diversity (q=2)
+# p2 <- ggiNEXT(outfinal_q2, type=1) + 
+#   ggtitle("Simpson Diversity (q = 2)") +
+#   theme_minimal()
+# 
+# # Display both plots
+# p1
+# p2
+# 
+# 
+# 
+# 
+# 
+# 
+# out10 <- iNEXT(holden.diver, q=0, datatype = "abundance",endpoint = 22000)
+# 
+# out10 
+# ggiNEXT(out10, type=1,grey=TRUE)+
+#   labs(y="Species richness", x="No. of individuals")+
+#   labs(tag = "b)") +
+#   theme(plot.tag.position = c(0.01, 1))
+# 
+# out4 <- iNEXT(holden.diver, type = 1, color.var <- "Order.q", z <- fortify(holden.diver), 
+#                             z$col <- z$shape <- factor(z$Order.q))
+# out4
+#               
+# # Plot the output
+# ggiNEXT(out3)
+# 
+# par(mfrow=c(2,3))
+# 
+# #figures species diversity 
+# fig1 <- plot(out3, col= "Blue")
+# fig1
+# #figures sample coverage  
+# fig2 <-plot(out3, type = 2, col= "Blue")
+# fig2
+# #figures species diversity against sample coverage   
+# fig3 <-plot(out3, type = 3, col= "Blue")
+# fig3
+```
+
+## alternative is using vegan
+
+```{r}
+####ALLIN
+
+# Load vegan package
+#library(vegan)
+
+# Define assemblages as separate matrices
+assemblages <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
+colors <- c("#A6611A", "#DFC27D", "#80CDC1", "#018571")
+labels <- c("Shade cacao", "Sun cacao", "Abandoned plantation", "Forest")
+
+# Calculate species accumulation curves for each assemblage
+accum_curves <- lapply(assemblages, specaccum)
+# Warning: the standard deviation is zeroWarning
+
+# Determine x and y axis limits based on the maximum values from all accumulation curves
+x_max <- max(sapply(accum_curves, function(curve) max(curve$sites)))
+y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
+```
+
+# create species accumulation curve
+```{r}
+# Create an empty plot with refined x and y limits for all assemblages
+plot(NULL, xlim = c(0, x_max), ylim = c(0, y_max + 5),  # Add buffer to y-axis for clarity
+     xlab = "Sample Size", ylab = "Species Richness",
+     main = "Standardized species accumulation curves for each landuse type")
+
+# Loop through each assemblage to add its accumulation curve to the plot
+for (i in seq_along(accum_curves)) {
+  # Extract the current curve
+  curve <- accum_curves[[i]]
+  
+  # Plot the accumulation curve with lines and add text labels
+  lines(curve$sites, curve$richness, col = colors[i], lwd = 2)
+  
+# Add a legend if needed
+legend("bottomright", legend = labels, col = colors, lty = 1, lwd = 2, cex = 0.8)
+```
+
+
+
+
+
+
+
+
+
 
 ## endangered species
 ```{r}
