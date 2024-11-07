@@ -21,6 +21,7 @@ library(ggpubr) # for arranging multi-panel figures
 library(car)
 library(glmmTMB)
 library(httr)
+library(DHARMa)
 ```
 
 load data
@@ -1178,100 +1179,66 @@ cor(trans_richness_local[, c("tran_mean_hoja_scaled",
 ```
 
 create pca variable based off CC and hoja b/c highly correlated
+- probably just end up using tran_mean_hoja but still keep jic
 ```{r}
 pca_CC_hoja <- prcomp(trans_richness_local
               [, c("tran_mean_hoja_scaled", "tran_mean_CC_scaled")], scale. = TRUE)
 trans_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 ```
 
-assess distribution of variables
-http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r
-## DO I NEED TO DO THIS?
-```{r}
-# # Is the data normally distributed?
-# 
-# # Shapiro-Wilk normality test for tran_mean_veg
-# shapiro.test(trans_richness_local$tran_mean_veg) # => p < 2.2e-16 NOT NORMAL
-# # Shapiro-Wilk normality test for tran_mean_hoja
-# shapiro.test(trans_richness_local$tran_mean_hoja) # => p = 3.813e-11 NOT NORMAL
-# 
-# # Visual inspection of the qqplots
-# 
-# # tran_mean_veg
-# ggqqplot(trans_richness_local$tran_mean_veg, ylab = "tran_mean_veg")
-# # tran_mean_hoja
-# ggqqplot(trans_richness_local$tran_mean_hoja, ylab = "tran_mean_hoja")
-# 
-# #Note that, if the data are not normally distributed, it’s recommended to use the
-# # non-parametric correlation, including Spearman and Kendall rank-based correlation tests
-# 
-# 
-# # Pearson correlation test
-# res <- cor.test(trans_richness_local$tran_mean_veg, trans_richness_local$tran_mean_hoja, 
-#                     method = "pearson")
-# res
-# 
-# res
-# # these variables are significantly correlated w/ correlation coefficient of -.28
-# 
-# # THERE ARE OTHER WAYS TO CHECK FOR CORRELATION - KENDALL AND SPEARMAN
-```
 
 # c. drivers of transect-level amphibian abundance
 use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects 
-
-## FULL MODEL POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL
-## NEGATIVE BINOMIAL NOT RUNNING EITHER - NEED HELP
-
-## FULL MODEL_2 APPEARS TO WORK?!??!?!
+## USE CC INSTEAD OF HOJA! NO DEVIATION DETECTED!!!!!!!!
 ```{r}
-#### POISSON OVERDISPERSED ####
-
-# full model with glmer, pca_CC_hoja, veg as F.E., poisson
-modfull <- glmer(num_ind ~ pca_CC_hoja + # use pca
-                   tran_mean_veg_scaled +
+############# NO QUANTILE DEVIATION DETECTED ############
+# full model with glmer, CC, veg as R.E., poisson
+modfull_abundance <- glmer(num_ind ~ tran_mean_CC + 
                    water_dist_scaled +
                    forest_cover_400_scaled +
+                   (1 | tran_mean_veg_scaled) +
                    (1 | Sitio),
               data = trans_richness_local,
               family = poisson())
 
-summary(modfull)
-vif(modfull) # vif not a concern
-check_overdispersion(modfull) # POISSON IS OVERDISPERSED
+summary(modfull_abundance) # tran_mean_CC_sig
+vif(modfull_abundance) # vif not a concern
+check_overdispersion(modfull_abundance) # HERE NOT OVERDISPERSED
+
+# assess model fit using dHARMA - NO QUANTILE DEVIATION DETECTED
+simulationOutput <- simulateResiduals(fittedModel = modfull_abundance)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over or under dispersed
+testZeroInflation(simulationOutput) # zero inflation not required
+
+########### NO QUANTILE DEVIATION DETECTED #############
 
 
-############# THIS ONE WORKSSSSSSSSSSSS ############
-# full model with glmer, pca_CC_hoja, veg as R.E., poisson
-modfull_2 <- glmer(num_ind ~ pca_CC_hoja + # use pca
+
+
+############# QUANTILE DEVIATION DETECTED ############
+# full model with glmer, hoja, veg as R.E., poisson
+modfull_abundance_2 <- glmer(num_ind ~ tran_mean_hoja + 
                    water_dist_scaled +
                    forest_cover_400_scaled +
-                   (1 | Sitio) +
-                   (1 | tran_mean_veg_scaled),
+                   (1 | tran_mean_veg_scaled) +
+                   (1 | Sitio),
               data = trans_richness_local,
               family = poisson())
 
-summary(modfull_2) # pca_CC_hoja sig
-vif(modfull_2) # vif not a concern
-check_overdispersion(modfull_2) # HERE NOT OVERDISPERSED
-########### THIS MIGHT BE THE ONE #############
+summary(modfull_abundance_2) # nothing sig (hoja v close!)
+vif(modfull_abundance_2) # vif not a concern
+check_overdispersion(modfull_abundance_2) # HERE NOT OVERDISPERSED
 
+# assess model fit using dHARMA - QUANTILE DEVIATION DETECTED
+simulationOutput <- simulateResiduals(fittedModel = modfull_abundance_2)
+plot(simulationOutput)
 
-#### NEGATIVE BINOMIAL WITH glmmTMB DOESNT WORK EITHER
-
-modfull_nb <- glmmTMB(num_ind ~ pca_CC_hoja +
-                    tran_mean_veg_scaled +
-                    water_dist_scaled +
-                    forest_cover_400_scaled +
-                    (1 | Sitio),
-                  data = trans_richness_local,
-                  family = nbinom2)
-### ERROR IN COV2VAR: V IS NOT A SQUARE NUMERIC MATRIX - WHAT DOES THIS MEAN?
-summary(modfull_nb)
-vif(modfull_nb)
-#### ERRRRRRRORS
-check_overdispersion(modfull_nb)
+testDispersion(simulationOutput) # not over or under dispersed
+testZeroInflation(simulationOutput) # zero inflation not required
+########### QUANTILE DEVIATION DETECTED #############
 ```
 
 
@@ -1391,7 +1358,7 @@ check_overdispersion(modfull_nb)
 
 
 
-# d. drivers of transect-level species richness
+# d. drivers of site-level species richness
 use glmer package to build multiple regression models
 - allows for inclusion of both random and rixed effects 
 
