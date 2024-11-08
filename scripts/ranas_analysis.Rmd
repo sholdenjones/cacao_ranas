@@ -1183,11 +1183,11 @@ pca_CC_hoja <- prcomp(trans_richness_local
 trans_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 ```
 
-
 ##c. drivers of transect-level amphibian abundance
 use glmer package to build full multiple regression
 - allows for inclusion of both random and rixed effects 
 - use canopy cover instead of hoja, no quantile deviation detected
+- work at transect level b/c
 ```{r}
 ############# FULL MODEL FITS - AIC 618.5 - CC sig pos ##############
 # full model with glmer, CC, veg as R.E., poisson
@@ -1343,15 +1343,63 @@ testZeroInflation(simulationOutput) # zero inflation not required
 # STOP HERE - none of Step 2 models fit
 ```
 
-so our best fitting candidate model for amphib abundance contains:
+the best fitting candidate model for amphibian abundance contains:
 - local canopy cover as a significant positive fixed effect
 - surrounding landscape forest cover as a fixed effect
 - Site and local herbaceous vegetation cover as random effects
 
 
-##d. drivers of site-level species richness
+
+
+#6. Multiple regression for drivers of amphibian richness in plantations
+
+Drivers of site-level species richness
 use glmer package to build multiple regression models
 - allows for inclusion of both random and fixed effects 
+
+Work at site-level to improve model fit
+- At transect-level many sites have 1-2 species
+- Less statistical power at site-level (23 sites), but better understanding of diversity
+- Start with the predictor models that were important for transect-level abundance
+
+
+
+## WORKING HERE ##
+
+## TURN THIS FROM TRANS INTO SITE
+
+
+##a. PCA
+- can only work for continuous variables
+
+https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+```{r}
+pca_fit <- prcomp(
+  x = trans_richness_local[, -c(1,2,5,6,7,9,10,11,12,13,14,15)], # remove these columns
+                  scale. = TRUE)
+
+pca_summary <- summary(pca_fit)
+pca_summary
+
+ls(pca_summary) # Lists the objects produced by summary
+
+pca_summary$importance
+
+# biplot - kinda ugly!
+biplot(x = pca_fit)
+
+# just plot first two axes of PCA
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+
+
+
+
+
+
+
 
 
 ## FULL MODEL_3 APPEARS TO WORK
@@ -1481,17 +1529,7 @@ check_overdispersion(modfull_3) # not overdispersed
 
 
 
-
-
-
-
-
-
-
-
-
-
-#6. P. achatinus exclusive analysis
+#7. P. achatinus exclusive analysis
 
 ##a. Priach percentage visualization
 - How does abundance, percentage vary across habitat types?
