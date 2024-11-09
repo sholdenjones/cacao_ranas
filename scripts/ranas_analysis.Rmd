@@ -853,235 +853,236 @@ threatened_abundance_by_site
 ```
 
 
-## REMOVE THIS ONCE PILLAGE CODE
+
+## REMOVE THIS ONCE PILLAGE CODE -->
 
 
-## COME THROUGH AND re analyze this section
+<!-- ## COME THROUGH AND re analyze this section -->
 
-## SITE LEVEL
+<!-- ## SITE LEVEL -->
 
-## a. PCA - wary of this, too pretty!
+<!-- ## a. PCA - wary of this, too pretty! -->
 
-- can only work for continuous variables
+<!-- - can only work for continuous variables -->
 
-https://jcoliver.github.io/learn-r/003-intro-multivariate.html
-```{r}
-# remove non-numerical columns, previously scaled columns
-# pca_fit <- prcomp(
-  # x = site_richness_local[, -c(1,5,9,10,14,15,16)], scale. = TRUE)
+<!-- https://jcoliver.github.io/learn-r/003-intro-multivariate.html -->
+<!-- ```{r} -->
+<!-- # remove non-numerical columns, previously scaled columns -->
+<!-- # pca_fit <- prcomp( -->
+<!--   # x = site_richness_local[, -c(1,5,9,10,14,15,16)], scale. = TRUE) -->
 
-# actually appears that pca sensitive to scale, so use scaled vars
-pca_fit <- prcomp(
-  x = site_richness_local[, -c(1,4,6,7,10,11,12)], scale. = TRUE)
-                        
-pca_summary <- summary(pca_fit)
-pca_summary
+<!-- # actually appears that pca sensitive to scale, so use scaled vars -->
+<!-- pca_fit <- prcomp( -->
+<!--   x = site_richness_local[, -c(1,4,6,7,10,11,12)], scale. = TRUE) -->
 
-ls(pca_summary) # Lists the objects produced by summary
+<!-- pca_summary <- summary(pca_fit) -->
+<!-- pca_summary -->
 
-pca_summary$importance
+<!-- ls(pca_summary) # Lists the objects produced by summary -->
 
-# biplot - kinda ugly!
-biplot(x = pca_fit)
+<!-- pca_summary$importance -->
 
-# just plot first two axes of PCA
-plot(x = pca_fit$x[, 1],
-     y = pca_fit$x[, 2],
-     xlab = "PC 1",
-     ylab = "PC 2")
+<!-- # biplot - kinda ugly! -->
+<!-- biplot(x = pca_fit) -->
 
-# I don't believe this code is actually filling site colors appropriately
+<!-- # just plot first two axes of PCA -->
+<!-- plot(x = pca_fit$x[, 1], -->
+<!--      y = pca_fit$x[, 2], -->
+<!--      xlab = "PC 1", -->
+<!--      ylab = "PC 2") -->
 
-# # what if we included the plantation type for each transect here?
-# cacao_type <- unique(site_richness_local$Tipo)
-# 
-# legend_cols <- c("#A6611A", "#DFC27D")
-# 
-# # assign colors to legend
-# pt_cols <- rep(x = legend_cols[1], length = nrow(site_richness_local))
-# pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2]
-# 
-# # plot just first two axes, include coloring of points for each cacao type
-# plot(x = pca_fit$x[, 1],
-#      y = pca_fit$x[, 2],
-#      xlab = "PC 1",
-#      ylab = "PC 2",
-#      pch = 19,
-#      col = pt_cols)
-# legend("bottomleft",
-#        legend = cacao_type,
-#        pch = 19,
-#        col = legend_cols,
-#        cex = 0.8)
-```
+<!-- # I don't believe this code is actually filling site colors appropriately -->
 
-## b. correlation
+<!-- # # what if we included the plantation type for each transect here? -->
+<!-- # cacao_type <- unique(site_richness_local$Tipo) -->
+<!-- #  -->
+<!-- # legend_cols <- c("#A6611A", "#DFC27D") -->
+<!-- #  -->
+<!-- # # assign colors to legend -->
+<!-- # pt_cols <- rep(x = legend_cols[1], length = nrow(site_richness_local)) -->
+<!-- # pt_cols[cacao_type == cacao_type[2]] <- legend_cols[2] -->
+<!-- #  -->
+<!-- # # plot just first two axes, include coloring of points for each cacao type -->
+<!-- # plot(x = pca_fit$x[, 1], -->
+<!-- #      y = pca_fit$x[, 2], -->
+<!-- #      xlab = "PC 1", -->
+<!-- #      ylab = "PC 2", -->
+<!-- #      pch = 19, -->
+<!-- #      col = pt_cols) -->
+<!-- # legend("bottomleft", -->
+<!-- #        legend = cacao_type, -->
+<!-- #        pch = 19, -->
+<!-- #        col = legend_cols, -->
+<!-- #        cex = 0.8) -->
+<!-- ``` -->
 
-need to address potential variable correlation before building regression models
+<!-- ## b. correlation -->
 
-visually assess potential correlation of scaled variables in site_richness_local
-- no variables appear to be highly correlated (r = 0.7 threshold)
-- appears that don't need to remove any!
-```{r}
-# would only expect local vars or landscape vars to be correlated with each other
-ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
-          y = "site_mean_veg_scaled", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "site_mean_hoja_scaled", ylab = "site_mean_veg_scaled")
-# r = -.17
+<!-- need to address potential variable correlation before building regression models -->
 
-ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
-          y = "site_mean_CC_scaled", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "site_mean_hoja_scaled", ylab = "site_mean_CC_scaled")
-# r = .79  HIGHLY CORRELATED
+<!-- visually assess potential correlation of scaled variables in site_richness_local -->
+<!-- - no variables appear to be highly correlated (r = 0.7 threshold) -->
+<!-- - appears that don't need to remove any! -->
+<!-- ```{r} -->
+<!-- # would only expect local vars or landscape vars to be correlated with each other -->
+<!-- ggscatter(site_richness_local, x = "site_mean_hoja_scaled",  -->
+<!--           y = "site_mean_veg_scaled",  -->
+<!--           add = "reg.line", conf.int = TRUE,  -->
+<!--           cor.coef = TRUE, cor.method = "pearson", -->
+<!--           xlab = "site_mean_hoja_scaled", ylab = "site_mean_veg_scaled") -->
+<!-- # r = -.17 -->
 
-ggscatter(site_richness_local, x = "site_mean_veg_scaled", 
-          y = "site_mean_CC_scaled", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "site_mean_veg_scaled", ylab = "site_mean_CC_scaled")
-# r = -.09
+<!-- ggscatter(site_richness_local, x = "site_mean_hoja_scaled",  -->
+<!--           y = "site_mean_CC_scaled",  -->
+<!--           add = "reg.line", conf.int = TRUE,  -->
+<!--           cor.coef = TRUE, cor.method = "pearson", -->
+<!--           xlab = "site_mean_hoja_scaled", ylab = "site_mean_CC_scaled") -->
+<!-- # r = .79  HIGHLY CORRELATED -->
 
-ggscatter(site_richness_local, x = "water_dist_scaled", 
-          y = "forest_cover_400_scaled", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled")
-# r = -.41
-```
+<!-- ggscatter(site_richness_local, x = "site_mean_veg_scaled",  -->
+<!--           y = "site_mean_CC_scaled",  -->
+<!--           add = "reg.line", conf.int = TRUE,  -->
+<!--           cor.coef = TRUE, cor.method = "pearson", -->
+<!--           xlab = "site_mean_veg_scaled", ylab = "site_mean_CC_scaled") -->
+<!-- # r = -.09 -->
 
-confirm this with correlation matrix
-- hoja and CC are strongly correlated at site level - need to address this
-```{r}
-cor(site_richness_local[, c("site_mean_hoja_scaled", 
-                             "site_mean_CC_scaled", 
-                             "water_dist_scaled", 
-                             "forest_cover_400_scaled",
-                             "site_mean_veg_scaled")])
-```
+<!-- ggscatter(site_richness_local, x = "water_dist_scaled",  -->
+<!--           y = "forest_cover_400_scaled",  -->
+<!--           add = "reg.line", conf.int = TRUE,  -->
+<!--           cor.coef = TRUE, cor.method = "pearson", -->
+<!--           xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled") -->
+<!-- # r = -.41 -->
+<!-- ``` -->
 
-create pca variable based off CC and hoja b/c highly correlated
-```{r}
-pca_CC_hoja <- prcomp(site_richness_local
-              [, c("site_mean_hoja_scaled", "site_mean_CC_scaled")], scale. = TRUE)
-site_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
-```
+<!-- confirm this with correlation matrix -->
+<!-- - hoja and CC are strongly correlated at site level - need to address this -->
+<!-- ```{r} -->
+<!-- cor(site_richness_local[, c("site_mean_hoja_scaled",  -->
+<!--                              "site_mean_CC_scaled",  -->
+<!--                              "water_dist_scaled",  -->
+<!--                              "forest_cover_400_scaled", -->
+<!--                              "site_mean_veg_scaled")]) -->
+<!-- ``` -->
 
-
-
-# c. drivers of site-level amphibian richness
-use glmer package to build multiple regression models
-- allows for inclusion of both random and rixed effects
-- include pca variable of CC and hoja
-
-## SINGULAR FIT BOUNDARY
-
-## full model for species richness
-```{r}
-# full model singular fit
-modfull <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
-                   site_mean_veg_scaled + # veg as R.E. prevented model convergence
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio), 
-              data = site_richness_local,
-              family = poisson())
-# BOUNDARY (singular) fit
-
-summary(modfull) 
-vif(modfull)
-check_overdispersion(modfull)
-
-
-modfull_2 <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio) +
-                   (1 | site_mean_veg_scaled), 
-              data = site_richness_local,
-              family = poisson())
-# BOUNDARY (singular) fit
-
-summary(modfull_2) 
-vif(modfull_2)
-check_overdispersion(modfull_2)
-```
+<!-- create pca variable based off CC and hoja b/c highly correlated -->
+<!-- ```{r} -->
+<!-- pca_CC_hoja <- prcomp(site_richness_local -->
+<!--               [, c("site_mean_hoja_scaled", "site_mean_CC_scaled")], scale. = TRUE) -->
+<!-- site_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1] -->
+<!-- ``` -->
 
 
 
-# POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL?
+<!-- # c. drivers of site-level amphibian richness -->
+<!-- use glmer package to build multiple regression models -->
+<!-- - allows for inclusion of both random and rixed effects -->
+<!-- - include pca variable of CC and hoja -->
+
+<!-- ## SINGULAR FIT BOUNDARY -->
+
+<!-- ## full model for species richness -->
+<!-- ```{r} -->
+<!-- # full model singular fit -->
+<!-- modfull <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja -->
+<!--                    site_mean_veg_scaled + # veg as R.E. prevented model convergence -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio),  -->
+<!--               data = site_richness_local, -->
+<!--               family = poisson()) -->
+<!-- # BOUNDARY (singular) fit -->
+
+<!-- summary(modfull)  -->
+<!-- vif(modfull) -->
+<!-- check_overdispersion(modfull) -->
 
 
-# CANNOT ASSESS VIF FOR NEGATIVE BINOMIAL MODELS AT SITE LEVEL - WHY?
-```{r}
-modfull_nb <- glmmTMB(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja
-                      water_dist_scaled + 
-                      forest_cover_400_scaled +
-                      (1 | Sitio) +
-                      (1 | site_mean_veg_scaled),
-                  data = site_richness_local,
-                  family = nbinom2()
-                  )
+<!-- modfull_2 <- glmer(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio) + -->
+<!--                    (1 | site_mean_veg_scaled),  -->
+<!--               data = site_richness_local, -->
+<!--               family = poisson()) -->
+<!-- # BOUNDARY (singular) fit -->
 
-summary(modfull_nb)
-vif(modfull_nb) # Error in cov2cor(v) : 'V' is not a square numeric matrix
-check_overdispersion(modfull_nb) # not overdispersed
-
-```
-
-
-## d. drivers of site-level amphibian abundance
-```{r}
-# full model using glmer, pca, veg RE, poisson
-modfull <- glmer(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja
-                   water_dist_scaled + 
-                   forest_cover_400_scaled +
-                   (1 | Sitio) +
-                   (1 | site_mean_veg_scaled), 
-              data = site_richness_local,
-              family = poisson())
-# BOUNDARY (singular) fit
-
-summary(modfull) 
-vif(modfull)
-check_overdispersion(modfull)
-
-# full model using glmmTMB, pca, veg RE, nbinom2
-modfull_nb <- glmmTMB(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja
-                      water_dist_scaled + 
-                      forest_cover_400_scaled +
-                      (1 | Sitio) +
-                      (1 | site_mean_veg_scaled),
-                  data = site_richness_local,
-                  family = nbinom2()
-                  )
-# Warning: Model convergence problem; non-positive-definite Hessian matrix. See vignette('troubleshooting')
-
-summary(modfull_nb)
-vif(modfull_nb)
-check_overdispersion(modfull_nb)
-
-# full model using glmmTMB, pca, veg FE, nbinom2
-modfull_nb_2 <- glmmTMB(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja
-                      site_mean_veg_scaled + # veg as FE
-                      water_dist_scaled + 
-                      forest_cover_400_scaled +
-                      (1 | Sitio),
-                  data = site_richness_local,
-                  family = nbinom2()
-                  )
-
-summary(modfull_nb_2)
-vif(modfull_nb_2) # Error in cov2cor(v) : 'V' is not a square numeric matrix
-check_overdispersion(modfull_nb_2)
-```
+<!-- summary(modfull_2)  -->
+<!-- vif(modfull_2) -->
+<!-- check_overdispersion(modfull_2) -->
+<!-- ``` -->
 
 
 
-## REMOVE UP TO HERE
+<!-- # POISSON MODEL OVERDISPERSED - TRY NEGATIVE BINOMIAL? -->
+
+
+<!-- # CANNOT ASSESS VIF FOR NEGATIVE BINOMIAL MODELS AT SITE LEVEL - WHY? -->
+<!-- ```{r} -->
+<!-- modfull_nb <- glmmTMB(no_species ~ pca_CC_hoja + # pca of correlated CC, hoja -->
+<!--                       water_dist_scaled +  -->
+<!--                       forest_cover_400_scaled + -->
+<!--                       (1 | Sitio) + -->
+<!--                       (1 | site_mean_veg_scaled), -->
+<!--                   data = site_richness_local, -->
+<!--                   family = nbinom2() -->
+<!--                   ) -->
+
+<!-- summary(modfull_nb) -->
+<!-- vif(modfull_nb) # Error in cov2cor(v) : 'V' is not a square numeric matrix -->
+<!-- check_overdispersion(modfull_nb) # not overdispersed -->
+
+<!-- ``` -->
+
+
+<!-- ## d. drivers of site-level amphibian abundance -->
+<!-- ```{r} -->
+<!-- # full model using glmer, pca, veg RE, poisson -->
+<!-- modfull <- glmer(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja -->
+<!--                    water_dist_scaled +  -->
+<!--                    forest_cover_400_scaled + -->
+<!--                    (1 | Sitio) + -->
+<!--                    (1 | site_mean_veg_scaled),  -->
+<!--               data = site_richness_local, -->
+<!--               family = poisson()) -->
+<!-- # BOUNDARY (singular) fit -->
+
+<!-- summary(modfull)  -->
+<!-- vif(modfull) -->
+<!-- check_overdispersion(modfull) -->
+
+<!-- # full model using glmmTMB, pca, veg RE, nbinom2 -->
+<!-- modfull_nb <- glmmTMB(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja -->
+<!--                       water_dist_scaled +  -->
+<!--                       forest_cover_400_scaled + -->
+<!--                       (1 | Sitio) + -->
+<!--                       (1 | site_mean_veg_scaled), -->
+<!--                   data = site_richness_local, -->
+<!--                   family = nbinom2() -->
+<!--                   ) -->
+<!-- # Warning: Model convergence problem; non-positive-definite Hessian matrix. See vignette('troubleshooting') -->
+
+<!-- summary(modfull_nb) -->
+<!-- vif(modfull_nb) -->
+<!-- check_overdispersion(modfull_nb) -->
+
+<!-- # full model using glmmTMB, pca, veg FE, nbinom2 -->
+<!-- modfull_nb_2 <- glmmTMB(num_ind ~ pca_CC_hoja + # pca of correlated CC, hoja -->
+<!--                       site_mean_veg_scaled + # veg as FE -->
+<!--                       water_dist_scaled +  -->
+<!--                       forest_cover_400_scaled + -->
+<!--                       (1 | Sitio), -->
+<!--                   data = site_richness_local, -->
+<!--                   family = nbinom2() -->
+<!--                   ) -->
+
+<!-- summary(modfull_nb_2) -->
+<!-- vif(modfull_nb_2) # Error in cov2cor(v) : 'V' is not a square numeric matrix -->
+<!-- check_overdispersion(modfull_nb_2) -->
+<!-- ``` -->
+
+
+
+## REMOVE UP TO HERE -->
 
 
 
@@ -1187,7 +1188,9 @@ trans_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 use glmer package to build full multiple regression
 - allows for inclusion of both random and rixed effects 
 - use canopy cover instead of hoja, no quantile deviation detected
-- work at transect level b/c
+- work at transect level
+
+full model
 ```{r}
 ############# FULL MODEL FITS - AIC 618.5 - CC sig pos ##############
 # full model with glmer, CC, veg as R.E., poisson
@@ -1349,8 +1352,6 @@ the best fitting candidate model for amphibian abundance contains:
 - Site and local herbaceous vegetation cover as random effects
 
 
-
-
 #6. Multiple regression for drivers of amphibian richness in plantations
 
 Drivers of site-level species richness
@@ -1362,24 +1363,17 @@ Work at site-level to improve model fit
 - Less statistical power at site-level (23 sites), but better understanding of diversity
 - Start with the predictor models that were important for transect-level abundance
 
-
-
-## WORKING HERE ##
-
-## TURN THIS FROM TRANS INTO SITE
-
-
 ##a. PCA
 - can only work for continuous variables
 
 https://jcoliver.github.io/learn-r/003-intro-multivariate.html
 ```{r}
 pca_fit <- prcomp(
-  x = trans_richness_local[, -c(1,2,5,6,7,9,10,11,12,13,14,15)], # remove these columns
+  x = site_richness_local[, -c(1,4,5,6,7,10,11,12,16)], # remove these columns
                   scale. = TRUE)
 
 pca_summary <- summary(pca_fit)
-pca_summary
+pca_summary # first two axes explain 53% of variance
 
 ls(pca_summary) # Lists the objects produced by summary
 
@@ -1393,6 +1387,301 @@ plot(x = pca_fit$x[, 1],
      y = pca_fit$x[, 2],
      xlab = "PC 1",
      ylab = "PC 2")
+```
+
+##b. correlation
+
+need to address potential variable correlation before building regression models
+- same as transect level! site_mean_hoja and site_mean_CC are highly correlated
+- so only use one when building models instead of both
+
+visually assess potential correlation of scaled variables in site_richness_local
+```{r}
+# would only expect local vars or landscape vars to be correlated with each other
+ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
+          y = "site_mean_veg_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_hoja_scaled", ylab = "site_mean_veg_scaled")
+# r = -.17
+
+ggscatter(site_richness_local, x = "site_mean_hoja_scaled", 
+          y = "site_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_hoja_scaled", ylab = "site_mean_CC_scaled")
+# r = .79 HIGHLY SCALED
+
+ggscatter(site_richness_local, x = "site_mean_veg_scaled", 
+          y = "site_mean_CC_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "site_mean_veg_scaled", ylab = "site_mean_CC_scaled")
+# r = .086
+
+ggscatter(site_richness_local, x = "water_dist_scaled", 
+          y = "forest_cover_400_scaled", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "water_dist_scaled", ylab = "forest_cover_400_scaled")
+# r = -.41
+```
+
+confirm this with correlation matrix
+- site_mean_CC_scaled and site_mean_hoja_scaled highly correlated (.79)
+```{r}
+cor(site_richness_local[, c("site_mean_hoja_scaled", 
+                             "site_mean_CC_scaled", 
+                             "water_dist_scaled", 
+                             "forest_cover_400_scaled",
+                             "site_mean_veg_scaled")])
+```
+
+create pca variable based off CC and hoja b/c highly correlated
+- probably just end up using site_mean_hoja_scaled but still keep just in case
+```{r}
+pca_CC_hoja <- prcomp(site_richness_local
+              [, c("site_mean_hoja_scaled", "site_mean_CC_scaled")], scale. = TRUE)
+site_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
+```
+
+##c. drivers of site-level amphibian richness
+use glm package to build full multiple regression
+- inclusion of random effects produced singular fit errors with glmer
+- use canopy cover instead of hoja b/c highly correlated
+- model needs to be simplified b/c less power and replication at site-level
+- work at site level b/c trans level richness counts are not as meaningful
+
+full model
+```{r}
+############# FULL MODEL - nothing sig - AIC 103.5 ##############
+# full model with glm, no R.E., poisson
+mod_richness_full <- glm(no_species ~ site_mean_CC_scaled +
+                                    site_mean_veg_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+summary(mod_richness_full) # nothing sig
+vif(mod_richness_full) # VIF not concern
+check_overdispersion(mod_richness_full) # not over dispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# FULL MODEL - nothing sig - AIC 103.5 ##############
+```
+
+leave one out cross-validation for candidate models for richness at site-level
+- start from full model which confirmed fit model assumptions
+
+
+
+```{r}
+############# MODEL NO WATER - SINGULAR FIT ##############
+# full model with glmer, no water, veg as R.E., poisson
+mod_richness_no_water <- glmer(no_species ~ site_mean_CC_scaled +
+                   forest_cover_400_scaled +
+                   (1 | site_mean_veg_scaled)
+                   (1 | Elevation),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_no_water) # 
+vif(mod_richness_no_water) # 
+check_overdispersion(mod_richness_no_water) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+############# MODEL NO WATER - SINGULAR FIT ##############
+
+
+############# MODEL CC - SINGULAR FIT ##############
+# model with glmer, only CC, veg as R.E., poisson
+mod_CC <- glmer(no_species ~ site_mean_CC_scaled +
+                   (1 | site_mean_veg_scaled) +
+                   (1 | Elevation),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_CC) # 
+vif(mod_richness_CC) # 
+check_overdispersion(mod_richness_CC) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_CC)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+############# MODEL CC - SINGULAR FIT ##############
+
+
+############# MODEL NO WATER, NO VEG - SINGULAR FIT  ##############
+# full model with glmer, no water, no veg., poisson
+mod_richness_no_water_veg <- glmer(no_species ~ site_mean_CC_scaled +
+                   forest_cover_400_scaled +
+                   (1 | Elevation),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_no_water_veg) # 
+vif(mod_richness_no_water) # 
+check_overdispersion(mod_richness_no_water) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+############# MODEL NO WATER, NO VEG - SINGULAR FIT ##############
+
+
+############# MODEL NO WATER, NO VEG -  ##############
+# full model with glmer, no water, no veg., poisson
+mod_richness_no_water_veg <- glmer(no_species ~ site_mean_hoja_scaled +
+                   forest_cover_400_scaled +
+                   (1 | Elevation),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_no_water) # 
+vif(mod_richness_no_water) # 
+check_overdispersion(mod_richness_no_water) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+############# MODEL NO WATER - SINGULAR FIT ##############
+
+
+# try with pair as R.E.?
+# full model with glmer, no water, veg as R.E., poisson
+mod_richness_no_water <- glmer(no_species ~ site_mean_CC_scaled +
+                   forest_cover_400_scaled +
+                   (1 | Pair),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_no_water) # 
+vif(mod_richness_no_water) # 
+check_overdispersion(mod_richness_no_water) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+############# MODEL NO WATER - SINGULAR FIT ##############
+
+
+
+# full model with glmer, no water, veg as R.E., poisson
+mod_richness_no_water_RE <- glmer(no_species ~ site_mean_CC_scaled +
+                   forest_cover_400_scaled,
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_no_water) # 
+vif(mod_richness_no_water) # 
+check_overdispersion(mod_richness_no_water) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+############# MODEL NO WATER - SINGULAR FIT ##############
+
+
+```
+
+
+
+
+
+## what if we ran through richness at transect-level?
+```{r}
+####### HMMM ##########
+# full model with glmer, pca_CC_hoja, veg as F.E., poisson
+modfull_3 <- glmer(num_species ~ tran_mean_CC_scaled +
+                   tran_mean_veg_scaled +
+                   water_dist_scaled + 
+                   forest_cover_400_scaled +
+                   (1 | Sitio), 
+              data = trans_richness_local,
+              family = poisson())
+
+summary(modfull_3) # nothing sig
+vif(modfull_3) # vif not concern
+check_overdispersion(modfull_3) # not overdispersed
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = modfull_3)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # 
+testZeroInflation(simulationOutput) # 
+
+########## USE THIS ONE ##############
+
+
+
+
+# full model with glmer, no water, veg as R.E., poisson
+mod_richness_no_water <- glmer(no_species ~ site_mean_CC_scaled +
+                   forest_cover_400_scaled +
+                   (1 | site_mean_veg_scaled),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+
+summary(mod_richness_no_water) # 
+vif(mod_richness_no_water) # 
+check_overdispersion(mod_richness_no_water) # 
+
+# assess model fit using dHARMA
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_water)
+plot(simulationOutput)
+
+
+
+
+# full model with glmer, no water, veg as R.E., poisson
+mod_richness_test <- glmer(no_species ~ site_mean_CC_scaled +
+                   (1 | site_mean_veg_scaled),
+              data = site_richness_local,
+              family = poisson())
+# boundary (singular) fit: see help('isSingular')
+```
+
+
+
+
+
+
+
 
 
 
