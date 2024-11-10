@@ -1464,7 +1464,7 @@ mod_richness_full <- glm(no_species ~ site_mean_CC_scaled +
                                     data = site_richness_local,
                                     family = poisson())
 
-summary(mod_richness_full) # nothing sig
+summary(mod_richness_full) # nothing sig - AIC 103.5
 vif(mod_richness_full) # VIF not concern
 check_overdispersion(mod_richness_full) # not over dispersed
 
@@ -1479,6 +1479,230 @@ testZeroInflation(simulationOutput) # not zero inflated
 
 leave one out cross-validation for candidate models for richness at site-level
 - start from full model which confirmed fit model assumptions
+- full model AIC was 103.5
+```{r}
+# STEP 1 - remove one predictor variable
+
+############# FULL MODEL NO CC - AIC 101.51 - nothing sig ##############
+# full model with glm, no CC, no R.E., poisson
+mod_richness_full_no_CC <- glm(no_species ~ 
+                                    # site_mean_CC_scaled +
+                                    site_mean_veg_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+
+summary(mod_richness_full_no_CC) # nothing sig - AIC 101.51
+vif(mod_richness_full_no_CC) # vif not a concern
+check_overdispersion(mod_richness_full_no_CC) # not overdispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full_no_CC)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# FULL MODEL NO CC - AIC 101.51 - nothing sig ##############
+
+############# FULL MODEL NO VEG - AIC 101.48 - nothing sig ##############
+# full model with glm, no veg, no R.E., poisson
+mod_richness_full_no_veg <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    # site_mean_veg_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+
+summary(mod_richness_full_no_veg) # nothing sig - AIC 101.48
+vif(mod_richness_full_no_veg) # vif not a concern
+check_overdispersion(mod_richness_full_no_veg) # not overdispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full_no_veg)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# FULL MODEL NO VEG - AIC 101.48 - nothing sig ##############
+
+####### FULL MODEL NO WATER - QUANT DEVIATIONS DETECTED (test n.s) ######
+###### nothing sig - AIC 101.52 #######
+# full model with glm, no water, no R.E., poisson
+mod_richness_full_no_water <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    site_mean_veg_scaled +
+                                    # water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+summary(mod_richness_full_no_water) # nothing sig - AIC 101.52
+vif(mod_richness_full_no_water) # vif not a concern
+check_overdispersion(mod_richness_full_no_water) # not overdispersed
+
+# assess model fit using dHARMA - QUANTILE DEVIATIONS DETECTED
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full_no_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+####### FULL MODEL NO WATER - QUANT DEVIATIONS DETECTED (test n.s) ######
+###### nothing sig - AIC 101.52 #######
+
+############# FULL MODEL NO FOREST - nothing sig - AIC 101.91 ##############
+# full model with glm, no forest, no R.E., poisson
+mod_richness_full_no_forest <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    site_mean_veg_scaled +
+                                    water_dist_scaled +
+                                    # forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+
+summary(mod_richness_full_no_forest) # nothing sig - AIC 101.91
+vif(mod_richness_full_no_forest) # vif not a concern
+check_overdispersion(mod_richness_full_no_forest) # not overdispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full_no_CC)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# FULL MODEL NO FOREST - nothing  sig - AIC 101.91 ##############
+
+###### FULL MODEL NO ELEVATION - QUANT DEVIATIONS DETECTED (test n.s.) ######
+###### nothing sig - AIC 102.96 ######
+# full model with glm, no forest, no R.E., poisson
+mod_richness_full_no_elevation <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    site_mean_veg_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled, # +
+                                    # Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+summary(mod_richness_full_no_elevation) # nothing sig - AIC 102.96
+vif(mod_richness_full_no_elevation) # vif not a concern
+check_overdispersion(mod_richness_full_no_elevation) # not overdispersed
+
+# assess model fit using dHARMA - QUANTILE DEVIATIONS DETECTED (quantile test n.s.)
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full_no_elevation)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+###### FULL MODEL NO ELEVATION - QUANT DEVIATIONS DETECTED (test n.s.) ######
+###### nothing sig - AIC 102.96 ######
+
+# STEP 2- remove a second predictor variable
+
+############# MODEL NO VEG, CC - nothing sig - AIC 99.51 ##############
+# model without veg, CC, glm, no R.E., poisson
+mod_richness_no_veg_CC <- glm(no_species ~ 
+                                    # site_mean_CC_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+
+summary(mod_richness_no_veg_CC) # nothing sig - AIC 99.51
+vif(mod_richness_no_veg_CC) # vif not a concern
+check_overdispersion(mod_richness_no_veg_CC) # not overdispersed
+
+# assess model fit using dHARMA - outer Newton did not converge fully?
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_veg_CC)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# MODEL NO VEG, CC - nothing sig - AIC 99.51 ##############
+
+############# MODEL NO VEG, WATER - nothing sig - AIC 99.52 ##############
+# model without veg, water, glm, no R.E., poisson
+mod_richness_no_veg_water <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    # water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+
+summary(mod_richness_no_veg_water) # nothing sig - AIC 99.52
+vif(mod_richness_no_veg_water) # vif not a concern
+check_overdispersion(mod_richness_no_veg_water) # not overdispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_veg_water)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# MODEL NO VEG, WATER - nothing sig - AIC 99.52 ##############
+
+############# MODEL NO VEG, FOREST - nothing sig - AIC 99.975 ##############
+# model without veg, forest, glm, no R.E., poisson
+mod_richness_no_veg_forest <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    water_dist_scaled +
+                                    # forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+summary(mod_richness_no_veg_forest) # nothing sig - AIC 99.975
+vif(mod_richness_no_veg_forest) # vif not a concern
+check_overdispersion(mod_richness_no_veg_forest) # not overdispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_veg_forest)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# MODEL NO VEG, FOREST - nothing sig - AIC 99.975 ##############
+
+############# MODEL NO VEG, ELEVATION - nothing sig - AIC 101.04 ##############
+# model without veg, elevation, glm, no R.E., poisson
+mod_richness_no_veg_elevation <- glm(no_species ~ 
+                                    site_mean_CC_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled, #+
+                                    # Elevation,
+                                    data = site_richness_local,
+                                    family = poisson())
+
+summary(mod_richness_no_veg_elevation) # nothing sig - AIC 101.04
+vif(mod_richness_no_veg_elevation) # vif not a concern
+check_overdispersion(mod_richness_no_veg_elevation) # not overdispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_no_veg_elevation)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# MODEL NO VEG, ELEVATION - nothing sig - AIC 101.04 ##############
+```
+
+
+
+
+
+
 
 
 
@@ -1739,83 +1963,6 @@ vif(modfull_3) # vif not concern
 check_overdispersion(modfull_3) # not overdispersed
 ########## USE THIS ONE ##############
 ```
-
-
-
-
-
-
-
-
-<!-- ## LOO-CV for candidate models -->
-<!-- ```{r} -->
-<!-- # model without hoja -->
-<!-- mod_no_hoja <- glmer(num_species ~  tran_mean_CC_scaled +  -->
-<!--                    tran_mean_veg_scaled +  -->
-<!--                    water_dist_scaled +  -->
-<!--                    forest_cover_400_scaled + -->
-<!--                    (1 | Sitio), -->
-<!--               data = trans_richness_local, -->
-<!--               family = poisson()) -->
-<!-- summary(mod_no_hoja) # nothing significant - # AIC 1147.1 -->
-<!-- vif(mod_no_hoja) # vif not a concern -->
-<!-- check_overdispersion(mod_no_hoja) # not overdispersed! -->
-
-<!-- # model without canopy cover -->
-<!-- mod_no_CC <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
-<!--                    tran_mean_veg_scaled +  -->
-<!--                    water_dist_scaled +  -->
-<!--                    forest_cover_400_scaled + -->
-<!--                    (1 | Sitio), -->
-<!--               data = trans_richness_local, -->
-<!--               family = poisson()) -->
-<!-- summary(mod_no_CC) # nothing significant - # AIC 1146.1 -->
-<!-- vif(mod_no_CC) # vif not a concern -->
-<!-- check_overdispersion(mod_no_CC) # not overdispersed! -->
-
-<!-- # model without veg -->
-<!-- mod_no_veg <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
-<!--                    tran_mean_CC_scaled +  -->
-<!--                    water_dist_scaled +  -->
-<!--                    forest_cover_400_scaled + -->
-<!--                    (1 | Sitio), -->
-<!--               data = trans_richness_local, -->
-<!--               family = poisson()) -->
-<!-- summary(mod_no_veg) # nothing significant - # AIC 1146.2 -->
-<!-- vif(mod_no_veg) # vif not a concern -->
-<!-- check_overdispersion(mod_no_veg) # not overdispersed! -->
-
-<!-- # model without water -->
-<!-- mod_no_water <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
-<!--                    tran_mean_CC_scaled +  -->
-<!--                    tran_mean_veg_scaled +  -->
-<!--                    forest_cover_400_scaled + -->
-<!--                    (1 | Sitio), -->
-<!--               data = trans_richness_local, -->
-<!--               family = poisson()) -->
-<!-- summary(mod_no_water) # nothing significant - # AIC 1146.1 -->
-<!-- vif(mod_no_water) # vif not a concern -->
-<!-- check_overdispersion(mod_no_water) # not overdispersed! -->
-
-<!-- # model without forest -->
-<!-- mod_no_forest <- glmer(num_species ~ tran_mean_hoja_scaled +  -->
-<!--                    tran_mean_CC_scaled +  -->
-<!--                    tran_mean_veg_scaled +  -->
-<!--                    water_dist_scaled +  -->
-<!--                    (1 | Sitio), -->
-<!--               data = trans_richness_local, -->
-<!--               family = poisson()) -->
-<!-- summary(mod_no_forest) # nothing significant - # AIC 1146.3 -->
-<!-- vif(mod_no_forest) # vif not a concern -->
-<!-- check_overdispersion(mod_no_forest) # not overdispersed! -->
-<!-- ``` -->
-
-
-
-
-
-
-
 
 
 #7. P. achatinus exclusive analysis
