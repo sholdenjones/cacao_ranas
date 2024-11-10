@@ -333,7 +333,74 @@ plot_abundance_by_site_cacao
 
 #2.Compare abundance, richness and Shannon diversity of forest and abandoned plantations
 
-##a. richness
+
+##a. NMDS ordination plot
+- using new_mat df, species-by-site abundance matrix
+- draw boundaries of landuse types
+```{r}
+#### Order new_mat df ####
+three_column <- new %>%
+  group_by(Sitio) %>%
+  count(`Final_ID`)
+
+# needs to be converted to data.frame!
+three_column <- data.frame(three_column)
+
+new_mat <- matrify(three_column)
+
+# Define the desired order of rows: Shade, Sun, Abandoned, Forest
+new_order <- c(1,3,5,8,19,20,22,25,27,29,30,32, # shade (n=12)
+               2,4,7,16,18,21,23,24,26,28,31, # sun (n=11)
+               9,13,14,17, # abandoned (n=4)
+               6,10,11,12,15 # forest (n=5)
+               )
+
+# Reorder rows
+new_mat <- new_mat[new_order, ]
+
+
+#### Make ordination plot ####
+
+# assign treatment levels per landuse type on reordered new_mat
+landuse_treatments=c(rep("Shade",12),
+                      rep("Sun",11), 
+                      rep("Abandoned",4), 
+                      rep("Forest",5))
+
+# use community by species matrix - stress = 0.26 - okay representation
+new_mat_NMDS = metaMDS(new_mat, k = 2)
+
+# sites are open circles, species are red crosses
+plot(new_mat_NMDS)
+
+
+# help visualize by labeling specific sites and species
+
+# ordination plot function especially for congested plots
+ordiplot(new_mat_NMDS,type="n")
+# this function adds text or points to ordination plots
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+orditorp(new_mat_NMDS,display="sites",cex=1.25,air=0.01)
+
+ordiplot(new_mat_NMDS,type="n")
+
+ordihull(new_mat_NMDS,groups=landuse_treatments,draw="polygon",
+         col="grey90",label=F)
+
+orditorp(new_mat_NMDS,display="species",col="red",air=0.01)
+
+# here colors need to align with landuse_treatments from above!
+# of course need to use chocolate!
+orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
+                                            rep("chocolate1",11),
+                                            rep("lightgreen",4),
+                                            rep("darkgreen",5)), 
+         air=0.01,cex=1.25)
+```
+
+
+##b. richness
 - Use two-sample t-test b/c not paired and dif number of sites
 ```{r}
 # create species richness vector for each cacao type
@@ -376,7 +443,7 @@ plot_richness_by_site_inactive
 ```
 
 
-##b. Shannon diversity
+##c. Shannon diversity
 Compare Shannon diversity of abandoned plantations and remnant forest
 
 two-sample t-test
@@ -421,7 +488,7 @@ plot_shannon_by_site_inactive
 ```
 
 
-##c. abundance
+##d. abundance
 Same process as above - use abundance_by_site for two sample t-test
 ```{r}
 # create species abundance vector for each cacao type
@@ -504,6 +571,11 @@ compare_abun_rich_shannon
 
 
 
+# THIS SECTION NEEDS WORK ##########
+
+
+
+
 #4. Contextualize cacao sites against reference sites
 
 To do this, need to use estimates of asymptotic species richness 
@@ -523,30 +595,30 @@ To do this, need to use estimates of asymptotic species richness
 # code from Tamara
 ```{r}
 # make vectors for each of the four site types from new_mat
-shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
-sun <- as.numeric(new_mat[13:23,])
-abandoned <- as.numeric(new_mat[24:27,])
-forest <- as.numeric(new_mat[28:32,])
+# shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
+# sun <- as.numeric(new_mat[13:23,])
+# abandoned <- as.numeric(new_mat[24:27,])
+# forest <- as.numeric(new_mat[28:32,])
 
-type_list <- list(shade,sun,abandoned,forest)
-names(type_list) <- c("shade", "sun", "abandoned", "forest")
-str(type_list)
-
-out10 <- iNEXT(type_list, q = 0, datatype = "abundance", endpoint = 22000)
-
-#plot sample-size-based rarefaction/extrapolation curve
-ggiNEXT(out10, type = 1, grey = FALSE) +
-  labs(y = "Species richness", x = "Number of individuals") +
-  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-
-#plot sample-coverage-based rarefaction/extrapolation curve
-ggiNEXT(out10, type = 2, grey = FALSE) +
-  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-
-#plot sample completeness curve
-ggiNEXT(out10, type = 3, grey = FALSE) +
-  labs(y = "Species richness", x = "Sample coverage") +
-  scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+# type_list <- list(shade,sun,abandoned,forest)
+# names(type_list) <- c("shade", "sun", "abandoned", "forest")
+# str(type_list)
+# 
+# out10 <- iNEXT(type_list, q = 0, datatype = "abundance", endpoint = 22000)
+# 
+# #plot sample-size-based rarefaction/extrapolation curve
+# ggiNEXT(out10, type = 1, grey = FALSE) +
+#   labs(y = "Species richness", x = "Number of individuals") +
+#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+# 
+# #plot sample-coverage-based rarefaction/extrapolation curve
+# ggiNEXT(out10, type = 2, grey = FALSE) +
+#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+# 
+# #plot sample completeness curve
+# ggiNEXT(out10, type = 3, grey = FALSE) +
+#   labs(y = "Species richness", x = "Sample coverage") +
+#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
 ```
 
 
@@ -555,55 +627,55 @@ ggiNEXT(out10, type = 3, grey = FALSE) +
 
 ## none of this makes any sense
 ```{r}
-#####List with matrices all#####
-# library(iNEXT)
-# library(ggplot2)
-# library(devtools)
-# library(httr)
-# library(grid)
-
-####SHADE
-
-head(data.shade)
-
-#Convert the data frame into a list matrix for inext 
-SH <- as.matrix(apply(data.shade[,-1],2, as.integer))
-
-#Name as row names
-row.names(SH) <- data.shade[,1]
-
-####SUNNY
-
-head(data.sun)
-
-#Convert the data frame into a list matrix for inext 
-SU <- as.matrix(apply(data.sun[,-1],2, as.integer))
-
-#Name as row names
-row.names(SU) <- data.sun[,1]
-
-
-####ABANDON
-
-head(data.aba)
-
-#Convert the data frame into a list matrix for inext 
-AB <- as.matrix(apply(data.aba[,-1],2, as.integer))
-
-#Name as row names
-row.names(AB) <- data.aba[,1]
-
-
-####FOREST
-
-head(data.for)
-
-#Convert the data frame into a list matrix for inext 
-FO <- as.matrix(apply(data.for[,-1],2, as.integer))
-
-#Name as row names
-row.names(FO) <- data.for[,1]
-
+# #####List with matrices all#####
+# # library(iNEXT)
+# # library(ggplot2)
+# # library(devtools)
+# # library(httr)
+# # library(grid)
+# 
+# ####SHADE
+# 
+# head(data.shade)
+# 
+# #Convert the data frame into a list matrix for inext 
+# SH <- as.matrix(apply(data.shade[,-1],2, as.integer))
+# 
+# #Name as row names
+# row.names(SH) <- data.shade[,1]
+# 
+# ####SUNNY
+# 
+# head(data.sun)
+# 
+# #Convert the data frame into a list matrix for inext 
+# SU <- as.matrix(apply(data.sun[,-1],2, as.integer))
+# 
+# #Name as row names
+# row.names(SU) <- data.sun[,1]
+# 
+# 
+# ####ABANDON
+# 
+# head(data.aba)
+# 
+# #Convert the data frame into a list matrix for inext 
+# AB <- as.matrix(apply(data.aba[,-1],2, as.integer))
+# 
+# #Name as row names
+# row.names(AB) <- data.aba[,1]
+# 
+# 
+# ####FOREST
+# 
+# head(data.for)
+# 
+# #Convert the data frame into a list matrix for inext 
+# FO <- as.matrix(apply(data.for[,-1],2, as.integer))
+# 
+# #Name as row names
+# row.names(FO) <- data.for[,1]
+# 
 
 ####List of matrices 
 
@@ -655,12 +727,12 @@ row.names(FO) <- data.for[,1]
 
 # FOREST data - use existing data if file is not available
 # (assuming you've already created the data frame `FOREST`)
-# data.for <- FOREST 
-# FO <- as.matrix(apply(data.for[,-1], 2, as.integer))
-# row.names(FO) <- data.for[,1]
-
-# List of matrices
-holden.diver <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
+# # data.for <- FOREST 
+# # FO <- as.matrix(apply(data.for[,-1], 2, as.integer))
+# # row.names(FO) <- data.for[,1]
+# 
+# # List of matrices
+# holden.diver <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
 
 
 
@@ -794,22 +866,22 @@ holden.diver <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
 
 ```{r}
 ####ALLIN
-
-# Load vegan package
-#library(vegan)
-
-# Define assemblages as separate matrices
-assemblages <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
-colors <- c("#A6611A", "#DFC27D", "#80CDC1", "#018571")
-labels <- c("Shade cacao", "Sun cacao", "Abandoned plantation", "Forest")
-
-# Calculate species accumulation curves for each assemblage
-accum_curves <- lapply(assemblages, specaccum)
-# Warning: the standard deviation is zeroWarning
-
-# Determine x and y axis limits based on the maximum values from all accumulation curves
-x_max <- max(sapply(accum_curves, function(curve) max(curve$sites)))
-y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
+# 
+# # Load vegan package
+# #library(vegan)
+# 
+# # Define assemblages as separate matrices
+# assemblages <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
+# colors <- c("#A6611A", "#DFC27D", "#80CDC1", "#018571")
+# labels <- c("Shade cacao", "Sun cacao", "Abandoned plantation", "Forest")
+# 
+# # Calculate species accumulation curves for each assemblage
+# accum_curves <- lapply(assemblages, specaccum)
+# # Warning: the standard deviation is zeroWarning
+# 
+# # Determine x and y axis limits based on the maximum values from all accumulation curves
+# x_max <- max(sapply(accum_curves, function(curve) max(curve$sites)))
+# y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
 ```
 
 
@@ -833,6 +905,12 @@ y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
 ```
 
 
+
+# UP UNTIL HERE ##########
+
+
+
+
 ## endangered species
 ```{r}
 threatened_abundance_by_site <- new_threatened %>%
@@ -841,6 +919,17 @@ threatened_abundance_by_site <- new_threatened %>%
 
 threatened_abundance_by_site
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -866,7 +955,7 @@ pca_fit <- prcomp(
                   scale. = TRUE)
 
 pca_summary <- summary(pca_fit)
-pca_summary
+pca_summary # first two axes explain 52% of variation
 
 ls(pca_summary) # Lists the objects produced by summary
 
