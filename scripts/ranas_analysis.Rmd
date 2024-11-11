@@ -91,7 +91,7 @@ priach_by_site <- read_csv(
   "data/processed_data/priach_by_site_processed.csv")
 priach_by_site <- as_tibble(priach_by_site)
 
-# matrix files from FVE
+# matrix files for each landuse type
 data.shade=read.table("data/processed_data/SHADE.txt", head= T)
 data.sun=read.table("data/processed_data/SUN.txt", head= T)
 data.for=read.table("data/processed_data/FOREST.txt", head= T)
@@ -569,349 +569,222 @@ compare_abun_rich_shannon
 ```
 
 
-
-
-# THIS SECTION NEEDS WORK ##########
-
-
-
-
 #4. Contextualize cacao sites against reference sites
 
 To do this, need to use estimates of asymptotic species richness 
 - b/c these sites did not have even sample coverage
+- Compare rarefied specues richness across different landuse types
+- use vegan package
 
-## iNEXT to show what the sampling coverage is for each site
-- then compare sampling coverage!
-- then graphically display this
-
-## ALSO CAN LOOK AT q=1
-
-
-## THIS CODE DOES NOT WORK ###
-## ILLOGICAL OUTPUT ##
-
-
-# code from Tamara
+create separate matrix for each landuse type
 ```{r}
-# make vectors for each of the four site types from new_mat
-# shade <- as.numeric(new_mat[1:12,]) # row numbers for shade
-# sun <- as.numeric(new_mat[13:23,])
-# abandoned <- as.numeric(new_mat[24:27,])
-# forest <- as.numeric(new_mat[28:32,])
+# shade
+head(data.shade)
+# convert the data frame into a list matrix for inext
+SH <- as.matrix(apply(data.shade[,-1],2, as.integer))
+# site name as row names
+row.names(SH) <- data.shade[,1]
 
-# type_list <- list(shade,sun,abandoned,forest)
-# names(type_list) <- c("shade", "sun", "abandoned", "forest")
-# str(type_list)
-# 
-# out10 <- iNEXT(type_list, q = 0, datatype = "abundance", endpoint = 22000)
-# 
-# #plot sample-size-based rarefaction/extrapolation curve
-# ggiNEXT(out10, type = 1, grey = FALSE) +
-#   labs(y = "Species richness", x = "Number of individuals") +
-#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-# 
-# #plot sample-coverage-based rarefaction/extrapolation curve
-# ggiNEXT(out10, type = 2, grey = FALSE) +
-#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
-# 
-# #plot sample completeness curve
-# ggiNEXT(out10, type = 3, grey = FALSE) +
-#   labs(y = "Species richness", x = "Sample coverage") +
-#   scale_color_manual(values = c("#80CDC1", "#018571", "#A6611A", "#DFC27D"))
+# sun
+head(data.sun)
+SU <- as.matrix(apply(data.sun[,-1],2, as.integer))
+row.names(SU) <- data.sun[,1]
+
+# abandoned
+head(data.aba)
+AB <- as.matrix(apply(data.aba[,-1],2, as.integer))
+row.names(AB) <- data.aba[,1]
+
+# forest
+head(data.for)
+FO <- as.matrix(apply(data.for[,-1],2, as.integer))
+row.names(FO) <- data.for[,1]
+```
+
+
+##a. Species accumulation curve
+```{r}
+# Define assemblages as separate matrices
+assemblages <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
+colors <- c("#A6611A", "#DFC27D", "#80CDC1", "#018571")
+labels <- c("Shade cacao", "Sun cacao", "Abandoned plantation", "Forest")
+
+# Calculate species accumulation curves for each assemblage
+accum_curves <- lapply(assemblages, function(x) specaccum(x, method = "random", permutations = 100))
+
+# Determine x and y axis limits based on the maximum values from all accumulation curves
+x_max <- max(sapply(accum_curves, function(curve) max(curve$sites)))
+y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
+
+#### Create species accumulation plot with confidence intervals ####
+# Create an empty plot with refined x and y limits for all assemblages
+plot(NULL, xlim = c(0, x_max), ylim = c(0, y_max + 5),  # Add buffer to y-axis for clarity
+     xlab = "Sample Size", ylab = "Species Richness",
+     main = "Standardized species accumulation curves for each landuse type")
+
+# Loop through each assemblage to add its accumulation curve and confidence intervals to the plot
+for (i in seq_along(accum_curves)) {
+  # Extract the current curve
+  curve <- accum_curves[[i]]
+  
+  # Plot the confidence interval as a shaded polygon
+  polygon(c(curve$sites, rev(curve$sites)), 
+          c(curve$richness + curve$sd, rev(curve$richness - curve$sd)),
+          col = adjustcolor(colors[i], alpha.f = 0.2), border = NA)
+  
+  # Plot the accumulation curve with lines
+  lines(curve$sites, curve$richness, col = colors[i], lwd = 2)
+}
+
+# Add a legend to the plot (outside the loop)
+legend("bottomright", legend = labels, col = colors, lty = 1, lwd = 2, cex = 0.8)
+```
+
+
+##b. Rarefaction
+```{r}
+# define rarefaction depth - smallest total abundance from four matrices
+min_sample_size <- min(rowSums(SH), rowSums(SU), rowSums(AB), rowSums(FO))
+
+# perform the rarefaction - expected species richness if each sample standardized to min
+rarefied_richness_shade <- rarefy(SH, min_sample_size)
+rarefied_richness_sun <- rarefy(SU, min_sample_size)
+rarefied_richness_abandon <- rarefy(AB, min_sample_size)
+rarefied_richness_forest <- rarefy(FO, min_sample_size)
+
+# combine results and calculate means for each land use type for easy comparison:
+mean_rarefied_richness <- c(mean(rarefied_richness_shade), 
+                   mean(rarefied_richness_sun), 
+                   mean(rarefied_richness_abandon), 
+                   mean(rarefied_richness_forest))
+
+# visualize
+boxplot(rarefied_richness_shade, 
+        rarefied_richness_sun, 
+        rarefied_richness_abandon, 
+        rarefied_richness_forest,
+        names = c("Shade cacao", "Sun cacao", "Abandoned cacao", "Forest"),
+        ylab = "Rarefied Species Richness")
 ```
 
 
 
-# iNEXT code from Francisco
 
-## none of this makes any sense
+
+
+
+
+
+# Rarefaction
+
+technique to assess expected species richness
+- allows calculation of species richness for given number of samples based on
+  construction of rarefaction curves
+  
+issue is that the larger number of ind sampled, more species will be found
+- rarefaction curves created by randomly re-sampling pool of N samples multiple
+  times and then plotting average number of species found in each sample
+- rarefaction generates expected number of species in small collection of n ind
+  drawn from large pool of N samples
+- typically grow rapidly at first, then slowly as only rarest species remain to
+  be sampled
+
+use rarefy and rarecurve functions
 ```{r}
-# #####List with matrices all#####
-# # library(iNEXT)
-# # library(ggplot2)
-# # library(devtools)
-# # library(httr)
-# # library(grid)
-# 
-# ####SHADE
-# 
-# head(data.shade)
-# 
-# #Convert the data frame into a list matrix for inext 
-# SH <- as.matrix(apply(data.shade[,-1],2, as.integer))
-# 
-# #Name as row names
-# row.names(SH) <- data.shade[,1]
-# 
-# ####SUNNY
-# 
-# head(data.sun)
-# 
-# #Convert the data frame into a list matrix for inext 
-# SU <- as.matrix(apply(data.sun[,-1],2, as.integer))
-# 
-# #Name as row names
-# row.names(SU) <- data.sun[,1]
-# 
-# 
-# ####ABANDON
-# 
-# head(data.aba)
-# 
-# #Convert the data frame into a list matrix for inext 
-# AB <- as.matrix(apply(data.aba[,-1],2, as.integer))
-# 
-# #Name as row names
-# row.names(AB) <- data.aba[,1]
-# 
-# 
-# ####FOREST
-# 
-# head(data.for)
-# 
-# #Convert the data frame into a list matrix for inext 
-# FO <- as.matrix(apply(data.for[,-1],2, as.integer))
-# 
-# #Name as row names
-# row.names(FO) <- data.for[,1]
-# 
+# abundances for each site
+spAbund <- rowSums(new_mat)
+spAbund
 
-####List of matrices 
-
-# holden.diver = list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
-# 
-# m <- c(10, 20, 30, 40, 50, 60, 100)
-# 
-# out1 <- iNEXT(holden.diver, datatype = "abundance") 
-# 
-# fig.alpha1 = ggiNEXT(out1, type =1)+ 
-# 
-# #Figures 
-# 
-# #FigDivAlpha = ggiNEXT(out.inc, type = 1, color.var <- "Order.q", z <- fortify(out.inc), 
-# # z$col <- z$shape <- factor(z$Order.q)) Revisar 
-# par(mfrow=c(2,3))
-# 
-# #figures species diversity 
-# fig1 <- plot(out.incranas, col= "Blue")
-# fig1
-# #figures sample coverage  
-# fig2 <-plot(out.incranas, type = 2, col= "Blue")
-# fig2
-# #figures species diversity against sample coverage   
-# fig3 <-plot(out.incranas, type = 3, col= "Blue")
-# fig3
-
-
-
-
-# Load necessary libraries
-# library(iNEXT)
-# library(ggplot2)
-
-# # SHADE data
-# data.shade <- (SHADE)
-# SH <- as.matrix(apply(data.shade[,-1], 2, as.integer))
-# row.names(SH) <- data.shade[,1]
-# 
-# # SUN data
-# data.sun <- (SUN)
-# SU <- as.matrix(apply(data.sun[,-1], 2, as.integer))
-# row.names(SU) <- data.sun[,1]
-# 
-# # ABANDON data
-# data.aba <- (ABANDON)
-# AB <- as.matrix(apply(data.aba[,-1], 2, as.integer))
-# row.names(AB) <- data.aba[,1]
-
-# FOREST data - use existing data if file is not available
-# (assuming you've already created the data frame `FOREST`)
-# # data.for <- FOREST 
-# # FO <- as.matrix(apply(data.for[,-1], 2, as.integer))
-# # row.names(FO) <- data.for[,1]
-# 
-# # List of matrices
-# holden.diver <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
-
-
-
-### lots of issues below here - illogical output from iNEXT ###
-
-
-# Perform iNEXT analysis (correct the spelling of "abundance_raw")
-
-# out3 <- iNEXT(holden.diver, q=0, datatype = "abundance")
-# ggiNEXT(out3)
-# par(mfrow=c(2,3))
-# 
-# #figures species diversity 
-# fig1 <- plot(out3)
-# fig1
-# #figures sample coverage  
-# fig2 <-plot(out3, type = 2)
-# fig2
-# #figures species diversity against sample coverage   
-# fig3 <-plot(out3, type = 3)
-# fig3
-# 
-# iNEXT(holden.diver)
-# 
-# holden.divers <- iNEXT(list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO), datatype = "abundance")
-# outfinal <- holden.divers
-
-# # Data information (basic data info)
-# data_info <- holden.divers$DataInfo
-# print(data_info)
-# 
-# # Diversity estimates
-# diversity_estimates <- holden.divers$iNextEst$size_based
-# print(diversity_estimates)
-# 
-# ggiNEXT(outfinal)
-# 
-# par(mfrow=c(2,3))
-# 
-# 
-# fig1 <- plot(outfinal)
-# fig1
-# #figures sample coverage  
-# fig2 <-plot(outfinal, type = 2)
-# fig2
-# #figures species diversity against sample coverage   
-# fig3 <-plot(outfinal, type = 3)
-# fig3
-
-#########
-
-# data_info <- holden.diver$DataInfo
-# print(data_info)
-# 
-# str(holden.diver)
-
-
-# 
-# # Calculate the number of non-zero species in each assemblage
-# shade_obs <- sum(colSums(SH) > 0)
-# sun_obs <- sum(colSums(SU) > 0)
-# abandon_obs <- sum(colSums(AB) > 0)
-# forest_obs <- sum(colSums(FO) > 0)
-# 
-# print(paste("SHADE observed species:", shade_obs))
-# print(paste("SUN observed species:", sun_obs))
-# print(paste("ABANDON observed species:", abandon_obs))
-# print(paste("FOREST observed species:", forest_obs))
-# 
-# 
-# # Run iNEXT with q=1 or q=2 to reduce bias from rare species
-# outfinal_q1 <- iNEXT(list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO), q=1, datatype="abundance")
-# outfinal_q2 <- iNEXT(list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO), q=2, datatype="abundance")
-# 
-# # Inspect the results
-# print(outfinal_q1)
-# print(outfinal_q2)
-# 
-# 
-# 
-# 
-# # Plotting Shannon diversity (q=1)
-# 
-# p1 <- ggiNEXT(outfinal_q1, type=1) + 
-#   ggtitle("Shannon Diversity (q = 1)") +
-#   theme_minimal()
-# 
-# # Plotting Simpson diversity (q=2)
-# p2 <- ggiNEXT(outfinal_q2, type=1) + 
-#   ggtitle("Simpson Diversity (q = 2)") +
-#   theme_minimal()
-# 
-# # Display both plots
-# p1
-# p2
-# 
-# 
-# 
-# 
-# 
-# 
-# out10 <- iNEXT(holden.diver, q=0, datatype = "abundance",endpoint = 22000)
-# 
-# out10 
-# ggiNEXT(out10, type=1,grey=TRUE)+
-#   labs(y="Species richness", x="No. of individuals")+
-#   labs(tag = "b)") +
-#   theme(plot.tag.position = c(0.01, 1))
-# 
-# out4 <- iNEXT(holden.diver, type = 1, color.var <- "Order.q", z <- fortify(holden.diver), 
-#                             z$col <- z$shape <- factor(z$Order.q))
-# out4
-#               
-# # Plot the output
-# ggiNEXT(out3)
-# 
-# par(mfrow=c(2,3))
-# 
-# #figures species diversity 
-# fig1 <- plot(out3, col= "Blue")
-# fig1
-# #figures sample coverage  
-# fig2 <-plot(out3, type = 2, col= "Blue")
-# fig2
-# #figures species diversity against sample coverage   
-# fig3 <-plot(out3, type = 3, col= "Blue")
-# fig3
+# abundances for each species
+test <- colSums(new_mat)
+test
 ```
 
-## alternative is using vegan
-
+rarefaction uses smallest number of obs per sample to extrapolate expected
+number if all other samples only had that number of obs
+- VC-C only had 3!!! may want to proceed without this  in the future
+- GP-N also only 9, without these two the next lowest is 22
 ```{r}
-####ALLIN
-# 
-# # Load vegan package
-# #library(vegan)
-# 
-# # Define assemblages as separate matrices
-# assemblages <- list(SHADE = SH, SUN = SU, ABANDON = AB, FOREST = FO)
-# colors <- c("#A6611A", "#DFC27D", "#80CDC1", "#018571")
-# labels <- c("Shade cacao", "Sun cacao", "Abandoned plantation", "Forest")
-# 
-# # Calculate species accumulation curves for each assemblage
-# accum_curves <- lapply(assemblages, specaccum)
-# # Warning: the standard deviation is zeroWarning
-# 
-# # Determine x and y axis limits based on the maximum values from all accumulation curves
-# x_max <- max(sapply(accum_curves, function(curve) max(curve$sites)))
-# y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
-```
+# including VC-C raremin is 3
+raremin <- min(rowSums(new_mat))
+raremin
 
+sRare <- rarefy(new_mat, raremin)
+sRare
 
-# create species accumulation curve - NOT WORKING
-```{r}
-# # Create an empty plot with refined x and y limits for all assemblages
-# plot(NULL, xlim = c(0, x_max), ylim = c(0, y_max + 5),  # Add buffer to y-axis for clarity
-#      xlab = "Sample Size", ylab = "Species Richness",
-#      main = "Standardized species accumulation curves for each landuse type")
-# 
-# # Loop through each assemblage to add its accumulation curve to the plot
-# for (i in seq_along(accum_curves)) {
-#   # Extract the current curve
-#   curve <- accum_curves[[i]]
-#   
-#   # Plot the accumulation curve with lines and add text labels
-#   lines(curve$sites, curve$richness, col = colors[i], lwd = 2)
-#   
-# # Add a legend if needed
-# legend("bottomright", legend = labels, col = colors, lty = 1, lwd = 2, cex = 0.8)
+# it won't allow us to override this to 22 (makes sense)
+# so will need to remove VC-C, GP-N from sites, via row position
+new_mat_abundant <- new_mat %>%
+  filter(!row_number() %in% c(5, 23))
+
+# let's see what happens with this as our raremin, and only using 30/32 sites
+raremin_abundant <- min(rowSums(new_mat_abundant))
+raremin_abundant
+
+# sRare gives expected 'rarefied' number of species (not obs) if only 22 collected
+sRare_abundant <- rarefy(new_mat_abundant, raremin_abundant)
+sRare_abundant
+
+# shannon_aov <- aov(shannon ~ Tipo, data = site_type)
+# summary(shannon_aov)
 ```
 
 
 
-# UP UNTIL HERE ##########
+
+## no statistical difference in rarefied species richness across types
+*note that using rarefaction to remove effects of diff sample sizes is bad!*
+```{r}
+# join tipo data with sRare_abundant in a df
+sRare_abundant_df <- sRare_abundant %>% 
+  enframe() %>% 
+  full_join(site_type, by = c("name" = "Sitio"))
+
+sRare_abundant_aov <- aov(value ~ Tipo, data = sRare_abundant_df)
+summary(sRare_abundant_aov)
+# p-value is 0.183 (04/9/23) - check back in when sequencing is done!
+```
+
+
+boxplot of rarefied species richness
+```{r}
+# can compare rarefied species richness by type
+sRare_abundant_df$Tipo <- factor(sRare_abundant_df$Tipo,
+                         c("N", "C", "V", "B"))
+
+plot_sRare_abundant <- ggplot(sRare_abundant_df, aes(x = Tipo, y = value, 
+                                                     fill = Tipo)) +
+geom_boxplot() +
+  scale_fill_manual(values = pal) +
+  scale_x_discrete(labels = c("Shade \n (n = 11)", "Sun \n (n = 10)", 
+                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+    ) +
+        # updated labels to reflect n = 10 for C and N sites
+  theme(legend.position = "none",
+        plot.background = element_rect("white"),
+        panel.background = element_rect("white"),
+        panel.grid = element_line("grey90"),
+        axis.line = element_line("gray25"),
+        axis.text = element_text(size = 12, color = "gray25"),
+        axis.title = element_text(size = 14, color = "gray25"),
+        legend.text = element_text(size = 12)) + 
+  labs(x = "Landtype",
+       y = "Rarefied species richness per site",
+       title = "There is no significant difference (p = 0.183) in rarefied species richness across landtypes")
+plot_sRare_abundant
+```
 
 
 
 
-## endangered species
+
+
+
+
+
+
+
+##c. Endangered species
 ```{r}
 threatened_abundance_by_site <- new_threatened %>%
   group_by(Tipo, Final_ID) %>%
