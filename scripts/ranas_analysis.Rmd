@@ -136,9 +136,13 @@ check_overdispersion <- function(model) {
 }
 ```
 
+
+################################################################################
+
+
 #1. Compare abundance, richness and Shannon diversity of shade and sun
 
-##a. richness
+##a. Richness
 - Use two-sample t-test b/c not perfectly paired in landscape and dif number of sites
 - If remove VC-N (weird site turned out to be N, not paired), then can run paired t-test
 ```{r}
@@ -269,7 +273,7 @@ plot_shannon_by_site_cacao
 
 
 
-##c. abundance
+##c. Abundance
 Same process as above - use abundance_by_site for two sample t-test
 ```{r}
 # create species abundance vector for each cacao type
@@ -331,8 +335,10 @@ plot_abundance_by_site_cacao
 ```
 
 
-#2.Compare abundance, richness and Shannon diversity of forest and abandoned plantations
+################################################################################
 
+
+#2.Compare abundance, richness and Shannon diversity of forest and abandoned plantations
 
 ##a. NMDS ordination plot
 - using new_mat df, species-by-site abundance matrix
@@ -400,7 +406,7 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 ```
 
 
-##b. richness
+##b. Richness
 - Use two-sample t-test b/c not paired and dif number of sites
 ```{r}
 # create species richness vector for each cacao type
@@ -488,7 +494,7 @@ plot_shannon_by_site_inactive
 ```
 
 
-##d. abundance
+##d. Abundance
 Same process as above - use abundance_by_site for two sample t-test
 ```{r}
 # create species abundance vector for each cacao type
@@ -529,7 +535,7 @@ plot_abundance_by_site_inactive
 ```
 
 
-##e. arrange figures for publication
+##e. Arrange figures for publication
 arrange these four or six figures as panels in one window
 ```{r}
 # richness and shannon diversity
@@ -564,6 +570,9 @@ compare_abun_rich_shannon <- ggarrange(
 compare_abun_rich_shannon
 #ggsave("output/compare_abun_rich_shannon.png", width = 10, height = 10)
 ```
+
+
+################################################################################
 
 
 #3. Contextualize cacao sites against reference sites
@@ -744,46 +753,34 @@ diversity_by_site_abundant <- sRare_abundant %>%
 # Anova for rarefied species richness by type without VC-C
 sRare_abundant_aov <- aov(sRare_abundant ~ Tipo, 
                           data = diversity_by_site_abundant)
-summary(sRare_abundant_aov)
+summary(sRare_abundant_aov) # p-value 0.205, not sig difference
 ```
 
-
-boxplot of rarefied species richness
+no difference in findings based on inclusion / exclusion of VC-C, so include it
 ```{r}
-# can compare rarefied species richness by type
-sRare_abundant_df$Tipo <- factor(sRare_abundant_df$Tipo,
+# site labels for 4 site comparison
+site_labels <-  c("Shade Cacao \n (n = 12)", 
+                  "Sun Cacao \n (n = 11)", 
+                  "Abandoned Plantation \n (n = 4)",
+                  "Remnant Forest \n (n = 5)")
+
+# reorder factor levels to match site_labels
+diversity_by_site$Tipo <- factor(diversity_by_site$Tipo,
                          c("N", "C", "V", "B"))
 
-plot_sRare_abundant <- ggplot(sRare_abundant_df, aes(x = Tipo, y = value, 
-                                                     fill = Tipo)) +
-geom_boxplot() +
-  scale_fill_manual(values = pal) +
-  scale_x_discrete(labels = c("Shade \n (n = 11)", "Sun \n (n = 10)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
-    ) +
-        # updated labels to reflect n = 10 for C and N sites
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(size = 14, color = "gray25"),
-        legend.text = element_text(size = 12)) + 
-  labs(x = "Landtype",
-       y = "Rarefied species richness per site",
-       title = "There is no significant difference (p = 0.183) in rarefied species richness across landtypes")
-plot_sRare_abundant
+# plot rarefied species richness across landuse types using palet, my_theme
+plot_rare_by_type <- ggplot(diversity_by_site, 
+                                     aes(x = Tipo, y = sRare, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + # order needs to match factor levels above
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Land use type",
+       y = "Rarefied species richness")
+
+plot_rare_by_type
+#ggsave("output/plot_rare_by_type.png", width = 10, height = 10)
 ```
-
-
-
-
-
-
-
-
-
 
 
 ##c. Endangered species
@@ -796,18 +793,7 @@ threatened_abundance_by_site
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+################################################################################
 
 
 #4. Multiple regression for drivers of amphibian abundance within plantations
@@ -847,7 +833,7 @@ plot(x = pca_fit$x[, 1],
 ```
 
 
-##b. correlation
+##b. Correlation
 
 need to address potential variable correlation before building regression models
 
@@ -904,7 +890,7 @@ pca_CC_hoja <- prcomp(trans_richness_local
 trans_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 ```
 
-##c. drivers of transect-level amphibian abundance
+##c. Drivers of transect-level amphibian abundance
 use glmer package to build full multiple regression
 - allows for inclusion of both random and rixed effects 
 - use canopy cover instead of hoja, no quantile deviation detected
@@ -1065,6 +1051,9 @@ the best fitting candidate model for amphibian abundance contains:
 - Site and local herbaceous vegetation cover as random effects
 
 
+################################################################################
+
+
 #5. Multiple regression for drivers of amphibian richness in plantations
 
 Drivers of site-level species richness
@@ -1102,7 +1091,7 @@ plot(x = pca_fit$x[, 1],
      ylab = "PC 2")
 ```
 
-##b. correlation
+##b. Correlation
 
 need to address potential variable correlation before building regression models
 - same as transect level! site_mean_hoja and site_mean_CC are highly correlated
@@ -1158,7 +1147,7 @@ pca_CC_hoja <- prcomp(site_richness_local
 site_richness_local$pca_CC_hoja <- pca_CC_hoja$x[,1]
 ```
 
-##c. drivers of site-level amphibian richness
+##c. Drivers of site-level amphibian richness
 use glm package to build full multiple regression
 - inclusion of random effects produced singular fit errors with glmer
 - use canopy cover instead of hoja b/c highly correlated
@@ -1536,9 +1525,7 @@ testZeroInflation(simulationOutput) # not zero inflated
 
 
 
-
-
-
+################################################################################
 
 
 #6. P. achatinus exclusive analysis
