@@ -900,7 +900,7 @@ full model
 ```{r}
 ############# FULL MODEL FITS - AIC 618.5 - CC sig pos ##############
 # full model with glmer, CC, veg as R.E., poisson
-modfull_abundance <- glmer(num_ind ~ tran_mean_CC + # use CC not hoja
+modfull_abundance <- glmer(num_ind ~ tran_mean_CC_scaled + # use CC not hoja
                    water_dist_scaled +
                    forest_cover_400_scaled +
                    (1 | tran_mean_veg_scaled) +
