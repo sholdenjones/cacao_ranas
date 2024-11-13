@@ -409,6 +409,10 @@ orditorp(new_mat_NMDS,display="sites",col=c(rep("chocolate4",12),
 ##b. Richness
 - Use two-sample t-test b/c not paired and dif number of sites
 ```{r}
+# ### what happens if remove FLL-B dud site?
+# richness_by_site <- richness_by_site %>%
+#   filter(!Sitio == 'FLL-B')
+
 # create species richness vector for each cacao type
 rich_forest <- richness_by_site %>%
   filter(Tipo == 'B') %>%
@@ -454,6 +458,10 @@ Compare Shannon diversity of abandoned plantations and remnant forest
 
 two-sample t-test
 ```{r}
+### what happens if remove FLL-B dud site?
+# diversity_by_site <- diversity_by_site %>%
+#   filter(!Sitio == 'FLL-B')
+
 # Two sample t-test for shannon diversity:
 
 # create Shannon diversity vector for each type
@@ -471,6 +479,8 @@ t.test(shannon_abandon, shannon_forest, paired = FALSE)
 
 Boxplot figure for abandoned vs. forest Shannon diversity
 ```{r}
+site_labels <- c("Abandoned \n (n = 4)", "Forest \n (n = 5)")
+
 # reorder factor levels
 diversity_by_site$Tipo <- factor(diversity_by_site$Tipo,
                          c("N", "C", "V", "B"))
@@ -497,6 +507,10 @@ plot_shannon_by_site_inactive
 ##d. Abundance
 Same process as above - use abundance_by_site for two sample t-test
 ```{r}
+# ### what happens if remove FLL-B dud site?
+# abundance_by_site <- abundance_by_site %>%
+#   filter(!Sitio == 'FLL-B')
+
 # create species abundance vector for each cacao type
 abun_abandon <- abundance_by_site %>%
   filter(Tipo == 'V') %>%
@@ -577,6 +591,7 @@ compare_abun_rich_shannon
 
 #3. Contextualize cacao sites against reference sites
 
+
 To do this, need to use estimates of asymptotic species richness 
 - b/c these sites did not have even sample coverage
 - Compare rarefied specues richness across different landuse types
@@ -603,6 +618,8 @@ row.names(AB) <- data.aba[,1]
 
 # forest
 head(data.for)
+# # ### what happens if remove FLL-B dud site?
+# data.for <- data.for[1:4,] 
 FO <- as.matrix(apply(data.for[,-1],2, as.integer))
 row.names(FO) <- data.for[,1]
 ```
