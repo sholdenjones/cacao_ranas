@@ -112,7 +112,7 @@ my_theme <- function() {
         panel.grid = element_line("grey90"),
         axis.line = element_line("gray25"),
         axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(size = 14, color = "gray25"),
+        axis.title = element_text(size = 16, color = "gray25"),
         legend.text = element_text(size = 12))
 }
 ```
