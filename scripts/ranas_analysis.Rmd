@@ -344,6 +344,7 @@ plot_abundance_by_site_cacao
 ##a. NMDS ordination plot
 - using new_mat df, species-by-site abundance matrix
 - draw boundaries of landuse types
+- possible that this figure doesn't ultimately get included in MS
 ```{r}
 #### Order new_mat df ####
 three_column <- new %>%
