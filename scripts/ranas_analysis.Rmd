@@ -21,6 +21,7 @@ library(car)
 library(glmmTMB)
 library(httr)
 library(DHARMa)
+library(ggrepel)
 ```
 
 load data
@@ -826,7 +827,134 @@ Start at transect level
 ##a. PCA
 - can only work for continuous variables
 
-https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+standard PCA fitting and plotting
+```{r}
+pca_fit <- prcomp(
+  x = trans_richness_local[, -c(1,2,5,6,7,9,10,11,12,13,14,15)], # remove these columns
+                  scale. = TRUE)
+
+pca_summary <- summary(pca_fit)
+pca_summary # first two axes explain 55% of variance
+
+ls(pca_summary) # Lists the objects produced by summary
+
+pca_summary$importance
+
+# biplot - standard, kinda ugly!
+biplot(x = pca_fit)
+```
+
+fancy biplot with specified colors - need to map manually
+```{r}
+# Define specific colors
+colors <- c("#DFC27D", "#A6611A")
+names(colors) <- levels(as.factor(site_richness_local$Tipo))
+
+# Mapping site type abbreviations to full names
+site_type_names <- c(C = "Sun cacao", N = "Shade cacao")
+
+# Map colors to points based on Tipo
+point_colors <- colors[as.factor(site_richness_local$Tipo)]
+
+# Extract PCA components and loadings
+pca_scores <- pca_fit$x  # Observation scores
+pca_loadings <- pca_fit$rotation  # Variable loadings
+
+# Create the biplot
+plot(pca_scores[, 1], pca_scores[, 2], 
+     col = point_colors, 
+     pch = 19, 
+     xlab = "PC1", 
+     ylab = "PC2", 
+     main = "Customized PCA Biplot",
+     xlim = c(min(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2, 
+              max(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2),
+     ylim = c(min(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2, 
+              max(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2))
+
+# Add arrows for variable loadings
+arrows(0, 0, pca_loadings[, 1] * max(abs(pca_scores[, 1])), 
+       pca_loadings[, 2] * max(abs(pca_scores[, 2])), 
+       length = 0.1, col = "black")
+
+# Add variable labels
+text(pca_loadings[, 1] * max(abs(pca_scores[, 1])), 
+     pca_loadings[, 2] * max(abs(pca_scores[, 2])), 
+     labels = rownames(pca_loadings), 
+     col = "black", cex = 0.8)
+
+# Add legend
+legend("bottomright", 
+       legend = c("Shade", "Sun"), 
+       col = c("#A6611A", "#DFC27D"), 
+       pch = 19)
+```
+
+use ggplot2 for publication level biplot
+```{r}
+# Prepare data for ggplot
+data_pca <- data.frame(PC1 = pca_scores[, 1],
+                       PC2 = pca_scores[, 2],
+                       Group = as.factor(trans_richness_local$Tipo))
+
+loading_data <- data.frame(PC1 = pca_loadings[, 1] * max(abs(pca_scores[, 1])),
+                           PC2 = pca_loadings[, 2] * max(abs(pca_scores[, 2])),
+                           Variable = rownames(pca_loadings))
+
+# Custom labels for legend
+group_labels <- c("C" = "Sun", "N" = "Shade")
+
+# Create plot
+tran_pca_plot <- ggplot() +
+  # Plot points with group coloring
+  geom_point(data = data_pca, aes(x = PC1, y = PC2, color = Group), size = 3) +
+  # Add arrows for variable loadings
+  geom_segment(data = loading_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +
+  # Add labels to the arrows
+  geom_text_repel(data = loading_data, aes(x = PC1, y = PC2, label = Variable),
+                  color = "black", size = 4) +
+  # Customize color scale and legend
+  scale_color_manual(values = c("#DFC27D", "#A6611A"),
+                     labels = group_labels) +
+  labs(x = "PC1", y = "PC2", color = "Cacao type") +
+  theme_minimal() +
+  theme(
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14),
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14),
+  )
+
+tran_pca_plot
+ggsave("output/tran_pca_plot.png", width = 10, height = 10)
+```
+
+Plot first two axes of PCA, no variable loadings
+```{r}
+# Define specific colors
+colors <- c("#DFC27D", "#A6611A")
+names(colors) <- levels(as.factor(trans_richness_local$Tipo))
+
+# Mapping site type abbreviations to full names
+site_type_names <- c(C = "Sun cacao", N = "Shade cacao")
+
+# Scatterplot with specified colors
+plot(x = pca_fit$x[, 1],
+     y = pca_fit$x[, 2],
+     xlab = "PC 1 (Explained variance: 30%)",
+     ylab = "PC 2 (Explained variance: 24%)",
+     col = colors[as.factor(site_richness_local$Tipo)],
+     pch = 19,
+     main = "PCA Scatterplot")
+
+# Add legend with full names
+legend("topleft", 
+       legend = site_type_names[levels(as.factor(site_richness_local$Tipo))], 
+       col = colors, 
+       pch = 19)
+```
+
 ```{r}
 pca_fit <- prcomp(
   x = trans_richness_local[, -c(1,2,5,6,7,9,10,11,12,13,14,15)], # remove these columns
@@ -1085,7 +1213,7 @@ Work at site-level to improve model fit
 ##a. PCA
 - can only work for continuous variables
 
-https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+standard PCA fitting and plotting
 ```{r}
 pca_fit <- prcomp(
   x = site_richness_local[, -c(1,4,5,6,7,10,11,12,16)], # remove these columns
@@ -1098,14 +1226,119 @@ ls(pca_summary) # Lists the objects produced by summary
 
 pca_summary$importance
 
-# biplot - kinda ugly!
+# biplot - standard, kinda ugly!
 biplot(x = pca_fit)
+```
 
-# just plot first two axes of PCA
+fancy biplot with specified colors - need to map manually
+```{r}
+# Define specific colors
+colors <- c("#DFC27D", "#A6611A")
+names(colors) <- levels(as.factor(site_richness_local$Tipo))
+
+# Mapping site type abbreviations to full names
+site_type_names <- c(C = "Sun cacao", N = "Shade cacao")
+
+# Map colors to points based on Tipo
+point_colors <- colors[as.factor(site_richness_local$Tipo)]
+
+# Extract PCA components and loadings
+pca_scores <- pca_fit$x  # Observation scores
+pca_loadings <- pca_fit$rotation  # Variable loadings
+
+# Create the biplot
+plot(pca_scores[, 1], pca_scores[, 2], 
+     col = point_colors, 
+     pch = 19, 
+     xlab = "PC1", 
+     ylab = "PC2", 
+     main = "Customized PCA Biplot",
+     xlim = c(min(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2, 
+              max(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2),
+     ylim = c(min(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2, 
+              max(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2))
+
+# Add arrows for variable loadings
+arrows(0, 0, pca_loadings[, 1] * max(abs(pca_scores[, 1])), 
+       pca_loadings[, 2] * max(abs(pca_scores[, 2])), 
+       length = 0.1, col = "black")
+
+# Add variable labels
+text(pca_loadings[, 1] * max(abs(pca_scores[, 1])), 
+     pca_loadings[, 2] * max(abs(pca_scores[, 2])), 
+     labels = rownames(pca_loadings), 
+     col = "black", cex = 0.8)
+
+# Add legend
+legend("bottomright", 
+       legend = c("Shade", "Sun"), 
+       col = c("#A6611A", "#DFC27D"), 
+       pch = 19)
+```
+
+use ggplot2 for publication level biplot
+```{r}
+# Prepare data for ggplot
+data_pca <- data.frame(PC1 = pca_scores[, 1],
+                       PC2 = pca_scores[, 2],
+                       Group = as.factor(site_richness_local$Tipo))
+
+loading_data <- data.frame(PC1 = pca_loadings[, 1] * max(abs(pca_scores[, 1])),
+                           PC2 = pca_loadings[, 2] * max(abs(pca_scores[, 2])),
+                           Variable = rownames(pca_loadings))
+
+# Custom labels for legend
+group_labels <- c("C" = "Sun", "N" = "Shade")
+
+# Create plot
+site_pca_plot <- ggplot() +
+  # Plot points with group coloring
+  geom_point(data = data_pca, aes(x = PC1, y = PC2, color = Group), size = 3) +
+  # Add arrows for variable loadings
+  geom_segment(data = loading_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +
+  # Add labels to the arrows
+  geom_text_repel(data = loading_data, aes(x = PC1, y = PC2, label = Variable),
+                  color = "black", size = 4) +
+  # Customize color scale and legend
+  scale_color_manual(values = c("#DFC27D", "#A6611A"),
+                     labels = group_labels) +
+  labs(x = "PC1", y = "PC2", color = "Cacao type") +
+  theme_minimal() +
+  theme(
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14),
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14),
+  )
+
+site_pca_plot
+#ggsave("output/site_pca_plot.png", width = 10, height = 10)
+```
+
+Plot first two axes of PCA, no variable loadings
+```{r}
+# Define specific colors
+colors <- c("#DFC27D", "#A6611A")
+names(colors) <- levels(as.factor(site_richness_local$Tipo))
+
+# Mapping site type abbreviations to full names
+site_type_names <- c(C = "Sun cacao", N = "Shade cacao")
+
+# Scatterplot with specified colors
 plot(x = pca_fit$x[, 1],
      y = pca_fit$x[, 2],
-     xlab = "PC 1",
-     ylab = "PC 2")
+     xlab = "PC 1 (Explained variance: 30%)",
+     ylab = "PC 2 (Explained variance: 24%)",
+     col = colors[as.factor(site_richness_local$Tipo)],
+     pch = 19,
+     main = "PCA Scatterplot")
+
+# Add legend with full names
+legend("bottomright", 
+       legend = site_type_names[levels(as.factor(site_richness_local$Tipo))], 
+       col = colors, 
+       pch = 19)
 ```
 
 ##b. Correlation
