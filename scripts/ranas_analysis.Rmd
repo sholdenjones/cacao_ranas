@@ -634,7 +634,10 @@ colors <- c("#A6611A", "#DFC27D", "#80CDC1", "#018571")
 labels <- c("Shade cacao", "Sun cacao", "Abandoned plantation", "Forest")
 
 # Calculate species accumulation curves for each assemblage
-accum_curves <- lapply(assemblages, function(x) specaccum(x, method = "random", permutations = 100))
+accum_curves <- lapply(assemblages, 
+                       function(x) specaccum(x, 
+                                             method = "random", 
+                                             permutations = 100))
 
 # Determine x and y axis limits based on the maximum values from all accumulation curves
 x_max <- max(sapply(accum_curves, function(curve) max(curve$sites)))
@@ -642,11 +645,11 @@ y_max <- max(sapply(accum_curves, function(curve) max(curve$richness)))
 
 #### Create species accumulation plot with confidence intervals ####
 # Create an empty plot with refined x and y limits for all assemblages
-plot(NULL, xlim = c(0, x_max), ylim = c(0, y_max + 5),  # Add buffer to y-axis for clarity
+plot(NULL, xlim = c(0, x_max), ylim = c(0, y_max + 5),  # Add buffer to y-axis
      xlab = "Sample Size", ylab = "Species Richness",
      main = "Standardized species accumulation curves for each landuse type")
 
-# Loop through each assemblage to add its accumulation curve and confidence intervals to the plot
+# Loop through each assemblage, add accumulation curve and CI to the plot
 for (i in seq_along(accum_curves)) {
   # Extract the current curve
   curve <- accum_curves[[i]]
@@ -809,6 +812,48 @@ threatened_abundance_by_site <- new_threatened %>%
 
 threatened_abundance_by_site
 ```
+
+
+##d. Dissimilarity indices
+```{r}
+# Create a site type vector
+site_types <- c(rep("Shade cacao", 12), 
+                rep("Sun cacao", 11), 
+                rep("Abandoned plantation", 4), 
+                rep("Remnant forest", 5))
+
+dissimilarity_matrix <- vegdist(new_mat, method = "bray")
+
+# NMDS - used by Mendenhall!
+nmds <- metaMDS(dissimilarity_matrix, k = 2) # stress of .08
+plot(nmds)
+
+# PCA - (if dissimilarities are not too high-dimensional)
+pca <- cmdscale(dissimilarity_matrix, k = 2)
+plot(pca[, 1], pca[, 2], xlab = "PC1", ylab = "PC2")
+
+# visualize and color by site type
+nmds_data <- as.data.frame(scores(nmds))
+nmds_data$site_type <- factor(site_types, 
+                              levels = c("Shade cacao", "Sun cacao", 
+                                         "Abandoned plantation", "Remnant forest"))
+
+# plot with ggplot, color by site type
+plot_nmds_bray <- ggplot(nmds_data, aes(x = NMDS1, y = NMDS2, 
+                                        color = site_type)) +
+  geom_point(size = 4) +
+  scale_color_manual(values = c("Shade cacao" = "#A6611A", 
+                               "Sun cacao" = "#DFC27D", 
+                               "Abandoned plantation" = "#80CDC1", 
+                               "Remnant forest" = "#018571")) +
+  theme_minimal() +
+  labs(color = "Land use type")
+
+plot_nmds_bray
+#ggsave("output/plot_nmds_bray.png", width = 10, height = 10)
+```
+
+
 
 
 ################################################################################

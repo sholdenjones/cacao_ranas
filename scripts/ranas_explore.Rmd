@@ -23,7 +23,7 @@ library(RColorBrewer)
 load data, create new df
 ```{r}
 # ranas data
-ranas <- read_csv("data/ranas_05_17_23.csv")
+ranas <- read_csv("data/processed_data/ranas_processed.csv")
 ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")
 
 ## need to change VC-V to VC-N, turns out this site is not actually abandoned
@@ -37,7 +37,7 @@ new <- ranas %>%
   filter(Recap == "N")
 
 # environmental data - change VC-V to VC-N
-environmental <- read_csv("data/environment_04_08_23.csv")
+environmental <- read_csv("data/processed_data/environmental_processed.csv")
 environmental$sample_date <- as.Date(environmental$Fecha, format = "%d/%m/%y")
 
 environmental <- environmental %>%
@@ -45,7 +45,7 @@ environmental <- environmental %>%
 environmental$Tipo[environmental$Sitio == "VC-N"] <- "N"
 
 # site_data - change VC-V to VC-N
-site_data <- read_csv("data/site_data.csv")
+site_data <- read_csv("data/processed_data/site_data_processed.csv")
 
 site_data <- site_data %>%
   mutate(Sitio = replace(Sitio, Sitio == "VC-V", "VC-N")) 
@@ -76,44 +76,44 @@ https://rpubs.com/an-bui/vegan-cheat-sheet
 
 There is no sig difference in sp richness b/ween landtypes
 ```{r}
-sppr <- specnumber(new_mat)
-
-sppr_aov <- aov(sppr ~ Tipo, data = site_type)
-summary(sppr_aov)
-# p-value of 0.805! no sig difference in sp richness b/ween landtypes
+# sppr <- specnumber(new_mat)
+# 
+# sppr_aov <- aov(sppr ~ Tipo, data = site_type)
+# summary(sppr_aov)
+# # p-value of 0.805! no sig difference in sp richness b/ween landtypes
 ```
 
 ## no sig difference in sp richness b/ween landtypes!
 
 Plot species richness b/ween landtypes
 ```{r}
-sppr_df <- sppr %>% 
-  enframe() %>% 
-  full_join(site_type, by = c("name" = "Sitio"))
-
-sppr_df$Tipo <- factor(sppr_df$Tipo,     # Reorder factor levels
-                         c("B", "V", "N", "C"))
-
-pal <- brewer.pal(4, "BrBG")
-
-plot_sppr <- ggplot(sppr_df, aes(x = Tipo, y = value, fill = Tipo)) +
-  geom_boxplot() +
-  scale_fill_manual(values = pal) +
-  scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
-                              "Abandoned \n (n = 4)", "Forest \n (n = 5)")
-    ) +
-  theme(legend.position = "none",
-        plot.background = element_rect("white"),
-        panel.background = element_rect("white"),
-        panel.grid = element_line("grey90"),
-        axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(color = "gray25"),
-        legend.text = element_text(size = 12)) + 
-  labs(x = "Ecological landtype",
-       y = "Confirmed species per site",
-       title = "Species richness")
-plot_sppr
+# sppr_df <- sppr %>% 
+#   enframe() %>% 
+#   full_join(site_type, by = c("name" = "Sitio"))
+# 
+# sppr_df$Tipo <- factor(sppr_df$Tipo,     # Reorder factor levels
+#                          c("B", "V", "N", "C"))
+# 
+# pal <- brewer.pal(4, "BrBG")
+# 
+# plot_sppr <- ggplot(sppr_df, aes(x = Tipo, y = value, fill = Tipo)) +
+#   geom_boxplot() +
+#   scale_fill_manual(values = pal) +
+#   scale_x_discrete(labels = c("Shade \n (n = 12)", "Sun \n (n = 11)", 
+#                               "Abandoned \n (n = 4)", "Forest \n (n = 5)")
+#     ) +
+#   theme(legend.position = "none",
+#         plot.background = element_rect("white"),
+#         panel.background = element_rect("white"),
+#         panel.grid = element_line("grey90"),
+#         axis.line = element_line("gray25"),
+#         axis.text = element_text(size = 12, color = "gray25"),
+#         axis.title = element_text(color = "gray25"),
+#         legend.text = element_text(size = 12)) + 
+#   labs(x = "Ecological landtype",
+#        y = "Confirmed species per site",
+#        title = "Species richness")
+# plot_sppr
 ```
 
 
@@ -322,9 +322,9 @@ sRare <- rarefy(new_mat, raremin)
 sRare
 
 # it won't allow us to override this to 22 (makes sense)
-# so will need to remove VC-C, GP-N from sites, via row position
+# so will need to remove VC-C via row position
 new_mat_abundant <- new_mat %>%
-  filter(!row_number() %in% c(19, 31))
+  filter(!row_number() %in% c(31))
 
 # let's see what happens with this as our raremin, and only using 30/32 sites
 raremin_abundant <- min(rowSums(new_mat_abundant))
