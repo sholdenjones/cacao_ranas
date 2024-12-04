@@ -97,6 +97,14 @@ data.shade=read.table("data/processed_data/SHADE.txt", head= T)
 data.sun=read.table("data/processed_data/SUN.txt", head= T)
 data.for=read.table("data/processed_data/FOREST.txt", head= T)
 data.aba=read.table("data/processed_data/ABANDON.txt", head= T)
+
+trans_richness_local_no_priach <- read_csv(
+  "data/processed_data/trans_richness_local_no_priach_processed.csv")
+trans_richness_local_no_priach <- as_tibble(trans_richness_local_no_priach)
+
+site_richness_local_no_priach <- read_csv(
+  "data/processed_data/site_richness_local_no_priach_processed.csv")
+site_richness_local_no_priach <- as_tibble(site_richness_local_no_priach)
 ```
 
 define a consistent palet, labels, and theme to be used in figures
@@ -853,8 +861,6 @@ plot_nmds_bray <- ggplot(nmds_data, aes(x = NMDS1, y = NMDS2,
 plot_nmds_bray
 #ggsave("output/plot_nmds_bray.png", width = 10, height = 10)
 ```
-
-
 
 
 ################################################################################
@@ -1820,7 +1826,6 @@ testZeroInflation(simulationOutput) # not zero inflated
 ```
 
 
-
 ################################################################################
 
 
@@ -1886,10 +1891,103 @@ priach_percentage_kruskal
 ```
 
 
+################################################################################
 
 
+#7. Analyses without P. achatinus
 
 
+Quickly run subset of analyses to see if removing priach changes findings
+- is priach driving abundance and (lack of) species richness patterns?
 
+comparing richness and abundance of active cacao sites
+```{r}
+# richness in cacao no priach
+test_plot <- ggplot(site_richness_local_no_priach, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_boxplot() +
+ # scale_fill_manual(values = pal) + # order needs to match factor levels above
+  #scale_x_discrete(labels = c(site_labels)) +
+  my_theme() + 
+  labs(x = "Land use type",
+       y = "Non priach Species richness")
+test_plot
 
+# abundance in cacao no priach
+test_2 <- ggplot(site_richness_local_no_priach, 
+                                     aes(x = Tipo, y = num_ind, fill = Tipo)) +
+  geom_boxplot() +
+  my_theme() + 
+  labs(x = "Land use type",
+       y = "Num non priach ind")
+test_2
+```
 
+doesn't appear to be any change in biplot
+```{r}
+# Define specific colors
+colors <- c("#DFC27D", "#A6611A")
+names(colors) <- levels(as.factor(site_richness_local_no_priach$Tipo))
+
+# Mapping site type abbreviations to full names
+site_type_names <- c(C = "Sun cacao", N = "Shade cacao")
+
+# Map colors to points based on Tipo
+point_colors <- colors[as.factor(site_richness_local_no_priach$Tipo)]
+
+# Extract PCA components and loadings
+pca_scores <- pca_fit$x  # Observation scores
+pca_loadings <- pca_fit$rotation  # Variable loadings
+
+# Create the biplot
+plot(pca_scores[, 1], pca_scores[, 2], 
+     col = point_colors, 
+     pch = 19, 
+     xlab = "PC1", 
+     ylab = "PC2", 
+     main = "Customized PCA Biplot",
+     xlim = c(min(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2, 
+              max(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2),
+     ylim = c(min(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2, 
+              max(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2))
+
+# Add arrows for variable loadings
+arrows(0, 0, pca_loadings[, 1] * max(abs(pca_scores[, 1])), 
+       pca_loadings[, 2] * max(abs(pca_scores[, 2])), 
+       length = 0.1, col = "black")
+
+# Add variable labels
+text(pca_loadings[, 1] * max(abs(pca_scores[, 1])), 
+     pca_loadings[, 2] * max(abs(pca_scores[, 2])), 
+     labels = rownames(pca_loadings), 
+     col = "black", cex = 0.8)
+
+# Add legend
+legend("bottomright", 
+       legend = c("Shade", "Sun"), 
+       col = c("#A6611A", "#DFC27D"), 
+       pch = 19)
+```
+
+glmer of site richness without priach shows no difference
+```{r}
+mod_richness_full_no_priach <- glm(no_species ~ site_mean_CC_scaled +
+                                    site_mean_veg_scaled +
+                                    water_dist_scaled +
+                                    forest_cover_400_scaled +
+                                    Elevation,
+                                    data = site_richness_local_no_priach,
+                                    family = poisson())
+
+summary(mod_richness_full_no_priach) # nothing sig - AIC 101.11
+vif(mod_richness_full_no_priach) # VIF not concern
+check_overdispersion(mod_richness_full_no_priach) # not over dispersed
+
+# assess model fit using dHARMA - no issues!
+simulationOutput <- simulateResiduals(fittedModel = mod_richness_full_no_priach)
+plot(simulationOutput)
+
+testDispersion(simulationOutput) # not over dispersed
+testZeroInflation(simulationOutput) # not zero inflated
+############# FULL MODEL - nothing sig - AIC 103.5 ##############
+```
