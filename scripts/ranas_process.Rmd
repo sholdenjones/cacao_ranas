@@ -466,15 +466,6 @@ richness_by_site_year <- new %>%
             no_species = n_distinct(`Final_ID`))
 ```
 
-
-
-
-
-
-
-## WORKING
-
-
 # richness_by_site_no_priach
 - summarize richness at each site (across both seasons)
 ```{r}
@@ -483,9 +474,6 @@ richness_by_site_no_priach <- new_no_priach %>%
   summarize(species = list(sort(unique(`Final_ID`))),
             no_species = n_distinct(`Final_ID`))
 ```
-
-
-
 
 # site_richness_local_no_priach
 - calculate richness at each site across both seasons - no priach!
@@ -533,11 +521,6 @@ site_richness_local_no_priach <- site_richness_local_no_priach %>%
 # filepath <- file.path(data_dir, filename)
 # write_csv(site_richness_local_no_priach, file = filepath)
 ```
-
-
-
-
-
 
 # local_by_site_year
 - calculate site-level averages for local vars for each season (year)
@@ -596,7 +579,6 @@ site_richness_local_no_priach <- site_richness_local_no_priach %>%
 # write_csv(site_richness_year_local, file = filepath)
 ```
 
-
 # trans_richness_local
 ```{r}
 # use ranas instead of new b/c ind may move between transects
@@ -625,9 +607,43 @@ trans_richness_local %>%
 
 # remove unnecessary columns, make sure variables are scaled properly
 
-filename <- "trans_richness_local_processed.csv"
-filepath <- file.path(data_dir, filename)
-write_csv(trans_richness_local, file = filepath)
+# filename <- "trans_richness_local_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(trans_richness_local, file = filepath)
+```
+
+# trans_richness_local_no_priach
+```{r}
+# use ranas instead of new b/c ind may move between transects
+trans_richness_no_priach <- ranas %>%
+  filter(!Final_ID == 'priach') %>%
+  group_by(Sitio, Transecto) %>% # add Fecha for each transect visit 
+  summarize(num_species = n_distinct(Final_ID))
+
+# as currently constructed, this sums richness for each transect on each date 
+trans_richness_local_no_priach <- left_join(trans_richness_no_priach, 
+                                            local_by_trans,
+                                 by = c("Sitio", "Transecto"))
+
+trans_abundance_no_priach <- ranas %>%
+  filter(!Final_ID == 'priach') %>%
+  group_by(Sitio, Transecto) %>% # add Fecha for each transect visit 
+  summarize(num_ind = n_distinct(Numero))
+
+# add to above df to make downstream model creation easier
+trans_richness_local_no_priach <- left_join(trans_abundance_no_priach,
+                                            trans_richness_local_no_priach,
+                                 by = c("Sitio", "Transecto")) %>%
+  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+
+# not every transect represented! could be an issue later
+trans_richness_local_no_priach %>%
+  group_by(Sitio, Transecto) %>%
+  summarize()
+
+# filename <- "trans_richness_local_no_priach_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(trans_richness_local_no_priach, file = filepath)
 ```
 
 # landscape_by_site
