@@ -105,6 +105,9 @@ trans_richness_local_no_priach <- as_tibble(trans_richness_local_no_priach)
 site_richness_local_no_priach <- read_csv(
   "data/processed_data/site_richness_local_no_priach_processed.csv")
 site_richness_local_no_priach <- as_tibble(site_richness_local_no_priach)
+
+MATFROGH <- read_csv("data/processed_data/MATFROGH.csv")
+MATFROGH <- as_tibble(MATFROGH)
 ```
 
 define a consistent palet, labels, and theme to be used in figures
@@ -813,7 +816,124 @@ plot_rare_by_type
 ```
 
 
-##c. Endangered species
+##c. Extrapolation
+
+use iNEXT to make rarefaction curves of each site type
+- this figure doesn't have extrapolation - vegan is doing the same thing above
+```{r}
+#load matrix
+attach(MATFROGH)
+data <- MATFROGH
+
+# Check the structure of your matrix
+str(MATFROGH)
+
+# Ensure Type is a factor
+MATFROGH$Type <- as.factor(MATFROGH$Type)
+
+# Summarize abundances for each Type and split into a list
+abundance_list <- MATFROGH %>%
+  group_by(Type) %>%
+  summarise(across(where(is.numeric), sum)) %>%  # Summarize numeric columns
+  split(.$Type)  # Split the summarized data by Type
+
+# Remove the Type column within each list element
+abundance_list <- lapply(abundance_list, function(x) x[, -1])  # Drop 'Type' column
+
+# Summarize abundances for each Type and split into numeric vectors
+abundance_list <- MATFROGH %>%
+  group_by(Type) %>%
+  summarise(across(where(is.numeric), sum)) %>%
+  split(.$Type)  # Split by Type
+
+# Convert each element of the list to a numeric vector
+abundance_list <- lapply(abundance_list, 
+                         function(x) as.numeric(x[, -1]))  # Drop the 'Type' column
+
+# Check the structure of abundance_list
+str(abundance_list)
+
+###RAREFACTION###
+rare_results <- iNEXT(abundance_list, q = 0, datatype = "abundance")
+
+rare_results
+# Plot the rarefaction curves
+
+ggiNEXT(rare_results, type = 1) +
+  ggtitle("Rarefaction Curves by Habitat Type") +
+  xlab("Sample Size") +
+  ylab("Species Richness")
+```
+
+## WORKING
+
+use iNEXT to extrapolate rarefaction curve to see what expected values would be
+- visually compare extrapolated rarefied species richness across landuse types
+- calculate extrapolated rarefied species richness
+```{r}
+###VISUALIZATION###
+# Perform rarefaction analysis with extended extrapolation
+rare_results_extended <- iNEXT(abundance_list, q = 0, 
+                               datatype = "abundance", endpoint = 2000)
+
+# Plot rarefaction/extrapolation curves with extended extrapolation
+ggiNEXT(rare_results_extended, type = 1) +
+  ggtitle("Extended Rarefaction and Extrapolation Curves by Habitat Type") +
+  xlab("Sample Size") +
+  ylab("Species Richness")
+
+
+
+extrapolated_rich_plot <- ggiNEXT(rare_results_extended, type = 1) +
+  scale_x_discrete(labels = c(site_labels)) +
+  my_theme() +
+  labs(x = "Sample size",
+       y = "Rarefied species richness")
+
+extrapolated_rich_plot
+
+###############################################################################
+### THIS IS SO SO SO CLOSE! JUST NEED TO CHANGE DISPLAY OF VALUES!!!!!
+
+# working:
+ggiNEXT(rare_results_extended, type = 1) +
+  ggtitle("Extended Rarefaction and Extrapolation Curves by Habitat Type") +
+  xlab("Sample Size") +
+  ylab("Species Richness") +
+  theme_minimal() +
+  scale_color_manual(values = c("ABANDON" = "#80CDC1", 
+                                "FOREST" = "#018571", 
+                                "SHADE" = "#A6611A",
+                                "SUN" = "#DFC27D")) 
+
+###############################################################################
+
+# Extract the iNextEst data frame
+extrapolated_richness <- rare_results_extended$iNextEst
+
+# Check the structure
+str(extrapolated_richness)
+
+# View the data
+head(extrapolated_richness)
+
+# Extract size-based extrapolated richness values
+extrapolated_summary <- extrapolated_richness$size_based %>%
+  filter(Method == "Extrapolation", m == 2000) %>%
+  select(Assemblage, m, qD, qD.LCL, qD.UCL)
+
+# Print the summary
+print(extrapolated_summary)
+```
+
+
+
+
+
+
+
+
+##d. Endangered species
 ```{r}
 threatened_abundance_by_site <- new_threatened %>%
   group_by(Tipo, Final_ID) %>%
@@ -823,7 +943,7 @@ threatened_abundance_by_site
 ```
 
 
-##d. Dissimilarity indices
+##e. Dissimilarity indices
 ```{r}
 # Create a site type vector
 site_types <- c(rep("Shade cacao", 12), 
@@ -1991,12 +2111,4 @@ testDispersion(simulationOutput) # not over dispersed
 testZeroInflation(simulationOutput) # not zero inflated
 ############# FULL MODEL - nothing sig - AIC 103.5 ##############
 ```
-
-
-
-
-## INCORPORATE FVE ANALYSES
-
-
-
 
