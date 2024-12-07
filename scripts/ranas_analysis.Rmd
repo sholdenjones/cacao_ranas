@@ -1099,7 +1099,7 @@ tran_pca_plot <- ggplot() +
   )
 
 tran_pca_plot
-ggsave("output/tran_pca_plot.png", width = 10, height = 10)
+#ggsave("output/tran_pca_plot.png", width = 10, height = 10)
 ```
 
 Plot first two axes of PCA, no variable loadings
