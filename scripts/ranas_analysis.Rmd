@@ -1991,3 +1991,12 @@ testDispersion(simulationOutput) # not over dispersed
 testZeroInflation(simulationOutput) # not zero inflated
 ############# FULL MODEL - nothing sig - AIC 103.5 ##############
 ```
+
+
+
+
+## INCORPORATE FVE ANALYSES
+
+
+
+
