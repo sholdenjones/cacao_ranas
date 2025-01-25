@@ -208,9 +208,21 @@ plot_richness_by_site_cacao <- ggplot(richness_by_site_cacao,
   my_theme() + 
   labs(x = "Cacao type",
        y = "Species richness")
-
 plot_richness_by_site_cacao
 #ggsave("output/plot_richness_by_site_cacao.png", width = 10, height = 10)
+
+# below using ggarrange to align multiple figs - don't want to repeat x axes labels
+plot_richness_by_site_cacao_arrange <- ggplot(richness_by_site_cacao, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + 
+  scale_y_continuous(limits = c(2, 10)) +
+  my_theme() + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(y = "Species richness")
+plot_richness_by_site_cacao_arrange
 ```
 
 
