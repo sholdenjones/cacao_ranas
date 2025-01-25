@@ -217,9 +217,10 @@ plot_richness_by_site_cacao_arrange <- ggplot(richness_by_site_cacao,
   geom_boxplot() +
   scale_fill_manual(values = pal) + 
   scale_y_continuous(limits = c(2, 10)) +
+  scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
   theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
+        #axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
   labs(y = "Richness")
 plot_richness_by_site_cacao_arrange
@@ -298,7 +299,7 @@ plot_shannon_by_site_cacao_arrange <- ggplot(shannon_by_site_cacao,
   geom_boxplot() +
   scale_fill_manual(values = pal) + 
   scale_x_discrete(labels = c(site_labels)) +
-  scale_y_continuous(limits = c(0, 1.75)) +
+  scale_y_continuous(limits = c(0, 1.6)) +
   my_theme() + 
   labs(x = "Cacao type",
        y = "Shannon index")
@@ -374,9 +375,10 @@ plot_abundance_by_site_cacao_arrange <- ggplot(abundance_by_site_cacao,
   geom_boxplot() +
   scale_fill_manual(values = pal) + 
   scale_y_continuous(limits = c(0, 51)) +
+  scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
   theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
+        #axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
   labs(y = "Abundance")
 plot_abundance_by_site_cacao_arrange
@@ -493,16 +495,16 @@ plot_richness_by_site_inactive <- ggplot(richness_by_site_inactive,
 plot_richness_by_site_inactive
 #ggsave("output/plot_richness_by_site_inactive.png", width = 10, height = 10)
 
-
 # below using ggarrange to align multiple figs - don't want to repeat x axes labels
 plot_richness_by_site_inactive_arrange <- ggplot(richness_by_site_inactive, 
                                      aes(x = Tipo, y = no_species, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = c("#80CDC1", "#018571")) + 
   scale_y_continuous(limits = c(2, 10)) +
+  scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
   theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
+       # axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         axis.title.y = element_blank(), #,
        # axis.text.y = element_blank() ,
@@ -564,7 +566,7 @@ plot_shannon_by_site_inactive_arrange <- ggplot(shannon_by_site_inactive,
   geom_boxplot() +
   scale_fill_manual(values = c("#80CDC1", "#018571")) + 
   scale_x_discrete(labels = c(site_labels)) +
-  scale_y_continuous(limits = c(0, 1.75)) +
+  scale_y_continuous(limits = c(0, 1.6)) +
   my_theme() + 
   labs(x = "Reference type") +
   theme(axis.title.y = element_blank(),
@@ -610,7 +612,6 @@ plot_abundance_by_site_inactive <- ggplot(abundance_by_site_inactive,
   my_theme() + 
   labs(x = "Reference type",
        y = "Amphibian abundance")
-
 plot_abundance_by_site_inactive
 #ggsave("output/plot_abundance_by_site_inactive.png", width = 10, height = 10)
 
@@ -620,9 +621,10 @@ plot_abundance_by_site_inactive_arrange <- ggplot(abundance_by_site_inactive,
   geom_boxplot() +
   scale_fill_manual(values = c("#80CDC1", "#018571")) + 
   scale_y_continuous(limits = c(0, 51)) +
+  scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
   theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
+        #axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         axis.title.y = element_blank(),
         #axis.text.y = element_blank(),
@@ -654,18 +656,17 @@ compare_abun_rich_shannon <- ggarrange(
   plot_abundance_by_site_cacao_arrange + rremove("xlab"), 
   plot_abundance_by_site_inactive_arrange + rremove("xlab") + rremove("ylab"),
   plot_richness_by_site_cacao_arrange + rremove("xlab"), 
-  plot_richness_by_site_inactive_arrange + rremove("xlab") + rremove("ylab"),
+  plot_richness_by_site_inactive_arrange + rremove("ylab"),
   plot_shannon_by_site_cacao_arrange,
   plot_shannon_by_site_inactive_arrange + rremove("ylab"),
   labels = c("A", "B", "C", "D", "E", "F"),
   ncol = 2, nrow = 3,
-  label.x = 0.01, #.01
+  label.x = 0.015, #.01
   label.y = 0.13  #.13
 )
 compare_abun_rich_shannon
 
-# CHANGE TEST WHEN DONE:
-#ggsave("output/compare_abun_rich_shannon_test.png", width = 10, height = 10)
+ggsave("output/compare_abun_rich_shannon_draft_5.png", width = 10, height = 10)
 ```
 
 
