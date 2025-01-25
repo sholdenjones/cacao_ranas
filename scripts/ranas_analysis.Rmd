@@ -149,9 +149,6 @@ check_overdispersion <- function(model) {
 ```
 
 
-################################################################################
-
-
 #1. Compare abundance, richness and Shannon diversity of shade and sun
 
 ##a. Richness
@@ -345,9 +342,6 @@ plot_abundance_by_site_cacao <- ggplot(abundance_by_site_cacao,
 plot_abundance_by_site_cacao
 #ggsave("output/plot_abundance_by_site_cacao.png", width = 10, height = 10)
 ```
-
-
-################################################################################
 
 
 #2.Compare abundance, richness and Shannon diversity of forest and abandoned plantations
@@ -597,9 +591,6 @@ compare_abun_rich_shannon <- ggarrange(
 compare_abun_rich_shannon
 #ggsave("output/compare_abun_rich_shannon.png", width = 10, height = 10)
 ```
-
-
-################################################################################
 
 
 #3. Contextualize cacao sites against reference sites
@@ -983,9 +974,6 @@ plot_nmds_bray
 ```
 
 
-################################################################################
-
-
 #4. Multiple regression for drivers of amphibian abundance within plantations
 
 Collected a series of local (quad-level), landscape (site-level) variables
@@ -1366,9 +1354,6 @@ the best fitting candidate model for amphibian abundance contains:
 - local canopy cover as a significant positive fixed effect
 - surrounding landscape forest cover as a fixed effect
 - Site and local herbaceous vegetation cover as random effects
-
-
-################################################################################
 
 
 #5. Multiple regression for drivers of amphibian richness in plantations
@@ -1946,9 +1931,6 @@ testZeroInflation(simulationOutput) # not zero inflated
 ```
 
 
-################################################################################
-
-
 #6. P. achatinus exclusive analysis
 
 ##a. Priach percentage visualization
@@ -2009,9 +1991,6 @@ priach_percentage_kruskal <- kruskal.test(priach_percentage ~ Tipo,
 priach_percentage_kruskal
 # No significant difference in priach percentage between landuse types
 ```
-
-
-################################################################################
 
 
 #7. Analyses without P. achatinus
