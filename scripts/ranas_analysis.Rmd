@@ -123,9 +123,9 @@ my_theme <- function() {
         panel.background = element_rect("white"),
         panel.grid = element_line("grey90"),
         axis.line = element_line("gray25"),
-        axis.text = element_text(size = 12, color = "gray25"),
-        axis.title = element_text(size = 16, color = "gray25"),
-        legend.text = element_text(size = 12))
+        axis.text = element_text(size = 16, color = "gray25"),
+        axis.title = element_text(size = 22, color = "gray25"),
+        legend.text = element_text(size = 16))
 }
 ```
 
@@ -211,7 +211,7 @@ plot_richness_by_site_cacao <- ggplot(richness_by_site_cacao,
 plot_richness_by_site_cacao
 #ggsave("output/plot_richness_by_site_cacao.png", width = 10, height = 10)
 
-# below using ggarrange to align multiple figs - don't want to repeat x axes labels
+# below using ggarrange to align multiple figs - don't want to repeat axis labels
 plot_richness_by_site_cacao_arrange <- ggplot(richness_by_site_cacao, 
                                      aes(x = Tipo, y = no_species, fill = Tipo)) +
   geom_boxplot() +
@@ -224,7 +224,6 @@ plot_richness_by_site_cacao_arrange <- ggplot(richness_by_site_cacao,
   labs(y = "Species richness")
 plot_richness_by_site_cacao_arrange
 ```
-
 
 
 ##b. Shannon diversity
@@ -280,7 +279,8 @@ shannon_by_site_cacao <- diversity_by_site %>%
 
 # plot Shannon diversity across landuse types using palet, my_theme
 plot_shannon_by_site_cacao <- ggplot(shannon_by_site_cacao, 
-                                     aes(x = Tipo, y = Shannon_Index, fill = Tipo)) +
+                                     aes(x = Tipo, y = Shannon_Index, 
+                                         fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) + # order needs to match factor levels above
   scale_x_discrete(labels = c(site_labels)) +
@@ -290,6 +290,20 @@ plot_shannon_by_site_cacao <- ggplot(shannon_by_site_cacao,
 
 plot_shannon_by_site_cacao
 #ggsave("output/plot_shannon_by_site_cacao.png", width = 10, height = 10)
+
+# below using ggarrange to align multiple figs
+plot_shannon_by_site_cacao_arrange <- ggplot(shannon_by_site_cacao, 
+                                     aes(x = Tipo, y = Shannon_Index, 
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + 
+  scale_x_discrete(labels = c(site_labels)) +
+  scale_y_continuous(limits = c(0, 1.75)) +
+  my_theme() + 
+  labs(x = "Cacao type",
+       y = "Species richness")
+
+plot_shannon_by_site_cacao_arrange
 ```
 
 
@@ -353,12 +367,25 @@ plot_abundance_by_site_cacao <- ggplot(abundance_by_site_cacao,
 
 plot_abundance_by_site_cacao
 #ggsave("output/plot_abundance_by_site_cacao.png", width = 10, height = 10)
+
+# below using ggarrange to align multiple figs - don't want to repeat axis labels
+plot_abundance_by_site_cacao_arrange <- ggplot(abundance_by_site_cacao, 
+                                     aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = pal) + 
+  scale_y_continuous(limits = c(0, 51)) +
+  my_theme() + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(y = "Amphibian abundance")
+plot_abundance_by_site_cacao_arrange
 ```
 
 
 #2.Compare abundance, richness and Shannon diversity of forest and abandoned plantations
 
-##a. NMDS ordination plot
+##a. NMDS ordination plot - this should go below with contextualize??!
 - using new_mat df, species-by-site abundance matrix
 - draw boundaries of landuse types
 - possible that this figure doesn't ultimately get included in MS
@@ -469,6 +496,22 @@ plot_richness_by_site_inactive <- ggplot(richness_by_site_inactive,
 
 plot_richness_by_site_inactive
 #ggsave("output/plot_richness_by_site_inactive.png", width = 10, height = 10)
+
+
+# below using ggarrange to align multiple figs - don't want to repeat x axes labels
+plot_richness_by_site_inactive_arrange <- ggplot(richness_by_site_inactive, 
+                                     aes(x = Tipo, y = no_species, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#80CDC1", "#018571")) + 
+  scale_y_continuous(limits = c(2, 10)) +
+  my_theme() + 
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+plot_richness_by_site_inactive_arrange
 ```
 
 
@@ -477,10 +520,6 @@ Compare Shannon diversity of abandoned plantations and remnant forest
 
 two-sample t-test
 ```{r}
-### what happens if remove FLL-B dud site?
-# diversity_by_site <- diversity_by_site %>%
-#   filter(!Sitio == 'FLL-B')
-
 # Two sample t-test for shannon diversity:
 
 # create Shannon diversity vector for each type
@@ -520,16 +559,27 @@ plot_shannon_by_site_inactive <- ggplot(shannon_by_site_inactive,
 
 plot_shannon_by_site_inactive
 #ggsave("output/plot_shannon_by_site_inactive.png", width = 10, height = 10)
+
+# below using ggarrange to align multiple figs - here don't want y axis legends
+plot_shannon_by_site_inactive_arrange <- ggplot(shannon_by_site_inactive, 
+                                     aes(x = Tipo, y = Shannon_Index, 
+                                         fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#80CDC1", "#018571")) + 
+  scale_x_discrete(labels = c(site_labels)) +
+  scale_y_continuous(limits = c(0, 1.75)) +
+  my_theme() + 
+  labs(x = "Cacao type") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+plot_shannon_by_site_inactive_arrange
 ```
 
 
 ##d. Abundance
 Same process as above - use abundance_by_site for two sample t-test
 ```{r}
-# ### what happens if remove FLL-B dud site?
-# abundance_by_site <- abundance_by_site %>%
-#   filter(!Sitio == 'FLL-B')
-
 # create species abundance vector for each cacao type
 abun_abandon <- abundance_by_site %>%
   filter(Tipo == 'V') %>%
@@ -565,6 +615,21 @@ plot_abundance_by_site_inactive <- ggplot(abundance_by_site_inactive,
 
 plot_abundance_by_site_inactive
 #ggsave("output/plot_abundance_by_site_inactive.png", width = 10, height = 10)
+
+# below using ggarrange to align multiple figs, don't want to repeat axes
+plot_abundance_by_site_inactive_arrange <- ggplot(abundance_by_site_inactive, 
+                                     aes(x = Tipo, y = n, fill = Tipo)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#80CDC1", "#018571")) + 
+  scale_y_continuous(limits = c(0, 51)) +
+  my_theme() + 
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+plot_abundance_by_site_inactive_arrange
 ```
 
 
@@ -588,18 +653,17 @@ compare_rich_shannon
 
 # abundance, richness and shannon diversity
 compare_abun_rich_shannon <- ggarrange(
-  plot_abundance_by_site_cacao + rremove("xlab"), 
-  plot_abundance_by_site_inactive + rremove("xlab") + rremove("ylab"),
-  plot_richness_by_site_cacao + rremove("xlab"), 
-  plot_richness_by_site_inactive + rremove("xlab") + rremove("ylab"),
-  plot_shannon_by_site_cacao,
-  plot_shannon_by_site_inactive + rremove("ylab"),
+  plot_abundance_by_site_cacao_arrange + rremove("xlab"), 
+  plot_abundance_by_site_inactive_arrange + rremove("xlab") + rremove("ylab"),
+  plot_richness_by_site_cacao_arrange + rremove("xlab"), 
+  plot_richness_by_site_inactive_arrange + rremove("xlab") + rremove("ylab"),
+  plot_shannon_by_site_cacao_arrange,
+  plot_shannon_by_site_inactive_arrange + rremove("ylab"),
   labels = c("A", "B", "C", "D", "E", "F"),
   ncol = 2, nrow = 3,
-  label.x = 0.01, 
-  label.y = 0.13 
+  label.x = 0.94, #.01
+  label.y = 0.93  #.13
 )
-
 compare_abun_rich_shannon
 #ggsave("output/compare_abun_rich_shannon.png", width = 10, height = 10)
 ```
