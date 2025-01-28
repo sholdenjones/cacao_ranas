@@ -2036,10 +2036,9 @@ plot_priach_by_site <- ggplot(priach_by_site,
   my_theme() + 
   labs(x = "Land use type",
        y = "P. achatinus percentage of total captures")
-
 plot_priach_by_site
 
-ggsave("output/plot_priach_by_site.png", width = 10, height = 10)
+#ggsave("output/plot_priach_by_site.png", width = 10, height = 10)
 ```
 
 
