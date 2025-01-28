@@ -1108,7 +1108,6 @@ plot(pca_scores[, 1], pca_scores[, 2],
      pch = 19, 
      xlab = "PC1", 
      ylab = "PC2", 
-     main = "Customized PCA Biplot",
      xlim = c(min(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2, 
               max(c(pca_scores[, 1], pca_loadings[, 1])) * 1.2),
      ylim = c(min(c(pca_scores[, 2], pca_loadings[, 2])) * 1.2, 
@@ -1162,12 +1161,11 @@ tran_pca_plot <- ggplot() +
   labs(x = "PC1", y = "PC2", color = "Cacao type") +
   theme_minimal() +
   theme(
-    axis.title = element_text(size = 16),
-    axis.text = element_text(size = 14),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 14),
+    axis.title = element_text(size = 22),
+    axis.text = element_text(size = 16),
+    legend.title = element_text(size = 22),
+    legend.text = element_text(size = 16),
   )
-
 tran_pca_plot
 #ggsave("output/tran_pca_plot.png", width = 10, height = 10)
 ```
@@ -1545,10 +1543,10 @@ site_pca_plot <- ggplot() +
   labs(x = "PC1", y = "PC2", color = "Cacao type") +
   theme_minimal() +
   theme(
-    axis.title = element_text(size = 16),
-    axis.text = element_text(size = 14),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 14),
+    axis.title = element_text(size = 22),
+    axis.text = element_text(size = 16),
+    legend.title = element_text(size = 22),
+    legend.text = element_text(size = 16),
   )
 
 site_pca_plot
