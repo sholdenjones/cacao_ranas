@@ -2170,3 +2170,21 @@ testZeroInflation(simulationOutput) # not zero inflated
 ############# FULL MODEL - nothing sig - AIC 103.5 ##############
 ```
 
+
+# 8. Species list
+
+```{r}
+new %>%
+  group_by(Final_ID) %>%
+  summarize(n = n())
+
+new %>%
+  group_by(Final_ID, Tipo) %>%
+  summarize(n = n())
+```
+
+
+
+
+
+

@@ -22,7 +22,7 @@ data_dir <- file.path(".", "data/processed_data")
 ranas - individual occurrence data across all sites
 ```{r}
 # read raw ranas data
-ranas <- read_csv("data/raw_data/ranas_04_05_24.csv")
+ranas <- read_csv("data/raw_data/ranas_01_28_25.csv")
 
 # format dates
 ranas$sample_date <- as.Date(ranas$Fecha, format = "%d/%m/%y")

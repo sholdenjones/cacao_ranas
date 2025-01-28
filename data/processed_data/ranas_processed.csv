@@ -446,7 +446,7 @@ FLL-V,Laguna,V,05/10/22,3,B,382,priach,priach,priach,priach,0020,4.1,Y,Y,N,382,N
 FLL-V,Laguna,V,05/10/22,3,C,383,priach,priach,priach,priach,0020,2.4,Y,Y,N,383,NA,NA,2022-10-05,2022
 FLL-V,Laguna,V,05/10/22,3,C,384,barpul,barpul,barpul,barpul,0020,2.6,Y,Y,N,367,NA,NA,2022-10-05,2022
 FLL-V,Laguna,V,05/10/22,4,A,385,barpul,barpul,barpul,barpul,0020,2.7,Y,Y,N,367,NA,NA,2022-10-05,2022
-FLL-V,Laguna,V,05/10/22,4,A,386,scisug,scisug,scisig,scisig,0020,4.4,Y,Y,N,386,NA,Scinax sugillatus?,2022-10-05,2022
+FLL-V,Laguna,V,05/10/22,4,A,386,scisug,scisug,scisug,scisug,0020,4.4,Y,Y,N,386,NA,Scinax sugillatus?,2022-10-05,2022
 FLL-V,Laguna,V,05/10/22,4,B,387,priach,priach,priach,priach,0020,4,Y,Y,N,345,NA,NA,2022-10-05,2022
 FLL-B,Laguna,B,05/10/22,1,D,388,priach,priach,priach,priach,0005,2.8,Y,Y,N,388,NA,NA,2022-10-05,2022
 FLL-B,Laguna,B,05/10/22,1,D,389,priach,priach,priach,priach,0005,3,Y,Y,N,389,NA,NA,2022-10-05,2022
@@ -1068,6 +1068,7 @@ LG-C,Aniseto-Caucho,C,19/11/22,4,D,872,priach,priach,priach,priach,0003,2.1,Y,Y,
 LG-C,Aniseto-Caucho,C,19/11/22,4,D,873,boapel,boapel,boapel,boapel,0003,5.5,Y,Y,N,873,NA,NA,2022-11-19,2022
 GP-C,Aniseto-Caucho,C,21/11/22,1,B,874,priach,priach,priach,priach,4000,2.9,Y,Y,N,874,NA,NA,2022-11-21,2022
 GP-C,Aniseto-Caucho,C,21/11/22,1,C,875,priach,priach,priach,priach,4000,2.2,Y,Y,N,875,NA,NA,2022-11-21,2022
+GP-C,Aniseto-Caucho,C,21/11/22,2,A,876,pri?,prisub,priaffsub?,prisub,4000,2.5,Y,Y,N,876,NA,"confirmado Pristimantis subsigillatus por sequencias - rev JMG - liberado, igual a otro colectado",2022-11-21,2022
 GP-C,Aniseto-Caucho,C,21/11/22,2,A,877,priach,priach,priach,priach,4000,3.6,Y,Y,N,877,NA,NA,2022-11-21,2022
 GP-C,Aniseto-Caucho,C,21/11/22,2,B,878,priach,priach,priach,priach,4000,3.6,Y,Y,N,874,NA,NA,2022-11-21,2022
 GP-C,Aniseto-Caucho,C,21/11/22,2,C,879,priach,priach,priach,priach,4000,2.8,Y,Y,N,879,NA,NA,2022-11-21,2022
@@ -1186,12 +1187,14 @@ PM-N,Aniseto-Caucho,N,26/11/22,3,A,973,boapel,boapel,priach,priach,0005,5,Y,Y,N,
 PM-N,Aniseto-Caucho,N,26/11/22,3,C,R208,priach,priach,priach,priach,0005,NA,N,N,Y,967,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,3,C,974,priach,priach,priach,priach,0005,2.2,Y,Y,N,968,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,3,C,975,priach,priach,priach,priach,0005,3.5,Y,Y,N,967,NA,NA,2022-11-26,2022
+PM-N,Aniseto-Caucho,N,26/11/22,3,D,976,pri?,pri?,NA,prilut,0005,1.6,Y,Y,N,976,NA,Confirmado como Pristimantis luteolateralis - No hay foto para ID,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,3,D,977,prisub,prisub,prisub,prisub,0005,2.5,Y,Y,N,977,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,3,D,R209,priach,priach,priach,priach,0005,NA,N,N,Y,968,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,4,A,978,priach,priach,priach,priach,0005,2.3,Y,Y,N,967,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,4,A,979,priach,priach,priach,priach,0005,2.5,Y,Y,N,967,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,4,B,980,priach,priach,priach,priach,0005,2.5,Y,Y,N,968,NA,NA,2022-11-26,2022
 PM-N,Aniseto-Caucho,N,26/11/22,4,D,981,priach,priach,priach,priach,0005,3,Y,Y,N,967,NA,NA,2022-11-26,2022
+PM-N,Aniseto-Caucho,N,26/11/22,4,D,982,pri?,pri?,NA,prilut,0005,1.5,Y,Y,N,976,NA,Confirmado como Pristimantis luteolateralis - No hay foto para ID,2022-11-26,2022
 PM-C,Aniseto-Caucho,C,26/11/22,1,B,R210,priach,priach,priach,priach,0020,NA,N,N,Y,967,NA,NA,2022-11-26,2022
 PM-C,Aniseto-Caucho,C,26/11/22,1,C,983,priach,priach,priach,priach,0020,2.2,Y,Y,N,967,NA,NA,2022-11-26,2022
 PM-C,Aniseto-Caucho,C,26/11/22,1,C,984,priach,priach,priach,priach,0020,2.7,Y,Y,N,967,NA,NA,2022-11-26,2022
@@ -1334,6 +1337,7 @@ FCAT-B3,Aniseto-Caucho,B,01/12/22,4,D,1098,priach,priach,priach,priach,2000,3.5,
 VC-N,Aniseto-Caucho,N,01/12/22,1,A,1099,priach,priach,priach,priach,0500,2.6,Y,Y,N,1087,NA,NA,2022-12-01,2022
 VC-N,Aniseto-Caucho,N,01/12/22,1,A,1100,priach,priach,priach,priach,0500,3,Y,Y,N,1100,NA,NA,2022-12-01,2022
 VC-N,Aniseto-Caucho,N,01/12/22,1,A,1101,priach,priach,priach,priach,0500,3.5,Y,Y,N,1101,NA,NA,2022-12-01,2022
+VC-N,Aniseto-Caucho,N,01/12/22,1,C,R233,pri?,pri?,priwal,priwal,0500,NA,N,N,Y,R233,NA,rev JMG,2022-12-01,2022
 VC-N,Aniseto-Caucho,N,01/12/22,1,C,1102,priach,priach,priach,priach,0500,3,Y,Y,N,1089,NA,NA,2022-12-01,2022
 VC-N,Aniseto-Caucho,N,01/12/22,1,D,R234,barpul,barpul,barpul,barpul,0500,NA,N,N,Y,1093,NA,NA,2022-12-01,2022
 VC-N,Aniseto-Caucho,N,01/12/22,2,A,1103,priach,priach,priach,priach,0500,2.5,Y,Y,N,1089,NA,NA,2022-12-01,2022
@@ -1861,6 +1865,7 @@ DB-N,Laguna,N,18/02/23,3,D,R364,priach,NA,priach,priach,0040,NA,N,N,Y,1488,NA,NA
 DB-N,Laguna,N,18/02/23,3,D,1494,barpul,NA,barpul,barpul,0040,2.7,Y,Y,N,1487,NA,NA,2023-02-18,2023
 DG-B,Gavilanes,B,20/02/23,1,B,1495,epibou,NA,epibou,epiesp,0005,1.7,Y,Y,N,1495,NA,NA,2023-02-20,2023
 DG-B,Gavilanes,B,20/02/23,1,C,1496,epibou,NA,epibou,epiesp,0005,1.6,Y,Y,N,1495,NA,NA,2023-02-20,2023
+DG-B,Gavilanes,B,20/02/23,2,A,1497,pri?,NA,prilaticla,prilatic,0005,2.8,Y,Y,N,1497,NA,rev JMG - prilat para DZ,2023-02-20,2023
 DG-B,Gavilanes,B,20/02/23,2,B,1498,priach,NA,priach,priach,0005,3,Y,Y,N,1498,NA,NA,2023-02-20,2023
 DG-B,Gavilanes,B,20/02/23,3,B,1499,priach,NA,priach,priach,0005,3,Y,Y,N,1498,NA,NA,2023-02-20,2023
 DG-B,Gavilanes,B,20/02/23,4,B,1500,priach,NA,priach,priach,0005,3.1,Y,Y,N,1499,NA,NA,2023-02-20,2023
@@ -2174,12 +2179,14 @@ PV-N,Aniseto-Caucho,N,15/03/23,4,A,1769,priach,NA,priach,priach,0200,2,Y,Y,N,176
 PV-N,Aniseto-Caucho,N,15/03/23,4,A,1770,priach,NA,priach,priach,0200,3,Y,Y,N,1760,NA,NA,2023-03-15,2023
 PV-N,Aniseto-Caucho,N,15/03/23,4,A,1771,priach,NA,priach,priach,0200,3.5,Y,Y,N,1771,NA,NA,2023-03-15,2023
 PV-N,Aniseto-Caucho,N,15/03/23,4,C,1772,priach,NA,priach,priach,0200,2,Y,Y,N,1760,NA,NA,2023-03-15,2023
+PV-N,Aniseto-Caucho,N,15/03/23,4,C,1773,priach,NA,x,priach,0200,4.2,Y,Y,N,1773,NA,confirmado priach por sequencias - no hay fotos,2023-03-15,2023
 PV-N,Aniseto-Caucho,N,15/03/23,4,D,R403,priach,NA,priach,priach,0200,NA,N,N,Y,1760,NA,NA,2023-03-15,2023
 VC-N,Aniseto-Caucho,N,16/03/23,1,C,1774,priach,NA,priach,priach,0500,2.2,Y,Y,N,1774,NA,NA,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,1,C,1775,priach,NA,priach,priach,0500,2,Y,Y,N,1774,NA,NA,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,2,B,1776,priach,NA,priach,priach,0500,3,Y,Y,N,1776,NA,NA,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,2,C,R404,priach,NA,priach,priach,0500,NA,N,N,Y,R404,NA,NA,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,2,C,1777,priach,NA,priach,priach,0500,2,Y,Y,N,R404,NA,NA,2023-03-16,2023
+VC-N,Aniseto-Caucho,N,16/03/23,2,D,1778,priach,NA,x,priach,0500,3,Y,Y,N,1773,NA,confirmado priach por sequencias - no hay fotos,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,3,B,R405,priach,NA,priach,priach,0500,NA,N,N,Y,1776,NA,NA,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,3,C,1779,priach,NA,priach,priach,0500,1.9,Y,Y,N,1776,NA,NA,2023-03-16,2023
 VC-N,Aniseto-Caucho,N,16/03/23,3,C,1780,priach,NA,priach,priach,0500,1.9,Y,Y,N,1776,NA,NA,2023-03-16,2023
@@ -2192,10 +2199,13 @@ VC-N,Aniseto-Caucho,N,16/03/23,4,D,1786,priach,NA,priach,priach,0500,2.4,Y,Y,N,1
 VC-N,Aniseto-Caucho,N,16/03/23,4,D,1787,priach,NA,priach,priach,0500,3,Y,Y,N,1773,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,1,A,1788,priach,NA,priach,priach,2000,3,Y,Y,N,1776,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,1,B,R406,priach,NA,priach,priach,2000,NA,N,N,Y,R404,NA,NA,2023-03-16,2023
+FCAT-B3,Aniseto-Caucho,B,16/03/23,1,B,1789,pri?,NA,pricf.sub,prilatid,2000,2.8,Y,Y,N,1789,NA,confirmado prilatid por sequencias - revisar DFM - prisub para DZ,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,1,D,1790,priach,NA,priach,priach,2000,3,Y,Y,N,1790,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,2,A,R407,priach,NA,priach,priach,2000,NA,N,N,Y,R404,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,2,B,R408,priach,NA,priach,priach,2000,NA,N,N,Y,1773,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,2,C,1791,priach,NA,priach,priach,2000,3,Y,Y,N,R404,NA,NA,2023-03-16,2023
+FCAT-B3,Aniseto-Caucho,B,16/03/23,3,B,1792,pri?,NA,NA,prilatid,2000,3,Y,Y,N,1789,NA,confirmado prilatid por sequencias -  revisar DFM - prisub para DZ,2023-03-16,2023
+FCAT-B3,Aniseto-Caucho,B,16/03/23,3,B,1793,pri?,NA,NA,prilatid,2000,2.5,Y,Y,N,1789,NA,confirmado prilatid por sequencias -  revisar DFM - prisub para DZ,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,3,C,1794,priach,NA,priach,priach,2000,3.2,Y,Y,N,1773,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,4,A,1795,priach,NA,priach,priach,2000,1.5,Y,Y,N,1773,NA,NA,2023-03-16,2023
 FCAT-B3,Aniseto-Caucho,B,16/03/23,4,A,R409,priach,NA,priach,priach,2000,NA,N,N,Y,1776,NA,NA,2023-03-16,2023
