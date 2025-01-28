@@ -1044,8 +1044,13 @@ plot_nmds_bray <- ggplot(nmds_data, aes(x = NMDS1, y = NMDS2,
                                "Abandoned plantation" = "#80CDC1", 
                                "Remnant forest" = "#018571")) +
   theme_minimal() +
-  labs(color = "Land use type")
-
+  labs(color = "Land use type") +
+  theme(
+    axis.text = element_text(size = 16),
+    axis.title = element_text(size = 22),
+    legend.text = element_text(size = 16),
+    legend.title = element_text(size = 22)
+  )
 plot_nmds_bray
 #ggsave("output/plot_nmds_bray.png", width = 10, height = 10)
 ```
