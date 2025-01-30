@@ -332,8 +332,7 @@ local_by_trans <- local_by_trans %>%
   select(Sitio, Tipo, Transecto, 
          tran_mean_veg, tran_mean_hoja, Pair,
          tran_mean_CC, tran_coef_var_CC,
-         forest_cover_400, water_dist) %>%
-  filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
+         forest_cover_400, water_dist)
 
 # bin all transect measurements to categories used in Islas studies
 
@@ -411,13 +410,12 @@ richness_by_site <- new %>%
             no_species = n_distinct(`Final_ID`))
 ```
 
-# site_richness_local
+# site_richness_local, site_richness_local_all
 - calculate richness at each site across both seasons
 - include local and landscape variables for model creation
 ```{r}
-site_richness_local <- left_join(richness_by_site, local_by_site,
+site_richness_local_all <- left_join(richness_by_site, local_by_site,
                                  by = c("Sitio")) %>%
-                       filter(Tipo %in% c("N", "C")) %>% # only N,C
                        group_by(Sitio) %>% 
                        slice(1) # just take one row per site
 
@@ -427,29 +425,35 @@ site_abundance <- ranas %>%
   summarize(num_ind = n_distinct(Numero))
 
 # add to above df to make downstream model creation easier
-site_richness_local <- left_join(site_abundance, site_richness_local,
-                                 by = c("Sitio")) %>%
-                       filter(Tipo %in% c("N", "C"))
+site_richness_local_all <- left_join(site_abundance, site_richness_local_all,
+                                 by = c("Sitio")) 
 
 # remove columns that are not necessary with this df
-site_richness_local <- site_richness_local %>%
+site_richness_local_all <- site_richness_local_all %>%
   select(-c("species", "Transecto", "tran_mean_veg", "tran_mean_hoja",
             "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
             "tran_mean_CC_scaled", "tran_mean_hoja_scaled",
             "veg_bins", "hoja_bins", "CC_bins"))
 
 # also add the elevation to this df - if working at site level, elevation as R.E.?
-site_richness_local <- merge(site_richness_local, 
+site_richness_local_all <- merge(site_richness_local_all, 
                                   site_data[, c("Sitio", "Elevation")],
                                   by = "Sitio",
                                   all.x = TRUE
                                   )
 
-site_richness_local <- site_richness_local %>%
+site_richness_local_all <- site_richness_local_all %>%
   group_by(Sitio) %>%
   slice(1) %>% # just need one row for each site
   ungroup() %>%
   mutate(elevation_scaled = as.numeric(scale(Elevation)))
+
+# filename <- "site_richness_local_all_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_richness_local_all, file = filepath)
+
+site_richness_local <- site_richness_local_all %>%
+            filter(Tipo %in% c("N", "C")) # only N,C
 
 # filename <- "site_richness_local_processed.csv"
 # filepath <- file.path(data_dir, filename)
@@ -587,7 +591,7 @@ trans_richness <- ranas %>%
   summarize(num_species = n_distinct(Final_ID))
 
 # as currently constructed, this sums richness for each transect on each date 
-trans_richness_local <- left_join(trans_richness, local_by_trans,
+trans_richness_local_all <- left_join(local_by_trans, trans_richness,
                                  by = c("Sitio", "Transecto"))
 
 trans_abundance <- ranas %>%
@@ -595,15 +599,16 @@ trans_abundance <- ranas %>%
   summarize(num_ind = n_distinct(Numero))
 
 # add to above df to make downstream model creation easier
-trans_richness_local <- left_join(trans_abundance, trans_richness_local,
+trans_richness_local <- left_join(trans_richness_local_all, trans_abundance, 
                                  by = c("Sitio", "Transecto")) %>%
+                                 replace(is.na(.), 0) %>%
   filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
 
 # check to make sure that each transect is represented in this df
 trans_richness_local %>%
   group_by(Sitio, Transecto) %>%
   summarize()
-# everybody accounted for!
+# have all of them here
 
 # remove unnecessary columns, make sure variables are scaled properly
 
@@ -621,8 +626,8 @@ trans_richness_no_priach <- ranas %>%
   summarize(num_species = n_distinct(Final_ID))
 
 # as currently constructed, this sums richness for each transect on each date 
-trans_richness_local_no_priach <- left_join(trans_richness_no_priach, 
-                                            local_by_trans,
+trans_richness_local_no_priach <- left_join(local_by_trans,
+                                            trans_richness_no_priach,
                                  by = c("Sitio", "Transecto"))
 
 trans_abundance_no_priach <- ranas %>%
@@ -631,8 +636,8 @@ trans_abundance_no_priach <- ranas %>%
   summarize(num_ind = n_distinct(Numero))
 
 # add to above df to make downstream model creation easier
-trans_richness_local_no_priach <- left_join(trans_abundance_no_priach,
-                                            trans_richness_local_no_priach,
+trans_richness_local_no_priach <- left_join(trans_richness_local_no_priach,
+                                            trans_abundance_no_priach,
                                  by = c("Sitio", "Transecto")) %>%
   filter(Tipo %in% c("N", "C"))  # here where filtering out B, V
 
@@ -645,6 +650,26 @@ trans_richness_local_no_priach %>%
 # filepath <- file.path(data_dir, filename)
 # write_csv(trans_richness_local_no_priach, file = filepath)
 ```
+
+# trans_richness_local_all
+Same as trans_richness but not filtering out B and V sites
+```{r}
+# add to above df (before filtering out cacao) to make downstream model creation easier
+trans_richness_local_all <- left_join(trans_richness_local_all, trans_abundance, 
+                                 by = c("Sitio", "Transecto")) %>%
+                                 replace(is.na(.), 0)
+
+# check to make sure that each transect is represented in this df
+trans_richness_local_all %>%
+  group_by(Sitio, Transecto) %>%
+  summarize()
+# have all of them here
+
+# filename <- "trans_richness_local_all_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(trans_richness_local_all, file = filepath)
+```
+
 
 # landscape_by_site
 

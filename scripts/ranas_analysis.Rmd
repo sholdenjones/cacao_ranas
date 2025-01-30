@@ -84,9 +84,17 @@ trans_richness_local <- read_csv(
   "data/processed_data/trans_richness_local_processed.csv")
 trans_richness_local <- as_tibble(trans_richness_local)
 
+trans_richness_local_all <- read_csv(
+  "data/processed_data/trans_richness_local_all_processed.csv")
+trans_richness_local_all <- as_tibble(trans_richness_local_all)
+
 site_richness_local <- read_csv(
   "data/processed_data/site_richness_local_processed.csv")
 site_richness_local <- as_tibble(site_richness_local)
+
+site_richness_local_all <- read_csv(
+  "data/processed_data/site_richness_local_all_processed.csv")
+site_richness_local_all <- as_tibble(site_richness_local_all)
 
 priach_by_site <- read_csv(
   "data/processed_data/priach_by_site_processed.csv")
@@ -1426,7 +1434,6 @@ plot(simulationOutput)
 testDispersion(simulationOutput) # not over or under dispersed
 testZeroInflation(simulationOutput) # zero inflation not required
 
-
 # STOP HERE - none of Step 2 models fit
 ```
 
@@ -2184,7 +2191,57 @@ new %>%
 ```
 
 
+# 9. Variation of environmental variables across sites and site types
 
+This is important to see if shade cacao sites are really shaded etc.
+Or, is there so much variation within these sites that they're not ecologically
+distinct?
 
+visualize distributions
+```{r}
+# canopy cover
+ggplot(site_richness_local_all, aes(x = site_mean_CC, fill = Tipo)) +
+  geom_histogram()
 
+# hoja
+ggplot(site_richness_local_all, aes(x = site_mean_hoja, fill = Tipo)) +
+  geom_histogram()
 
+# forest
+ggplot(site_richness_local_all, aes(x = forest_cover_400, fill = Tipo)) +
+  geom_histogram()
+
+# water
+ggplot(site_richness_local_all, aes(x = water_dist, fill = Tipo)) +
+  geom_histogram()
+
+# veg
+ggplot(site_richness_local_all, aes(x = site_mean_veg, fill = Tipo)) +
+  geom_histogram()
+
+# elevation
+ggplot(site_richness_local_all, aes(x = Elevation, fill = Tipo)) +
+  geom_histogram()
+```
+
+make a supplementary table showing type level means
+- important to show spread of these variables
+```{r}
+env_table <- site_richness_local_all %>%
+  group_by(Tipo) %>%
+  summarise(mean_canopy = mean(site_mean_CC), 
+            sd_canopy = sd(site_mean_CC),
+            mean_hoja = mean(site_mean_hoja), 
+            sd_hoja = sd(site_mean_hoja),
+            mean_forest = mean(forest_cover_400), 
+            sd_forest = sd(forest_cover_400),
+            mean_water = mean(water_dist), 
+            sd_water = sd(water_dist),
+            mean_veg = mean(site_mean_veg), 
+            sd_veg = sd(site_mean_veg),
+            mean_elevation = mean(Elevation), 
+            sd_elevation = sd(Elevation),
+            ) 
+
+# write.csv(env_table, "output/env_table.csv", row.names = FALSE)
+```
