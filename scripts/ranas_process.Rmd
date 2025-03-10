@@ -1,6 +1,10 @@
 
 # PROCESSING DATA
 
+
+## SELECT VECTOR STRING NOT WORKING. WTF IS GOING ON?
+
+
 Use this script to perform small tasks on raw data to make it tidier, 
 easier to work with. Output is processed data to be used in analysis scripts.
 
@@ -33,8 +37,8 @@ ranas <- ranas %>%
          year = substr(sample_date, 1, 4))
 
 # remove '...20', '...21' column - not sure why these are being added
-ranas <- ranas %>%
-  select(-c("...20", "...21"))
+# ranas <- ranas %>%
+  # select(-c("...20", "...21"))
 
 ranas$Tipo[ranas$Sitio == "VC-N"] <- "N"
 
@@ -254,6 +258,8 @@ site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
 # write_csv(site_data, file = filepath)
 ```
 
+## SCARY SELECT ERROR BELOW WTF IS GOING ON
+
 # site_data_map
 - simplified version of site_data just for making map for publication
 ```{r}
@@ -374,6 +380,10 @@ local_by_trans <- local_by_trans %>%
 # write_csv(local_by_trans, file = filepath)
 ```
 
+
+## NEED TO SCALE ELEVATION VAR TOO!!!!!!!!! URGENT
+
+
 # local_by_site
 easier to work at site level - removes lots of strange use cases
 - use local_by_trans df from above to calculate site-level local variables 
@@ -390,6 +400,9 @@ local_by_site <- local_by_trans %>%
          site_mean_hoja = mean(tran_mean_hoja),
          site_mean_CC = mean(tran_mean_CC)
   )
+
+
+## TEST INCLUDE ELEVATION AS SCALED VAR! DUH
 
 # scale all vars
 local_by_site <- local_by_site %>%
