@@ -162,6 +162,24 @@ check_overdispersion <- function(model) {
 
 #1. Compare abundance, richness and Shannon diversity of shade and sun
 
+
+What are the means for each of these values for each land use type?
+```{r}
+site_richness_local_all %>%
+  group_by(Tipo) %>%
+  summarize(mean(num_ind))
+
+site_richness_local_all %>%
+  group_by(Tipo) %>%
+  summarize(mean(no_species))
+
+diversity_by_site %>%
+  group_by(Tipo) %>%
+  summarize(mean(Shannon_Index))
+```
+
+
+
 ##a. Richness
 - Use two-sample t-test b/c not perfectly paired in landscape and dif number of sites
 - If remove VC-N (weird site turned out to be N, not paired), then can run paired t-test
@@ -320,17 +338,19 @@ plot_shannon_by_site_cacao_arrange
 
 
 
+## MOTHER FUCKER ABUNDANCE_BY_SITE IS WRONG
+
 ##c. Abundance
 Same process as above - use abundance_by_site for two sample t-test
 ```{r}
 # create species abundance vector for each cacao type
-abun_ccn <- abundance_by_site %>%
+abun_ccn <- site_richness_local %>%
   filter(Tipo == 'C') %>%
-  pull(n)
-  
-abun_n <- abundance_by_site %>%
+  pull(num_ind)
+
+abun_n <- site_richness_local %>%
   filter(Tipo == 'N') %>%
-  pull(n)
+  pull(num_ind)
 
 # run two-sample t-test for species richness
 t.test(abun_ccn, abun_n, paired = FALSE)
@@ -339,18 +359,18 @@ t.test(abun_ccn, abun_n, paired = FALSE)
 paired t-test
 ```{r}
 # drop VC-N from df, this site messes up pairing for t-test
-pair_abundance_by_site <- abundance_by_site %>%
+pair_site_richness_local <- site_richness_local %>%
   filter(Sitio != 'VC-N') %>%
   arrange(Pair) # sort by Pair so vectors pulled align with pairs
 
 # create abundance vector for each cacao type
-pair_abun_ccn <- pair_abundance_by_site %>%
+pair_abun_ccn <- pair_site_richness_local %>%
   filter(Tipo == 'C') %>%
-  pull(n)
+  pull(num_ind)
   
-pair_abun_n <- pair_abundance_by_site %>%
+pair_abun_n <- pair_site_richness_local %>%
   filter(Tipo == 'N') %>%
-  pull(n)
+  pull(num_ind)
 
 t.test(pair_abun_ccn, pair_abun_n, paired = TRUE)
 ```
@@ -361,15 +381,15 @@ Boxplot figure for CCN vs. Nacional abundance
 site_labels <-  c("Shade \n (n = 12)", "Sun \n (n = 11)")
 
 # reorder factor levels
-abundance_by_site$Tipo <- factor(abundance_by_site$Tipo,
+site_richness_local$Tipo <- factor(site_richness_local$Tipo,
                          c("N", "C", "V", "B"))
 
-abundance_by_site_cacao <- abundance_by_site %>%
+site_richness_local_cacao <- site_richness_local %>%
   filter(Tipo == "C" | Tipo == 'N')
 
 # plot species richness across landuse types using palet, my_theme
-plot_abundance_by_site_cacao <- ggplot(abundance_by_site_cacao, 
-                                     aes(x = Tipo, y = n, fill = Tipo)) +
+plot_abundance_by_site_cacao <- ggplot(site_richness_local_cacao, 
+                                     aes(x = Tipo, y = num_ind, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) + # order needs to match factor levels above
   scale_x_discrete(labels = c(site_labels)) +
@@ -381,11 +401,11 @@ plot_abundance_by_site_cacao
 #ggsave("output/plot_abundance_by_site_cacao.png", width = 10, height = 10)
 
 # below using ggarrange to align multiple figs - don't want to repeat axis labels
-plot_abundance_by_site_cacao_arrange <- ggplot(abundance_by_site_cacao, 
-                                     aes(x = Tipo, y = n, fill = Tipo)) +
+plot_abundance_by_site_cacao_arrange <- ggplot(site_richness_local_cacao, 
+                                     aes(x = Tipo, y = num_ind, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = pal) + 
-  scale_y_continuous(limits = c(0, 51)) +
+  scale_y_continuous(limits = c(0, 180)) +
   scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
   theme(axis.title.x=element_blank(),
@@ -589,16 +609,16 @@ plot_shannon_by_site_inactive_arrange
 
 
 ##d. Abundance
-Same process as above - use abundance_by_site for two sample t-test
+Same process as above - use site_richness_local_all for two sample t-test
 ```{r}
 # create species abundance vector for each cacao type
-abun_abandon <- abundance_by_site %>%
+abun_abandon <- site_richness_local_all %>%
   filter(Tipo == 'V') %>%
-  pull(n)
+  pull(num_ind)
   
-abun_forest <- abundance_by_site %>%
+abun_forest <- site_richness_local_all %>%
   filter(Tipo == 'B') %>%
-  pull(n)
+  pull(num_ind)
 
 # run two-sample t-test for species richness
 t.test(abun_abandon, abun_forest, paired = FALSE)
@@ -607,15 +627,15 @@ t.test(abun_abandon, abun_forest, paired = FALSE)
 Boxplot figure for forest vs. abandoned abundance
 ```{r}
 # reorder factor levels
-abundance_by_site$Tipo <- factor(abundance_by_site$Tipo,
+site_richness_local_all$Tipo <- factor(site_richness_local_all$Tipo,
                          c("N", "C", "V", "B"))
 
-abundance_by_site_inactive <- abundance_by_site %>%
+site_richness_local_inactive <- site_richness_local_all %>%
   filter(Tipo == "V" | Tipo == 'B')
 
 # plot Shannon diversity across landuse types using palet, my_theme
-plot_abundance_by_site_inactive <- ggplot(abundance_by_site_inactive, 
-                                     aes(x = Tipo, y = n, 
+plot_abundance_by_site_inactive <- ggplot(site_richness_local_inactive, 
+                                     aes(x = Tipo, y = num_ind, 
                                          fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = c("#80CDC1", "#018571")) +
@@ -627,11 +647,11 @@ plot_abundance_by_site_inactive
 #ggsave("output/plot_abundance_by_site_inactive.png", width = 10, height = 10)
 
 # below using ggarrange to align multiple figs, don't want to repeat axes
-plot_abundance_by_site_inactive_arrange <- ggplot(abundance_by_site_inactive, 
-                                     aes(x = Tipo, y = n, fill = Tipo)) +
+plot_abundance_by_site_inactive_arrange <- ggplot(site_richness_local_inactive, 
+                                     aes(x = Tipo, y = num_ind, fill = Tipo)) +
   geom_boxplot() +
   scale_fill_manual(values = c("#80CDC1", "#018571")) + 
-  scale_y_continuous(limits = c(0, 51)) +
+  scale_y_continuous(limits = c(0, 180)) +
   scale_x_discrete(labels = c(site_labels)) +
   my_theme() + 
   theme(axis.title.x = element_blank(),
@@ -676,7 +696,6 @@ compare_abun_rich_shannon <- ggarrange(
   label.y = 0.13  #.13
 )
 compare_abun_rich_shannon
-
 #ggsave("output/compare_abun_rich_shannon_draft_5.png", width = 10, height = 10)
 ```
 
@@ -2250,7 +2269,7 @@ hist_arrange <- ggarrange(
 )
 hist_arrange
 
-#ggsave("output/hist_arrange_variables.png", width = 10, height = 10)
+#ggsave("output/hist_arrange_variables.png", width = 15, height = 10)
 ```
 
 

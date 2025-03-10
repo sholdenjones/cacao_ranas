@@ -2,6 +2,10 @@
 # PROCESSING DATA
 
 
+
+## THIS WHOLE SCRIPT IS SO FUCKED - NEED TO FUCKING REDO EVERYTHING IN CLEAN VERSION
+
+
 ## SELECT VECTOR STRING NOT WORKING. WTF IS GOING ON?
 
 
@@ -263,17 +267,17 @@ site_data$Tipo[site_data$Sitio == "VC-N"] <- "N"
 # site_data_map
 - simplified version of site_data just for making map for publication
 ```{r}
-site_data_map <- site_data %>%
-  group_by(Sitio) %>%
-  filter(Transecto == 3) %>% # use 3rd transects, less like to have entry errors
-  slice(1) %>%
-  select(c("Sitio", "Tipo", "Owner", "Start UTM 1", "Start UTM 2", 
-           "Start Latitude", "Start Longitude", "Notas", "Pair")) 
-
-# output
-filename <- "site_data_map_processed.csv"
-filepath <- file.path(data_dir, filename)
-write_csv(site_data_map, file = filepath)
+# site_data_map <- site_data %>%
+#   group_by(Sitio) %>%
+#   filter(Transecto == 3) %>% # use 3rd transects, less like to have entry errors
+#   slice(1) %>%
+#   select(c("Sitio", "Tipo", "Owner", "Start UTM 1", "Start UTM 2", 
+#            "Start Latitude", "Start Longitude", "Notas", "Pair")) 
+# 
+# # output
+# filename <- "site_data_map_processed.csv"
+# filepath <- file.path(data_dir, filename)
+# write_csv(site_data_map, file = filepath)
 ```
 
 
@@ -334,11 +338,11 @@ now join this dataframe with local_by_trans
 local_by_trans <- left_join(environment_fill_by_trans, local_by_trans,
                                  by = c("Sitio", "Transecto"))
 
-local_by_trans <- local_by_trans %>%
-  select(Sitio, Tipo, Transecto, 
-         tran_mean_veg, tran_mean_hoja, Pair,
-         tran_mean_CC, tran_coef_var_CC,
-         forest_cover_400, water_dist)
+# local_by_trans <- local_by_trans %>%
+#   select(Sitio, Tipo, Transecto, 
+#          tran_mean_veg, tran_mean_hoja, Pair,
+#          tran_mean_CC, tran_coef_var_CC,
+#          forest_cover_400, water_dist)
 
 # bin all transect measurements to categories used in Islas studies
 
@@ -442,11 +446,11 @@ site_richness_local_all <- left_join(site_abundance, site_richness_local_all,
                                  by = c("Sitio")) 
 
 # remove columns that are not necessary with this df
-site_richness_local_all <- site_richness_local_all %>%
-  select(-c("species", "Transecto", "tran_mean_veg", "tran_mean_hoja",
-            "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
-            "tran_mean_CC_scaled", "tran_mean_hoja_scaled",
-            "veg_bins", "hoja_bins", "CC_bins"))
+# site_richness_local_all <- site_richness_local_all %>%
+#   select(-c("species", "Transecto", "tran_mean_veg", "tran_mean_hoja",
+#             "tran_mean_CC", "tran_coef_var_CC", "tran_mean_veg_scaled",
+#             "tran_mean_CC_scaled", "tran_mean_hoja_scaled",
+#             "veg_bins", "hoja_bins", "CC_bins"))
 
 # also add the elevation to this df - if working at site level, elevation as R.E.?
 site_richness_local_all <- merge(site_richness_local_all, 
