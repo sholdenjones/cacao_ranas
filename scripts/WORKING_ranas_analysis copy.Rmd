@@ -677,7 +677,7 @@ compare_abun_rich_shannon <- ggarrange(
 )
 compare_abun_rich_shannon
 
-ggsave("output/compare_abun_rich_shannon_draft_5.png", width = 10, height = 10)
+#ggsave("output/compare_abun_rich_shannon_draft_5.png", width = 10, height = 10)
 ```
 
 
@@ -1595,7 +1595,7 @@ summary(mod_abundance_CC_elevation) # CC sig, AIC 234.3
 vif(mod_abundance_CC_elevation) # vif not a concern
 check_overdispersion(mod_abundance_CC_elevation) # not overdispersed
 
-# assess model fit using dHARMA - quant dev detected, quant test n.s.
+# assess model fit using dHARMA - quant dev detected, quant test significant
 simulationOutput <- simulateResiduals(
                               fittedModel =  mod_abundance_CC_elevation)
 plot(simulationOutput)
@@ -1630,7 +1630,7 @@ testDispersion(simulationOutput) # not over or under dispersed
 testZeroInflation(simulationOutput) # zero inflation not required
 
 
-######## MODEL ELEVATION   -  AIC  , sig  #########
+######## MODEL ELEVATION fits  -  AIC 235.8 , elevation not sig  #########
 # model with glm.nb, ONLY ELEVATION
 mod_abundance_elevation <- glm.nb(num_ind ~ elevation_scaled,
               data = site_richness_local
@@ -1672,7 +1672,7 @@ use glm package to build full multiple regression
 
 FULL MODEL
 ```{r}
-############# FULL MODEL - nothing sig - AIC 103.2 ##############
+############# FULL MODEL fits - nothing sig - AIC 103.2 ##############
 # full model with glm, no R.E., poisson
 mod_richness_full <- glm(no_species ~ site_mean_CC_scaled +
                                     site_mean_veg_scaled +
@@ -2249,6 +2249,8 @@ hist_arrange <- ggarrange(
   elevation_hist
 )
 hist_arrange
+
+#ggsave("output/hist_arrange_variables.png", width = 10, height = 10)
 ```
 
 
