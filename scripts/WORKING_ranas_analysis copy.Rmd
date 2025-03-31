@@ -338,7 +338,7 @@ plot_shannon_by_site_cacao_arrange
 
 
 
-## MOTHER FUCKER ABUNDANCE_BY_SITE IS WRONG
+## ABUNDANCE_BY_SITE IS WRONG
 
 ##c. Abundance
 Same process as above - use abundance_by_site for two sample t-test
