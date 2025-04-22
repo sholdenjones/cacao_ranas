@@ -690,13 +690,14 @@ compare_abun_rich_shannon <- ggarrange(
   plot_richness_by_site_inactive_arrange + rremove("ylab"),
   plot_shannon_by_site_cacao_arrange,
   plot_shannon_by_site_inactive_arrange + rremove("ylab"),
-  labels = c("A", "B", "C", "D", "E", "F"),
+  labels = c("a", "b", "c", "d", "e", "f"),
   ncol = 2, nrow = 3,
   label.x = 0.015, #.01
-  label.y = 0.13  #.13
+  label.y = 0.13,  #.13
+  font.label = list(size = 20, face = "bold")
 )
 compare_abun_rich_shannon
-#ggsave("output/compare_abun_rich_shannon_draft_5.png", width = 10, height = 10)
+#ggsave("output/compare_abun_rich_shannon_submit.png", width = 10, height = 10)
 ```
 
 
@@ -1002,7 +1003,12 @@ ggiNEXT(rare_results_extended, type = 1) +
   scale_color_manual(values = c("ABANDON" = "#80CDC1", 
                                 "FOREST" = "#018571", 
                                 "SHADE" = "#A6611A",
-                                "SUN" = "#DFC27D")) 
+                                "SUN" = "#DFC27D"),
+                      labels = c("ABANDON" = "Abandoned", 
+                                 "FOREST" = "Forest", 
+                                 "SHADE" = "Shade", 
+                                  "SUN" = "Sun") 
+                     ) 
 
 ###############################################################################
 
@@ -1025,6 +1031,98 @@ ggiNEXT(rare_results_extended, type = 1) +
 # # Print the summary
 # print(extrapolated_summary)
 ```
+
+
+
+
+
+
+## final for submitted MS
+
+# prep matrix for iNEXT
+```{r}
+#load matrix
+attach(MATFROGH)
+data <- MATFROGH
+
+# Check the structure of your matrix
+str(MATFROGH)
+
+# Ensure Type is a factor
+MATFROGH$Type <- as.factor(MATFROGH$Type)
+
+# Summarize abundances for each Type and split into a list
+abundance_list <- MATFROGH %>%
+  group_by(Type) %>%
+  summarise(across(where(is.numeric), sum)) %>%  # Summarize numeric columns
+  split(.$Type)  # Split the summarized data by Type
+
+# Remove the Type column within each list element
+abundance_list <- lapply(abundance_list, function(x) x[, -1])  # Drop 'Type' column
+
+# Summarize abundances for each Type and split into numeric vectors
+abundance_list <- MATFROGH %>%
+  group_by(Type) %>%
+  summarise(across(where(is.numeric), sum)) %>%
+  split(.$Type)  # Split by Type
+
+# Convert each element of the list to a numeric vector
+abundance_list <- lapply(abundance_list, 
+                         function(x) as.numeric(x[, -1]))  # Drop the 'Type' column
+
+# Check the structure of abundance_list
+str(abundance_list)
+
+
+name_map <- c("ABANDON" = "Abandoned",
+              "FOREST" = "Forest",
+              "SHADE" = "Shade",
+              "SUN" = "Sun")
+
+names(abundance_list) <- name_map[names(abundance_list)]
+```
+
+
+
+use iNEXT to extrapolate rarefaction curve to see what expected values would be
+- visually compare extrapolated rarefied species richness across landuse types
+- calculate extrapolated rarefied species richness
+```{r}
+###VISUALIZATION###
+# Perform rarefaction analysis with extended extrapolation
+rare_results_extended <- iNEXT(abundance_list, q = 0, 
+                               datatype = "abundance", endpoint = 1000)
+
+plot_extrap_submit <- ggiNEXT(rare_results_extended, type = 1) +
+  xlab("Number of individuals sampled") +
+  ylab("Species richness") +
+  scale_color_manual(values = c(
+    "Shade" = "#A6611A",
+    "Sun" = "#DFC27D", 
+    "Abandoned" = "#80CDC1", 
+    "Forest" = "#018571"
+  )) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid = element_blank(),         # Remove all gridlines
+    axis.line = element_line(color = "black"),  # Add axis lines
+    axis.ticks = element_line(color = "black"), # Keep tick marks
+    axis.title = element_text(size = 16, face = "bold"), 
+    axis.text = element_text(size = 14), 
+    legend.title = element_blank(),
+    legend.text = element_text(size = 14),
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5)
+  )
+plot_extrap_submit
+#ggsave("output/plot_extrap_submit.png", width = 10, height = 10)
+```
+
+
+
+
+
+
+
 
 
 ##d. Endangered species
