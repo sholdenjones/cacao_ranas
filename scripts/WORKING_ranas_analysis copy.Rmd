@@ -1114,10 +1114,40 @@ plot_extrap_submit <- ggiNEXT(rare_results_extended, type = 1) +
     plot.title = element_text(size = 18, face = "bold", hjust = 0.5)
   )
 plot_extrap_submit
-#ggsave("output/plot_extrap_submit.png", width = 10, height = 10)
+ggsave("output/plot_extrap_submit.png", width = 10, height = 10)
 ```
 
 
+## boxplot of extrapolated species richness
+
+```{r}
+# # Combine all extrapolated values into one data frame
+# extrapolated_df <- rare_results_extended$iNextEst$size_based
+# 
+# # Filter for extrapolation at exactly 1000 individuals
+# extrapolated_summary <- extrapolated_df %>%
+#   dplyr::filter(Method == "Extrapolation", m == 1000, Order.q == 0) %>%
+#   dplyr::select(Assemblage, m, qD, qD.LCL, qD.UCL)
+# 
+# # Print the summary
+# print(extrapolated_summary)
+# 
+# 
+# library(ggplot2)
+# 
+# ggplot(extrapolated_summary, aes(x = Assemblage, y = qD, fill = Assemblage)) +
+#   geom_boxplot() +
+#   geom_errorbar(aes(ymin = qD.LCL, ymax = qD.UCL), width = 0.2) +
+#   scale_fill_manual(values = c("ABANDON" = "#80CDC1", 
+#                                "FOREST" = "#018571", 
+#                                "SHADE" = "#A6611A",
+#                                "SUN" = "#DFC27D")) +
+#   labs(title = "Extrapolated Species Richness at 2000 Individuals",
+#        x = "Habitat Type", y = "Estimated Species Richness") +
+#   theme_minimal()
+
+
+```
 
 
 
